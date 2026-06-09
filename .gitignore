@@ -1,0 +1,21 @@
+﻿# Cloned repos
+scan_target/
+
+# Reports (may contain sensitive findings)
+reports/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# Secrets
+.env
+*.env
+
+# OS
+.DS_Store
+Thumbs.db
