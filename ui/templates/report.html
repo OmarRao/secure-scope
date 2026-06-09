@@ -3,176 +3,231 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Security Report — {{ repo_slug }}</title>
+  <title>SecureScope / {{ repo_slug }}</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;900&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:#0d1117;--bg2:#161b22;--bg3:#21262d;--bg4:#2d333b;
-      --border:#30363d;--border2:#484f58;
-      --text:#e6edf3;--text2:#8b949e;--text3:#6e7681;
-      --red:#f85149;--orange:#d29922;--green:#3fb950;
-      --blue:#58a6ff;--purple:#bc8cff;--cyan:#39d353;--teal:#4ec9b0;
+      --ink:   #0a0c0f; --ink2: #111419; --ink3: #181c23; --ink4: #1f242d;
+      --rule:  #252b35; --rule2: #2e3540;
+      --muted: #4a5568; --dim: #6b7785; --sub: #8b96a4;
+      --body:  #c8d0db; --head: #ffffff;
+      --accent:#4f8ef7; --danger:#f25757; --warn:#e6a817; --ok:#3ecf79; --tag:#a78bfa; --teal:#4ec9b0;
     }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px}
-    a{color:var(--blue);text-decoration:none}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--ink);color:var(--body);font-family:'Geist',sans-serif;font-size:14px;line-height:1.6}
+    ::selection{background:rgba(79,142,247,.25);color:var(--head)}
+    a{color:var(--accent);text-decoration:none}
     a:hover{text-decoration:underline}
-    code{font-family:'JetBrains Mono',monospace;font-size:12px;background:var(--bg3);padding:2px 6px;border-radius:4px}
+    code,pre,kbd{font-family:'Geist Mono',monospace}
 
-    /* ── Layout ── */
-    .layout{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
-    .sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:24px 0;position:sticky;top:0;height:100vh;overflow-y:auto}
-    .sidebar .logo{padding:0 20px 20px;border-bottom:1px solid var(--border);font-weight:700;font-size:16px}
-    .sidebar .logo span{color:var(--blue)}
-    .nav-section{padding:16px 20px 8px;font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.8px;text-transform:uppercase}
-    .nav-item{display:flex;align-items:center;gap:8px;padding:8px 20px;color:var(--text2);cursor:pointer;transition:all .15s;font-size:13px}
-    .nav-item:hover,.nav-item.active{background:var(--bg3);color:var(--text)}
-    .nav-item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    /* Layout */
+    .shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+    .side{
+      background:var(--ink2);border-right:1px solid var(--rule);
+      padding:0;position:sticky;top:0;height:100vh;overflow-y:auto;
+      display:flex;flex-direction:column;
+    }
+    .side-top{padding:20px 18px;border-bottom:1px solid var(--rule)}
+    .side-logo{font-size:14px;font-weight:700;color:var(--head);letter-spacing:-.2px}
+    .side-logo sup{font-size:9px;color:var(--accent);margin-left:3px;font-weight:500;font-family:'Geist Mono',monospace}
+    .side-repo{font-size:11px;color:var(--dim);margin-top:4px;font-family:'Geist Mono',monospace;word-break:break-all}
+    .nav-grp{padding:16px 0 4px 18px;font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace}
+    .nav-item{
+      display:flex;align-items:center;gap:9px;padding:8px 18px;
+      font-size:13px;color:var(--sub);cursor:pointer;
+      transition:all .12s;border-left:2px solid transparent;
+    }
+    .nav-item:hover{background:var(--ink3);color:var(--body)}
+    .nav-item.on{background:var(--ink3);color:var(--head);border-left-color:var(--accent)}
+    .nav-ic{font-size:14px;width:16px;text-align:center;flex-shrink:0}
+    .nav-ct{
+      margin-left:auto;font-size:10px;font-weight:700;
+      font-family:'Geist Mono',monospace;padding:1px 6px;
+      border-radius:4px;
+    }
+    .ct-r{background:rgba(242,87,87,.15);color:var(--danger)}
+    .ct-w{background:rgba(230,168,23,.13);color:var(--warn)}
+    .ct-b{background:rgba(79,142,247,.13);color:var(--accent)}
+    .side-foot{margin-top:auto;padding:16px 18px;border-top:1px solid var(--rule);font-size:11px;color:var(--muted);line-height:1.7;font-family:'Geist Mono',monospace}
 
-    .main{padding:32px;max-width:1100px}
+    /* Main */
+    .content{padding:32px 36px;max-width:1080px}
 
-    /* ── Section ── */
-    .section{margin-bottom:48px;scroll-margin-top:24px}
-    .section-title{font-size:20px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:10px}
-    .section-title .icon{font-size:22px}
+    /* Report banner */
+    .banner{
+      border:1px solid var(--rule2);border-radius:10px;
+      padding:24px 28px;margin-bottom:36px;
+      background:var(--ink2);
+      display:flex;justify-content:space-between;align-items:flex-start;gap:20px;
+    }
+    .banner-left h1{font-size:22px;font-weight:800;color:var(--head);letter-spacing:-.4px;margin-bottom:6px}
+    .banner-left .bsub{font-size:13px;color:var(--sub)}
+    .banner-meta{display:flex;gap:20px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--rule)}
+    .bmeta{font-size:12px;color:var(--sub);font-family:'Geist Mono',monospace}
+    .bmeta strong{color:var(--body)}
+    .banner-score{
+      text-align:center;flex-shrink:0;
+      background:var(--ink3);border:1px solid var(--rule2);
+      border-radius:10px;padding:16px 24px;
+    }
+    .score-num{font-size:44px;font-weight:900;font-family:'Geist Mono',monospace;line-height:1}
+    .score-lbl{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:6px;color:var(--muted)}
+    .score-grade{font-size:13px;font-weight:700;margin-top:4px;letter-spacing:.5px;text-transform:uppercase}
 
-    /* ── Summary cards ── */
-    .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px}
-    .card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px}
-    .card .num{font-size:36px;font-weight:700;line-height:1}
-    .card .label{font-size:12px;color:var(--text2);margin-top:4px}
-    .card.red{border-color:rgba(248,81,73,.4);background:rgba(248,81,73,.05)}
-    .card.red .num{color:var(--red)}
-    .card.orange{border-color:rgba(210,153,34,.4);background:rgba(210,153,34,.05)}
-    .card.orange .num{color:var(--orange)}
-    .card.blue{border-color:rgba(88,166,255,.4);background:rgba(88,166,255,.05)}
-    .card.blue .num{color:var(--blue)}
-    .card.green{border-color:rgba(63,185,80,.4);background:rgba(63,185,80,.05)}
-    .card.green .num{color:var(--green)}
+    /* Section */
+    .sec{margin-bottom:52px;scroll-margin-top:20px}
+    .sec-head{
+      display:flex;align-items:center;gap:12px;
+      margin-bottom:20px;padding-bottom:14px;
+      border-bottom:1px solid var(--rule);
+    }
+    .sec-title{font-size:17px;font-weight:700;color:var(--head);letter-spacing:-.3px}
+    .sec-count{font-size:12px;font-weight:600;font-family:'Geist Mono',monospace;color:var(--muted);background:var(--ink3);border:1px solid var(--rule2);padding:2px 8px;border-radius:5px}
+    .eyebrow{font-size:10px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:6px}
 
-    /* ── Charts ── */
-    .charts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:32px}
-    .charts-row2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:32px}
-    .chart-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px}
-    .chart-box h3{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:16px;text-transform:uppercase;letter-spacing:.5px}
-    .chart-box canvas{max-height:220px}
+    /* KPI row */
+    .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:28px}
+    .kpi{background:var(--ink2);padding:18px 16px;border-right:1px solid var(--rule)}
+    .kpi:last-child{border-right:none}
+    .kpi-num{font-size:30px;font-weight:800;font-family:'Geist Mono',monospace;line-height:1;color:var(--head)}
+    .kpi-num.r{color:var(--danger)} .kpi-num.w{color:var(--warn)} .kpi-num.b{color:var(--accent)} .kpi-num.g{color:var(--ok)} .kpi-num.v{color:var(--tag)}
+    .kpi-lbl{font-size:11px;color:var(--muted);margin-top:5px;letter-spacing:.2px}
+    .kpi-sub{font-size:11px;font-family:'Geist Mono',monospace;color:var(--dim);margin-top:3px}
 
-    /* ── GitHub Info ── */
-    .gh-header{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:24px;margin-bottom:20px}
-    .gh-meta{display:flex;align-items:center;gap:16px;margin-bottom:16px}
-    .gh-avatar{width:56px;height:56px;border-radius:50%;border:2px solid var(--border)}
-    .gh-title{font-size:22px;font-weight:700}
-    .gh-desc{color:var(--text2);margin-top:4px;font-size:14px}
-    .gh-stats{display:flex;gap:20px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
-    .gh-stat{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2)}
-    .gh-stat strong{color:var(--text)}
-    .gh-topics{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-    .topic{background:rgba(88,166,255,.1);color:var(--blue);border:1px solid rgba(88,166,255,.2);
-      border-radius:20px;padding:3px 12px;font-size:12px}
+    /* Threat level bar */
+    .threat-bar-wrap{border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:28px}
+    .threat-bar-head{background:var(--ink2);padding:16px 20px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center}
+    .threat-bar-head .eyebrow{margin-bottom:0}
+    .threat-label{font-size:13px;font-weight:700;font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:.8px}
+    .threat-track{height:10px;background:var(--ink3);position:relative;overflow:hidden}
+    .threat-fill{height:100%;transition:width .8s ease;position:relative}
+    .threat-fill::after{content:'';position:absolute;top:0;right:0;bottom:0;width:40px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15))}
+    .threat-legend{background:var(--ink2);padding:12px 20px;display:flex;gap:20px}
+    .threat-leg-item{font-size:11px;color:var(--sub);display:flex;align-items:center;gap:6px;font-family:'Geist Mono',monospace}
+    .threat-leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 
-    .gh-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
-    .info-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:20px}
-    .info-box h3{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px}
-    .info-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
-    .info-row:last-child{border:none}
-    .info-row .key{color:var(--text2)}
-    .info-row .val{color:var(--text);font-weight:500;text-align:right;max-width:60%}
+    /* Charts grid */
+    .chart-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
+    .chart-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:28px}
+    .chart-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+    .cbox{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:20px}
+    .cbox-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:16px}
+    .cbox canvas{max-height:200px}
 
+    /* File heatmap */
+    .hm-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:12px}
+    .hm-name{font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub);min-width:140px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .hm-track{flex:1;background:var(--ink3);border-radius:3px;height:16px;overflow:hidden}
+    .hm-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:7px;font-size:10px;font-weight:700;color:#fff}
+    .hm-n{font-family:'Geist Mono',monospace;font-size:11px;color:var(--dim);min-width:22px;text-align:right}
+
+    /* Attack surface tiles */
+    .atk-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+    .atk-tile{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:18px}
+    .atk-tile.exposed{border-color:rgba(242,87,87,.35);background:rgba(242,87,87,.04)}
+    .atk-tile.partial{border-color:rgba(230,168,23,.3);background:rgba(230,168,23,.04)}
+    .atk-tile.safe{border-color:rgba(62,207,121,.25);background:rgba(62,207,121,.04)}
+    .atk-ic{font-size:22px;margin-bottom:10px}
+    .atk-name{font-size:12px;font-weight:700;color:var(--head);margin-bottom:4px;letter-spacing:-.1px}
+    .atk-status{font-size:11px;font-weight:600;font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:.5px}
+    .atk-status.e{color:var(--danger)} .atk-status.p{color:var(--warn)} .atk-status.s{color:var(--ok)}
+    .atk-detail{font-size:11px;color:var(--dim);margin-top:6px;line-height:1.4}
+
+    /* MITRE tiles */
+    .mitre-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:28px}
+    .mt{background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;transition:border-color .15s}
+    .mt.crit{border-color:rgba(242,87,87,.4);background:rgba(242,87,87,.04)}
+    .mt.med{border-color:rgba(230,168,23,.35);background:rgba(230,168,23,.04)}
+    .mt .tid{font-family:'Geist Mono',monospace;font-size:10px;color:var(--accent);margin-bottom:4px}
+    .mt .tname{font-size:12px;font-weight:600;color:var(--head);margin-bottom:2px;line-height:1.3}
+    .mt .ttactic{font-size:10px;color:var(--dim);font-family:'Geist Mono',monospace}
+    .mt .tct{font-size:28px;font-weight:900;font-family:'Geist Mono',monospace;margin-top:10px;line-height:1}
+    .mt.crit .tct{color:var(--danger)} .mt.med .tct{color:var(--warn)}
+
+    /* GitHub info */
+    .gh-card{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:24px;margin-bottom:16px}
+    .gh-top{display:flex;align-items:flex-start;gap:16px;margin-bottom:16px}
+    .gh-av{width:52px;height:52px;border-radius:50%;border:1px solid var(--rule2);flex-shrink:0}
+    .gh-name{font-size:20px;font-weight:800;color:var(--head);letter-spacing:-.3px}
+    .gh-desc{font-size:13px;color:var(--sub);margin-top:4px}
+    .gh-stats{display:flex;gap:20px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--rule)}
+    .gh-s{font-size:13px;color:var(--sub)} .gh-s strong{color:var(--body)}
+    .gh-topics{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+    .topic{background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.2);border-radius:4px;padding:2px 9px;font-size:11px;font-family:'Geist Mono',monospace}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+    .ibox{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:18px}
+    .ibox-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:12px}
+    .irow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--rule);font-size:13px}
+    .irow:last-child{border:none}
+    .ik{color:var(--sub)} .iv{color:var(--body);font-weight:500;text-align:right;max-width:55%}
+
+    /* Commit list */
     .commit-list{list-style:none}
-    .commit-item{padding:8px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;font-size:13px}
-    .commit-item:last-child{border:none}
-    .commit-sha{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);flex-shrink:0;background:rgba(88,166,255,.1);padding:2px 6px;border-radius:4px}
-    .commit-msg{color:var(--text);flex:1;line-height:1.4}
-    .commit-meta{color:var(--text3);font-size:11px;white-space:nowrap}
+    .commit-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--rule);font-size:12px}
+    .commit-row:last-child{border:none}
+    .csha{font-family:'Geist Mono',monospace;font-size:10px;background:rgba(79,142,247,.1);color:var(--accent);padding:2px 6px;border-radius:3px;flex-shrink:0}
+    .cmsg{color:var(--body);flex:1;line-height:1.4}
+    .cmeta{color:var(--muted);font-family:'Geist Mono',monospace;font-size:10px;white-space:nowrap}
 
-    .contrib-grid{display:flex;flex-wrap:wrap;gap:10px}
-    .contrib{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)}
-    .contrib img{width:28px;height:28px;border-radius:50%}
-    .contrib strong{color:var(--text)}
+    /* Contributors */
+    .contrib-wrap{display:flex;flex-wrap:wrap;gap:10px}
+    .contrib-item{display:flex;align-items:center;gap:8px;font-size:12px}
+    .contrib-item img{width:26px;height:26px;border-radius:50%}
+    .contrib-item strong{color:var(--body)} .contrib-item span{color:var(--dim)}
 
-    /* ── Findings table ── */
-    .filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
-    .filter-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);
-      padding:6px 14px;border-radius:20px;font-size:12px;cursor:pointer;transition:all .15s}
-    .filter-btn.active,.filter-btn:hover{border-color:var(--blue);color:var(--blue);background:rgba(88,166,255,.1)}
-    .search-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);
-      padding:6px 14px;border-radius:20px;font-size:12px;outline:none;min-width:200px}
-    .search-input:focus{border-color:var(--blue)}
+    /* File tree */
+    .tree-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+    .tree-item{font-family:'Geist Mono',monospace;font-size:11px;padding:3px 9px;border:1px solid var(--rule);border-radius:4px;background:var(--ink3)}
+    .tree-item.dir{color:var(--accent)} .tree-item.file{color:var(--sub)}
+
+    /* Lang bars */
+    .lang-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px}
+    .lang-n{min-width:90px;color:var(--sub);font-family:'Geist Mono',monospace;font-size:11px}
+    .lang-track{flex:1;background:var(--ink3);border-radius:3px;height:10px;overflow:hidden}
+    .lang-fill{height:100%;border-radius:3px}
+    .lang-p{min-width:36px;text-align:right;color:var(--dim);font-family:'Geist Mono',monospace;font-size:11px}
+
+    /* Findings */
+    .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+    .fbtn{background:var(--ink3);border:1px solid var(--rule2);color:var(--sub);padding:5px 13px;border-radius:5px;font-size:12px;cursor:pointer;font-family:'Geist Mono',monospace;transition:all .12s}
+    .fbtn:hover,.fbtn.on{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.08)}
+    .fsearch{background:var(--ink3);border:1px solid var(--rule2);color:var(--body);padding:5px 13px;border-radius:5px;font-size:12px;outline:none;font-family:'Geist Mono',monospace;min-width:200px}
+    .fsearch:focus{border-color:var(--accent)}
 
     table{width:100%;border-collapse:collapse;font-size:13px}
-    th{text-align:left;padding:10px 12px;color:var(--text3);border-bottom:2px solid var(--border);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
-    td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
-    tr:hover td{background:rgba(255,255,255,.02)}
+    th{text-align:left;padding:9px 12px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;border-bottom:2px solid var(--rule)}
+    td{padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+    tr:hover td{background:rgba(255,255,255,.015)}
 
-    .sev{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700}
-    .sev-ERROR{background:rgba(248,81,73,.15);color:var(--red)}
-    .sev-WARNING{background:rgba(210,153,34,.15);color:var(--orange)}
-    .sev-INFO{background:rgba(88,166,255,.15);color:var(--blue)}
-    .tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;margin:2px 2px 0 0}
-    .tag-cwe{background:rgba(188,140,255,.1);color:var(--purple);border:1px solid rgba(188,140,255,.2)}
-    .tag-att{background:rgba(88,166,255,.1);color:var(--blue);border:1px solid rgba(88,166,255,.2)}
+    .sev{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;font-family:'Geist Mono',monospace;letter-spacing:.5px}
+    .sev-ERROR{background:rgba(242,87,87,.13);color:var(--danger)}
+    .sev-WARNING{background:rgba(230,168,23,.13);color:var(--warn)}
+    .sev-INFO{background:rgba(79,142,247,.13);color:var(--accent)}
+    .tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-family:'Geist Mono',monospace;margin:1px}
+    .tag-cwe{background:rgba(167,139,250,.1);color:var(--tag);border:1px solid rgba(167,139,250,.2)}
+    .tag-att{background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
     .tag-tactic{background:rgba(78,201,176,.1);color:var(--teal);border:1px solid rgba(78,201,176,.2)}
+    details summary{cursor:pointer;color:var(--accent);font-size:11px;margin-top:5px;font-family:'Geist Mono',monospace}
+    .fix-pre{background:var(--ink);border:1px solid var(--rule);border-radius:6px;padding:10px;margin-top:7px;font-family:'Geist Mono',monospace;font-size:11px;white-space:pre-wrap;color:var(--sub);max-height:260px;overflow-y:auto;line-height:1.55}
 
-    details summary{cursor:pointer;color:var(--blue);font-size:12px;margin-top:6px}
-    details[open] summary{color:var(--text2)}
-    .fix-content{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:12px;
-      margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:12px;white-space:pre-wrap;
-      color:var(--text2);max-height:300px;overflow-y:auto;line-height:1.6}
+    /* CVE */
+    .cve-id{font-family:'Geist Mono',monospace;font-size:10px;background:rgba(242,87,87,.1);color:var(--danger);border:1px solid rgba(242,87,87,.2);padding:2px 7px;border-radius:4px}
 
-    /* ── CVE table ── */
-    .cve-badge{background:rgba(248,81,73,.1);color:var(--red);border:1px solid rgba(248,81,73,.2);
-      padding:2px 8px;border-radius:6px;font-size:11px;font-family:'JetBrains Mono',monospace}
+    /* Sandbox */
+    .sandbox-hd{display:flex;align-items:center;gap:12px;padding:16px;background:var(--ink2);border:1px solid var(--rule);border-radius:10px;margin-bottom:14px}
+    .sdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .sdot.g{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+    .sdot.r{background:var(--danger);box-shadow:0 0 8px var(--danger)}
+    .sdot.d{background:var(--muted)}
+    .susp-item{padding:8px 12px;background:rgba(242,87,87,.07);border:1px solid rgba(242,87,87,.2);border-radius:6px;margin-bottom:7px;font-size:12px;color:var(--danger);font-family:'Geist Mono',monospace}
+    .conn-item{padding:5px 10px;background:var(--ink2);border:1px solid var(--rule);border-radius:5px;margin-bottom:5px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub)}
+    .stdout-box{background:var(--ink);border:1px solid var(--rule);border-radius:8px;padding:14px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub);white-space:pre-wrap;max-height:260px;overflow-y:auto;line-height:1.55}
 
-    /* ── Sandbox ── */
-    .sandbox-status{display:flex;align-items:center;gap:12px;padding:16px;
-      background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:16px}
-    .status-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
-    .status-dot.ok{background:var(--green);box-shadow:0 0 8px var(--green)}
-    .status-dot.warn{background:var(--orange);box-shadow:0 0 8px var(--orange)}
-    .status-dot.none{background:var(--text3)}
-    .suspicious-list{list-style:none}
-    .suspicious-item{padding:8px 12px;background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.2);
-      border-radius:6px;margin-bottom:8px;font-size:13px;color:var(--red)}
-    .conn-item{padding:6px 12px;background:var(--bg2);border:1px solid var(--border);
-      border-radius:6px;margin-bottom:6px;font-family:'JetBrains Mono',monospace;font-size:12px}
-
-    /* ── File heatmap ── */
-    .heatmap{display:flex;flex-direction:column;gap:6px}
-    .hm-row{display:flex;align-items:center;gap:10px;font-size:12px}
-    .hm-file{color:var(--text2);min-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'JetBrains Mono',monospace}
-    .hm-bar-bg{flex:1;background:var(--bg3);border-radius:4px;height:18px;overflow:hidden}
-    .hm-bar{height:100%;border-radius:4px;display:flex;align-items:center;padding-left:8px;font-size:11px;font-weight:600;color:#fff;transition:width .6s ease;min-width:30px}
-    .hm-count{color:var(--text2);width:28px;text-align:right;flex-shrink:0}
-
-    /* ── Language bars ── */
-    .lang-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px}
-    .lang-name{min-width:100px;color:var(--text2)}
-    .lang-bar-bg{flex:1;background:var(--bg3);border-radius:4px;height:12px;overflow:hidden}
-    .lang-bar{height:100%;border-radius:4px}
-    .lang-pct{color:var(--text2);min-width:36px;text-align:right;font-size:12px}
-
-    /* ── MITRE heat tiles ── */
-    .mitre-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
-    .mitre-tile{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px;transition:border-color .2s}
-    .mitre-tile.has-finding{border-color:rgba(248,81,73,.5);background:rgba(248,81,73,.05)}
-    .mitre-tile.has-warning{border-color:rgba(210,153,34,.4);background:rgba(210,153,34,.04)}
-    .mitre-tile .t-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue)}
-    .mitre-tile .t-name{font-size:12px;font-weight:600;margin:4px 0}
-    .mitre-tile .t-tactic{font-size:11px;color:var(--text3)}
-    .mitre-tile .t-count{font-size:22px;font-weight:700;margin-top:8px;color:var(--red)}
-    .mitre-tile.has-warning .t-count{color:var(--orange)}
-    .mitre-tile:not(.has-finding):not(.has-warning) .t-count{display:none}
-
-    /* ── Report header ── */
-    .report-header{background:linear-gradient(135deg,rgba(31,111,235,.15) 0%,rgba(188,140,255,.1) 100%);
-      border:1px solid rgba(88,166,255,.2);border-radius:12px;padding:28px;margin-bottom:32px}
-    .report-header h1{font-size:26px;font-weight:700;margin-bottom:6px}
-    .report-header .meta{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--text2)}
-    .report-header .meta span strong{color:var(--text)}
-    .print-btn{float:right;background:var(--bg3);border:1px solid var(--border);color:var(--text2);
-      padding:8px 16px;border-radius:6px;cursor:pointer;font-size:13px}
-    .print-btn:hover{border-color:var(--blue);color:var(--blue)}
+    /* Print */
+    @media print{.side{display:none}.content{max-width:100%}}
   </style>
 </head>
 <body>
@@ -181,301 +236,448 @@
 {% set dep_vulns = dependency_vulns or [] %}
 {% set gh = gh_info or {} %}
 {% set rt = runtime or {} %}
-{% set errors = findings | selectattr('severity','eq','ERROR') | list %}
-{% set warnings = findings | selectattr('severity','eq','WARNING') | list %}
+{% set errs  = findings | selectattr('severity','eq','ERROR')   | list %}
+{% set warns = findings | selectattr('severity','eq','WARNING') | list %}
 
-<div class="layout">
-  <!-- ── Sidebar ── -->
-  <nav class="sidebar">
-    <div class="logo">🔒 Secure<span>Scope</span></div>
+{# Threat score: 10 per error, 3 per warning, 8 per CVE, 15 per sandbox hit #}
+{% set _score = (errs|length * 10) + (warns|length * 3) + (dep_vulns|length * 8) + (rt.get('suspicious_behaviors',[])|length * 15) %}
+{% set score = [_score, 100] | min %}
+{% if score >= 70 %}{% set grade = "CRITICAL" %}{% set gcolor = "#f25757" %}
+{% elif score >= 45 %}{% set grade = "HIGH" %}{% set gcolor = "#e6a817" %}
+{% elif score >= 20 %}{% set grade = "MEDIUM" %}{% set gcolor = "#4f8ef7" %}
+{% else %}{% set grade = "LOW" %}{% set gcolor = "#3ecf79" %}{% endif %}
 
-    <div class="nav-section">Report</div>
-    <div class="nav-item active" onclick="scrollTo('overview')">📊 Overview</div>
-    <div class="nav-item" onclick="scrollTo('github')">📋 Repository Info</div>
-    <div class="nav-item" onclick="scrollTo('mitre')">🎯 MITRE ATT&CK</div>
-    <div class="nav-item" onclick="scrollTo('charts')">📈 Analysis Charts</div>
+{# Technique counts #}
+{% set tcounts = {} %}
+{% for f in findings %}
+  {% if f.get('attack_technique') %}
+    {% if f.attack_technique not in tcounts %}{% set _ = tcounts.update({f.attack_technique:{'count':0,'name':f.get('attack_name',''),'tactic':f.get('attack_tactic',''),'sev':f.get('severity','')}}) %}{% endif %}
+    {% set _ = tcounts[f.attack_technique].update({'count': tcounts[f.attack_technique]['count']+1}) %}
+  {% endif %}
+{% endfor %}
 
-    <div class="nav-section">Findings</div>
-    <div class="nav-item" onclick="scrollTo('findings')">
-      <span class="dot" style="background:var(--red)"></span>
-      Vulnerabilities ({{ findings|length }})
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <nav class="side">
+    <div class="side-top">
+      <div class="side-logo">SecureScope<sup>BETA</sup></div>
+      <div class="side-repo">{{ repo_url | replace('https://github.com/','') }}</div>
     </div>
-    <div class="nav-item" onclick="scrollTo('cves')">
-      <span class="dot" style="background:var(--orange)"></span>
-      Dependency CVEs ({{ dep_vulns|length }})
+
+    <div class="nav-grp">Overview</div>
+    <div class="nav-item on" onclick="go('top',this)"><span class="nav-ic">&#x1F4CA;</span> Summary</div>
+    <div class="nav-item" onclick="go('threat',this)"><span class="nav-ic">&#x26A1;</span> Threat Level</div>
+    <div class="nav-item" onclick="go('surface',this)"><span class="nav-ic">&#x1F3AF;</span> Attack Surface</div>
+    <div class="nav-item" onclick="go('charts',this)"><span class="nav-ic">&#x1F4C8;</span> Analysis Charts</div>
+
+    <div class="nav-grp">Repository</div>
+    <div class="nav-item" onclick="go('github',this)"><span class="nav-ic">&#x1F4CB;</span> Repo Info</div>
+    <div class="nav-item" onclick="go('mitre',this)"><span class="nav-ic">&#x1F6E1;</span> MITRE ATT&CK <span class="nav-ct ct-b">{{ tcounts|length }}</span></div>
+
+    <div class="nav-grp">Findings</div>
+    <div class="nav-item" onclick="go('findings',this)">
+      <span class="nav-ic">&#x1F50D;</span> Vulnerabilities
+      <span class="nav-ct {% if errs %}ct-r{% else %}ct-w{% endif %}">{{ findings|length }}</span>
     </div>
-    <div class="nav-item" onclick="scrollTo('sandbox')">
-      <span class="dot" style="background:{% if rt.get('suspicious_behaviors') %}var(--red){% elif rt %}var(--green){% else %}var(--text3){% endif %}"></span>
-      Sandbox Runtime
+    <div class="nav-item" onclick="go('cves',this)">
+      <span class="nav-ic">&#x1F4E6;</span> Dep. CVEs
+      <span class="nav-ct ct-b">{{ dep_vulns|length }}</span>
+    </div>
+    <div class="nav-item" onclick="go('sandbox',this)">
+      <span class="nav-ic">&#x1F433;</span> Sandbox
+      {% if rt.get('suspicious_behaviors') %}<span class="nav-ct ct-r">{{ rt.suspicious_behaviors|length }}</span>{% endif %}
     </div>
 
-    <div class="nav-section">Info</div>
-    <div class="nav-item" onclick="window.open('{{ gh.get('url','#') }}','_blank')">🔗 View on GitHub</div>
-    <div class="nav-item" onclick="window.print()">🖨️ Print Report</div>
-    <div class="nav-item" onclick="window.location='/'">← New Scan</div>
+    <div class="nav-grp">Actions</div>
+    <div class="nav-item" onclick="window.open('{{ gh.get('url','#') }}','_blank')"><span class="nav-ic">&#x1F517;</span> View on GitHub</div>
+    <div class="nav-item" onclick="window.print()"><span class="nav-ic">&#x1F5A8;</span> Print Report</div>
+    <div class="nav-item" onclick="window.location='/'"><span class="nav-ic">&#x2190;</span> New Scan</div>
 
-    <div style="padding:20px;margin-top:auto;font-size:11px;color:var(--text3)">
-      Generated {{ generated_at }}<br>
-      SecureScope v1.0
+    <div class="side-foot">
+      Generated<br>{{ generated_at }}<br><br>
+      SecureScope v1.0<br>
+      MITRE ATT&CK v14
     </div>
   </nav>
 
-  <!-- ── Main ── -->
-  <div class="main">
+  <!-- CONTENT -->
+  <div class="content">
 
-    <!-- Report Header -->
-    <div class="report-header">
-      <button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>
-      <h1>Security Analysis Report</h1>
-      <div style="font-size:15px;color:var(--text2)">
-        <a href="{{ repo_url }}" target="_blank">{{ repo_url }}</a>
+    <!-- Banner -->
+    <div class="banner" id="top">
+      <div class="banner-left">
+        <h1>{{ gh.get('full_name', repo_slug) }}</h1>
+        <div class="bsub">{{ gh.get('description','Security analysis report') }}</div>
+        <div class="banner-meta">
+          <span class="bmeta">Branch <strong>{{ gh.get('default_branch','main') }}</strong></span>
+          <span class="bmeta">Language <strong>{{ gh.get('language','Unknown') }}</strong></span>
+          <span class="bmeta">License <strong>{{ gh.get('license','None') }}</strong></span>
+          <span class="bmeta">{{ generated_at }}</span>
+        </div>
       </div>
-      <div class="meta">
-        <span>📅 Generated: <strong>{{ generated_at }}</strong></span>
-        <span>🌿 Branch: <strong>{{ gh.get('default_branch','main') }}</strong></span>
-        <span>💻 Language: <strong>{{ gh.get('language','Unknown') }}</strong></span>
-        <span>⚖️ License: <strong>{{ gh.get('license','None') }}</strong></span>
+      <div class="banner-score">
+        <div class="eyebrow" style="margin-bottom:8px">Risk Score</div>
+        <div class="score-num" style="color:{{ gcolor }}">{{ score }}</div>
+        <div class="score-lbl">out of 100</div>
+        <div class="score-grade" style="color:{{ gcolor }}">{{ grade }}</div>
       </div>
     </div>
 
-    <!-- ══ OVERVIEW ══ -->
-    <section class="section" id="overview">
-      <div class="section-title"><span class="icon">📊</span> Overview</div>
+    <!-- KPI row -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-num r">{{ errs|length }}</div>
+        <div class="kpi-lbl">Critical Findings</div>
+        <div class="kpi-sub">ERROR severity</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-num w">{{ warns|length }}</div>
+        <div class="kpi-lbl">Warnings</div>
+        <div class="kpi-sub">WARNING severity</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-num b">{{ dep_vulns|length }}</div>
+        <div class="kpi-lbl">Dep. CVEs</div>
+        <div class="kpi-sub">Known vulnerabilities</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-num v">{{ tcounts|length }}</div>
+        <div class="kpi-lbl">ATT&CK Techniques</div>
+        <div class="kpi-sub">Unique techniques</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-num {% if rt %}g{% else %}d{% endif %}" style="{% if not rt %}color:var(--muted){% endif %}">
+          {% if rt %}{{ rt.get('exit_code','?') }}{% else %}N/A{% endif %}
+        </div>
+        <div class="kpi-lbl">Sandbox Exit</div>
+        <div class="kpi-sub">{% if rt %}Container run{% else %}Not executed{% endif %}</div>
+      </div>
+    </div>
 
-      <div class="cards">
-        <div class="card red">
-          <div class="num">{{ errors|length }}</div>
-          <div class="label">Critical Findings</div>
+    <!-- Threat Level section -->
+    <div class="sec" id="threat">
+      <div class="sec-head">
+        <div class="sec-title">Threat Level</div>
+        <div class="sec-count">Score {{ score }}/100</div>
+      </div>
+
+      <div class="threat-bar-wrap">
+        <div class="threat-bar-head">
+          <div class="eyebrow">Composite Risk Score</div>
+          <span class="threat-label" style="color:{{ gcolor }}">{{ grade }}</span>
         </div>
-        <div class="card orange">
-          <div class="num">{{ warnings|length }}</div>
-          <div class="label">Warnings</div>
+        <div class="threat-track">
+          <div class="threat-fill" id="threatFill"
+            style="width:{{ score }}%;background:linear-gradient(90deg,
+              {% if score >= 70 %}#f25757,#ff8c42
+              {% elif score >= 45 %}#e6a817,#f2a347
+              {% elif score >= 20 %}#4f8ef7,#a78bfa
+              {% else %}#3ecf79,#4ec9b0{% endif %})">
+          </div>
         </div>
-        <div class="card blue">
-          <div class="num">{{ dep_vulns|length }}</div>
-          <div class="label">Dependency CVEs</div>
-        </div>
-        <div class="card green">
-          <div class="num">{% if rt %}{{ rt.get('exit_code','—') }}{% else %}—{% endif %}</div>
-          <div class="label">Sandbox Exit Code</div>
+        <div class="threat-legend">
+          <span class="threat-leg-item"><span class="threat-leg-dot" style="background:#3ecf79"></span>Low (0-19)</span>
+          <span class="threat-leg-item"><span class="threat-leg-dot" style="background:#4f8ef7"></span>Medium (20-44)</span>
+          <span class="threat-leg-item"><span class="threat-leg-dot" style="background:#e6a817"></span>High (45-69)</span>
+          <span class="threat-leg-item"><span class="threat-leg-dot" style="background:#f25757"></span>Critical (70-100)</span>
         </div>
       </div>
 
-      <div class="charts-row">
-        <div class="chart-box">
-          <h3>Severity Breakdown</h3>
-          <canvas id="chartSeverity"></canvas>
+      <!-- Score breakdown -->
+      <div class="chart-grid-4">
+        <div class="cbox" style="text-align:center">
+          <div class="cbox-title">Critical Weight</div>
+          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--danger)">{{ errs|length * 10 }}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">{{ errs|length }} errors x 10 pts</div>
         </div>
-        <div class="chart-box">
-          <h3>MITRE ATT&CK Coverage</h3>
-          <canvas id="chartMitre"></canvas>
+        <div class="cbox" style="text-align:center">
+          <div class="cbox-title">Warning Weight</div>
+          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--warn)">{{ warns|length * 3 }}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">{{ warns|length }} warnings x 3 pts</div>
         </div>
-        <div class="chart-box">
-          <h3>Findings by File</h3>
-          <div class="heatmap" id="fileHeatmap"></div>
+        <div class="cbox" style="text-align:center">
+          <div class="cbox-title">CVE Weight</div>
+          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--accent)">{{ dep_vulns|length * 8 }}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">{{ dep_vulns|length }} CVEs x 8 pts</div>
+        </div>
+        <div class="cbox" style="text-align:center">
+          <div class="cbox-title">Runtime Weight</div>
+          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--tag)">{{ rt.get('suspicious_behaviors',[])|length * 15 }}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">{{ rt.get('suspicious_behaviors',[])|length }} behaviors x 15 pts</div>
         </div>
       </div>
-    </section>
 
-    <!-- ══ GITHUB INFO ══ -->
-    <section class="section" id="github">
-      <div class="section-title"><span class="icon">📋</span> Repository Information</div>
+      <!-- Priority fix queue -->
+      {% if errs %}
+      <div class="cbox">
+        <div class="cbox-title">Priority Fix Queue (Top 5 Critical)</div>
+        <table style="margin-top:8px">
+          <thead><tr><th>#</th><th>Rule</th><th>File</th><th>CWE</th><th>Technique</th></tr></thead>
+          <tbody>
+            {% for f in errs[:5] %}
+            <tr>
+              <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">{{ loop.index }}</td>
+              <td><code style="font-size:11px">{{ f.get('rule_id','').split('.')[-1] }}</code></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">{{ f.get('file','') | truncate(32, True, '..') }}:{{ f.get('line_start','') }}</td>
+              <td>{% if f.get('cwe') %}<span class="tag tag-cwe">{{ f.cwe }}</span>{% else %}<span style="color:var(--muted)">N/A</span>{% endif %}</td>
+              <td>{% if f.get('attack_technique') %}<span class="tag tag-att">{{ f.attack_technique }}</span>{% else %}<span style="color:var(--muted)">N/A</span>{% endif %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
 
-      <div class="gh-header">
-        <div class="gh-meta">
-          {% if gh.get('avatar_url') %}
-          <img class="gh-avatar" src="{{ gh.avatar_url }}" alt="{{ gh.owner }}">
-          {% endif %}
+    <!-- Attack Surface section -->
+    <div class="sec" id="surface">
+      <div class="sec-head"><div class="sec-title">Attack Surface Analysis</div></div>
+
+      {% set has_sqli   = findings | selectattr('cwe','eq','CWE-89')  | list | length > 0 %}
+      {% set has_xss    = findings | selectattr('cwe','eq','CWE-79')  | list | length > 0 %}
+      {% set has_cmd    = findings | selectattr('cwe','eq','CWE-78')  | list | length > 0 %}
+      {% set has_ssrf   = findings | selectattr('cwe','eq','CWE-918') | list | length > 0 %}
+      {% set has_path   = findings | selectattr('cwe','eq','CWE-22')  | list | length > 0 %}
+      {% set has_creds  = findings | selectattr('cwe','eq','CWE-798') | list | length > 0 %}
+      {% set has_crypto = findings | selectattr('cwe','eq','CWE-327') | list | length > 0 %}
+      {% set has_deser  = findings | selectattr('cwe','eq','CWE-502') | list | length > 0 %}
+
+      <div class="atk-grid">
+        <div class="atk-tile {% if has_sqli %}exposed{% elif dep_vulns %}partial{% else %}safe{% endif %}">
+          <div class="atk-ic">&#x1F5C4;</div>
+          <div class="atk-name">SQL Injection</div>
+          <div class="atk-status {% if has_sqli %}e{% else %}s{% endif %}">{% if has_sqli %}Exposed{% else %}Clear{% endif %}</div>
+          <div class="atk-detail">CWE-89 / T1190 Initial Access</div>
+        </div>
+        <div class="atk-tile {% if has_cmd %}exposed{% else %}safe{% endif %}">
+          <div class="atk-ic">&#x1F4BB;</div>
+          <div class="atk-name">Command Injection</div>
+          <div class="atk-status {% if has_cmd %}e{% else %}s{% endif %}">{% if has_cmd %}Exposed{% else %}Clear{% endif %}</div>
+          <div class="atk-detail">CWE-78 / T1059 Execution</div>
+        </div>
+        <div class="atk-tile {% if has_xss %}partial{% else %}safe{% endif %}">
+          <div class="atk-ic">&#x1F4DC;</div>
+          <div class="atk-name">Cross-Site Scripting</div>
+          <div class="atk-status {% if has_xss %}p{% else %}s{% endif %}">{% if has_xss %}Detected{% else %}Clear{% endif %}</div>
+          <div class="atk-detail">CWE-79 / T1059.007 Execution</div>
+        </div>
+        <div class="atk-tile {% if has_ssrf %}exposed{% else %}safe{% endif %}">
+          <div class="atk-ic">&#x1F310;</div>
+          <div class="atk-name">SSRF</div>
+          <div class="atk-status {% if has_ssrf %}e{% else %}s{% endif %}">{% if has_ssrf %}Exposed{% else %}Clear{% endif %}</div>
+          <div class="atk-detail">CWE-918 / T1090 Defense Evasion</div>
+        </div>
+        <div class="atk-tile {% if has_path %}partial{% else %}safe{% endif %}">
+          <div class="atk-ic">&#x1F4C1;</div>
+          <div class="atk-name">Path Traversal</div>
+          <div class="atk-status {% if has_path %}p{% else %}s{% endif %}">{% if has_path %}Detected{% else %}Clear{% endif %}</div>
+          <div class="atk-detail">CWE-22 / T1083 Discovery</div>
+        </div>
+        <div class="atk-tile {% if has_creds %}exposed{% else %}safe{% endif %}">
+          <div class="atk-ic">&#x1F511;</div>
+          <div class="atk-name">Hardcoded Credentials</div>
+          <div class="atk-status {% if has_creds %}e{% else %}s{% endif %}">{% if has_creds %}Exposed{% else %}Clear{% endif %}</div>
+          <div class="atk-detail">CWE-798 / T1552.001 Credential Access</div>
+        </div>
+        <div class="atk-tile {% if has_crypto %}partial{% else %}safe{% endif %}">
+          <div class="atk-ic">&#x1F512;</div>
+          <div class="atk-name">Weak Cryptography</div>
+          <div class="atk-status {% if has_crypto %}p{% else %}s{% endif %}">{% if has_crypto %}Detected{% else %}Clear{% endif %}</div>
+          <div class="atk-detail">CWE-327 / T1600 Defense Evasion</div>
+        </div>
+        <div class="atk-tile {% if has_deser %}exposed{% else %}safe{% endif %}">
+          <div class="atk-ic">&#x1F4E6;</div>
+          <div class="atk-name">Insecure Deserialization</div>
+          <div class="atk-status {% if has_deser %}e{% else %}s{% endif %}">{% if has_deser %}Exposed{% else %}Clear{% endif %}</div>
+          <div class="atk-detail">CWE-502 / T1059 Execution</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="sec" id="charts">
+      <div class="sec-head"><div class="sec-title">Analysis Charts</div></div>
+
+      <div class="chart-grid-3">
+        <div class="cbox">
+          <div class="cbox-title">Severity Distribution</div>
+          <canvas id="cSeverity"></canvas>
+        </div>
+        <div class="cbox">
+          <div class="cbox-title">ATT&CK Technique Radar</div>
+          <canvas id="cRadar"></canvas>
+        </div>
+        <div class="cbox">
+          <div class="cbox-title">Findings by File</div>
+          <div id="fileHm"></div>
+        </div>
+      </div>
+
+      <div class="chart-grid-2">
+        <div class="cbox">
+          <div class="cbox-title">Severity per File (Top 6)</div>
+          <canvas id="cStackBar"></canvas>
+        </div>
+        <div class="cbox">
+          <div class="cbox-title">Language Risk Distribution</div>
+          <canvas id="cLangPolar"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-grid-2">
+        <div class="cbox">
+          <div class="cbox-title">CWE Category Breakdown</div>
+          <canvas id="cCwe"></canvas>
+        </div>
+        <div class="cbox">
+          <div class="cbox-title">Tactic Phase Distribution</div>
+          <canvas id="cTactic"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- GitHub Info -->
+    <div class="sec" id="github">
+      <div class="sec-head"><div class="sec-title">Repository Information</div></div>
+
+      <div class="gh-card">
+        <div class="gh-top">
+          {% if gh.get('avatar_url') %}<img class="gh-av" src="{{ gh.avatar_url }}" alt="{{ gh.owner }}">{% endif %}
           <div>
-            <div class="gh-title">
-              <a href="{{ gh.get('url','#') }}" target="_blank">{{ gh.get('full_name', repo_slug) }}</a>
-              {% if gh.get('private') %}<span class="topic" style="font-size:11px;margin-left:8px">Private</span>{% endif %}
-              {% if gh.get('archived') %}<span class="topic" style="font-size:11px;margin-left:8px;background:rgba(210,153,34,.1);color:var(--orange)">Archived</span>{% endif %}
-            </div>
+            <div class="gh-name"><a href="{{ gh.get('url','#') }}" target="_blank">{{ gh.get('full_name', repo_slug) }}</a></div>
             <div class="gh-desc">{{ gh.get('description','No description provided.') }}</div>
           </div>
         </div>
         <div class="gh-stats">
-          <div class="gh-stat">⭐ <strong>{{ gh.get('stars',0) }}</strong> Stars</div>
-          <div class="gh-stat">🍴 <strong>{{ gh.get('forks',0) }}</strong> Forks</div>
-          <div class="gh-stat">👁️ <strong>{{ gh.get('watchers',0) }}</strong> Watchers</div>
-          <div class="gh-stat">🐛 <strong>{{ gh.get('open_issues',0) }}</strong> Open Issues</div>
-          <div class="gh-stat">💾 <strong>{{ gh.get('size_kb',0) }} KB</strong></div>
-          <div class="gh-stat">💻 <strong>{{ gh.get('language','Unknown') }}</strong></div>
+          <span class="gh-s">Stars <strong>{{ gh.get('stars',0) }}</strong></span>
+          <span class="gh-s">Forks <strong>{{ gh.get('forks',0) }}</strong></span>
+          <span class="gh-s">Watchers <strong>{{ gh.get('watchers',0) }}</strong></span>
+          <span class="gh-s">Issues <strong>{{ gh.get('open_issues',0) }}</strong></span>
+          <span class="gh-s">Size <strong>{{ gh.get('size_kb',0) }} KB</strong></span>
         </div>
         {% if gh.get('topics') %}
-        <div class="gh-topics">
-          {% for topic in gh.topics %}<span class="topic">{{ topic }}</span>{% endfor %}
-        </div>
+        <div class="gh-topics">{% for t in gh.topics %}<span class="topic">{{ t }}</span>{% endfor %}</div>
         {% endif %}
       </div>
 
-      <div class="gh-grid">
-        <!-- Repo Details -->
-        <div class="info-box">
-          <h3>Repository Details</h3>
-          <div class="info-row"><span class="key">Owner</span><span class="val">{{ gh.get('owner','—') }}</span></div>
-          <div class="info-row"><span class="key">Type</span><span class="val">{{ gh.get('owner_type','—') }}</span></div>
-          <div class="info-row"><span class="key">Default Branch</span><span class="val"><code>{{ gh.get('default_branch','main') }}</code></span></div>
-          <div class="info-row"><span class="key">License</span><span class="val">{{ gh.get('license','None') }}</span></div>
-          <div class="info-row"><span class="key">Created</span><span class="val">{{ gh.get('created_at','—') }}</span></div>
-          <div class="info-row"><span class="key">Last Updated</span><span class="val">{{ gh.get('updated_at','—') }}</span></div>
-          <div class="info-row"><span class="key">Last Push</span><span class="val">{{ gh.get('pushed_at','—') }}</span></div>
-          <div class="info-row"><span class="key">Size</span><span class="val">{{ gh.get('size_kb',0) }} KB</span></div>
+      <div class="info-grid">
+        <div class="ibox">
+          <div class="ibox-title">Details</div>
+          <div class="irow"><span class="ik">Owner</span><span class="iv">{{ gh.get('owner','N/A') }}</span></div>
+          <div class="irow"><span class="ik">Default Branch</span><span class="iv"><code>{{ gh.get('default_branch','main') }}</code></span></div>
+          <div class="irow"><span class="ik">License</span><span class="iv">{{ gh.get('license','None') }}</span></div>
+          <div class="irow"><span class="ik">Created</span><span class="iv">{{ gh.get('created_at','N/A') }}</span></div>
+          <div class="irow"><span class="ik">Last Push</span><span class="iv">{{ gh.get('pushed_at','N/A') }}</span></div>
+          <div class="irow"><span class="ik">Size</span><span class="iv">{{ gh.get('size_kb',0) }} KB</span></div>
         </div>
 
-        <!-- Language Breakdown -->
-        <div class="info-box">
-          <h3>Language Breakdown</h3>
+        <div class="ibox">
+          <div class="ibox-title">Language Breakdown</div>
           {% if gh.get('languages') %}
-            {% set lang_colors = {'Python':'#3572A5','JavaScript':'#f1e05a','TypeScript':'#2b7489','PHP':'#4F5D95','Java':'#b07219','Go':'#00ADD8','Ruby':'#701516','C':'#555555','C++':'#f34b7d','Rust':'#dea584','Shell':'#89e051','HTML':'#e34c26','CSS':'#563d7c'} %}
+            {% set lc = {'Python':'#3572A5','JavaScript':'#f1e05a','TypeScript':'#2b7489','PHP':'#4F5D95','Java':'#b07219','Go':'#00ADD8','Ruby':'#701516','Shell':'#89e051','HTML':'#e34c26','CSS':'#563d7c','Rust':'#dea584'} %}
             {% for lang, pct in gh.languages.items() %}
             <div class="lang-row">
-              <span class="lang-name">{{ lang }}</span>
-              <div class="lang-bar-bg">
-                <div class="lang-bar" style="width:{{ pct }}%;background:{{ lang_colors.get(lang,'#58a6ff') }}"></div>
-              </div>
-              <span class="lang-pct">{{ pct }}%</span>
+              <span class="lang-n">{{ lang }}</span>
+              <div class="lang-track"><div class="lang-fill" style="width:{{ pct }}%;background:{{ lc.get(lang,'#4f8ef7') }}"></div></div>
+              <span class="lang-p">{{ pct }}%</span>
             </div>
             {% endfor %}
-          {% else %}
-            <p style="color:var(--text3)">No language data available.</p>
-          {% endif %}
+          {% else %}<p style="color:var(--muted);font-size:12px">No language data available.</p>{% endif %}
         </div>
 
-        <!-- Recent Commits -->
-        <div class="info-box">
-          <h3>Recent Commits</h3>
+        <div class="ibox">
+          <div class="ibox-title">Recent Commits</div>
           {% if gh.get('recent_commits') %}
           <ul class="commit-list">
             {% for c in gh.recent_commits %}
-            <li class="commit-item">
-              <span class="commit-sha">{{ c.sha }}</span>
-              <div>
-                <div class="commit-msg">{{ c.message }}</div>
-                <div class="commit-meta">{{ c.author }} · {{ c.date }}</div>
-              </div>
+            <li class="commit-row">
+              <span class="csha">{{ c.sha }}</span>
+              <div><div class="cmsg">{{ c.message }}</div><div class="cmeta">{{ c.author }} / {{ c.date }}</div></div>
             </li>
             {% endfor %}
           </ul>
-          {% else %}
-            <p style="color:var(--text3)">No commit data available.</p>
-          {% endif %}
+          {% else %}<p style="color:var(--muted);font-size:12px">No commit data.</p>{% endif %}
         </div>
 
-        <!-- Contributors -->
-        <div class="info-box">
-          <h3>Contributors</h3>
+        <div class="ibox">
+          <div class="ibox-title">Contributors</div>
           {% if gh.get('contributors') %}
-          <div class="contrib-grid">
+          <div class="contrib-wrap">
             {% for c in gh.contributors %}
-            <a href="{{ c.url }}" target="_blank" class="contrib">
+            <a href="{{ c.url }}" target="_blank" class="contrib-item">
               <img src="{{ c.avatar }}" alt="{{ c.login }}">
-              <div>
-                <strong>{{ c.login }}</strong>
-                <div>{{ c.contributions }} commits</div>
-              </div>
+              <div><strong>{{ c.login }}</strong><br><span>{{ c.contributions }} commits</span></div>
             </a>
             {% endfor %}
           </div>
-          {% else %}
-            <p style="color:var(--text3)">No contributor data available.</p>
-          {% endif %}
+          {% else %}<p style="color:var(--muted);font-size:12px">No contributor data.</p>{% endif %}
         </div>
       </div>
 
-      <!-- File Tree -->
       {% if gh.get('file_tree') %}
-      <div class="info-box">
-        <h3>Top-Level File Structure</h3>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+      <div class="ibox">
+        <div class="ibox-title">File Structure</div>
+        <div class="tree-wrap">
           {% for f in gh.file_tree %}
-          <span style="background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:12px;font-family:'JetBrains Mono',monospace;color:{% if f.type == 'dir' %}var(--blue){% else %}var(--text2){% endif %}">
-            {% if f.type == 'dir' %}📁{% else %}📄{% endif %} {{ f.name }}
-          </span>
+          <span class="tree-item {{ f.type }}">{% if f.type == 'dir' %}&#x1F4C1;{% else %}&#x1F4C4;{% endif %} {{ f.name }}</span>
           {% endfor %}
         </div>
       </div>
       {% endif %}
-    </section>
+    </div>
 
-    <!-- ══ MITRE ATT&CK ══ -->
-    <section class="section" id="mitre">
-      <div class="section-title"><span class="icon">🎯</span> MITRE ATT&CK Coverage</div>
-
-      {% set all_techniques = findings | selectattr('attack_technique') | map(attribute='attack_technique') | list %}
-      {% set technique_counts = {} %}
-      {% for f in findings %}
-        {% if f.get('attack_technique') %}
-          {% if f.attack_technique not in technique_counts %}
-            {% set _ = technique_counts.update({f.attack_technique: {'count': 0, 'name': f.get('attack_name',''), 'tactic': f.get('attack_tactic',''), 'severity': f.get('severity','')}}) %}
-          {% endif %}
-          {% set _ = technique_counts[f.attack_technique].update({'count': technique_counts[f.attack_technique]['count'] + 1}) %}
-        {% endif %}
-      {% endfor %}
-
+    <!-- MITRE ATT&CK -->
+    <div class="sec" id="mitre">
+      <div class="sec-head">
+        <div class="sec-title">MITRE ATT&CK Coverage</div>
+        <div class="sec-count">{{ tcounts|length }} techniques</div>
+      </div>
       <div class="mitre-grid">
-        {% for tech, info in technique_counts.items() %}
-        <div class="mitre-tile {% if info.severity == 'ERROR' %}has-finding{% else %}has-warning{% endif %}">
-          <div class="t-id">{{ tech }}</div>
-          <div class="t-name">{{ info.name }}</div>
-          <div class="t-tactic">{{ info.tactic }}</div>
-          <div class="t-count">{{ info.count }}</div>
+        {% for tech, info in tcounts.items() %}
+        <div class="mt {% if info.sev == 'ERROR' %}crit{% else %}med{% endif %}">
+          <div class="tid">{{ tech }}</div>
+          <div class="tname">{{ info.name }}</div>
+          <div class="ttactic">{{ info.tactic }}</div>
+          <div class="tct">{{ info.count }}</div>
         </div>
         {% endfor %}
-        {% if not technique_counts %}
-        <div style="color:var(--text3);font-size:13px;grid-column:1/-1;padding:20px 0">No ATT&CK mappings found in this scan.</div>
-        {% endif %}
+        {% if not tcounts %}<div style="color:var(--muted);font-size:13px">No ATT&CK techniques mapped in this scan.</div>{% endif %}
       </div>
-    </section>
+    </div>
 
-    <!-- ══ CHARTS ══ -->
-    <section class="section" id="charts">
-      <div class="section-title"><span class="icon">📈</span> Analysis Charts</div>
-      <div class="charts-row2">
-        <div class="chart-box">
-          <h3>Findings Trend by Severity</h3>
-          <canvas id="chartTrend"></canvas>
-        </div>
-        <div class="chart-box">
-          <h3>Language Risk Distribution</h3>
-          <canvas id="chartLangRisk"></canvas>
-        </div>
-      </div>
-    </section>
-
-    <!-- ══ FINDINGS ══ -->
-    <section class="section" id="findings">
-      <div class="section-title"><span class="icon">🔍</span> Vulnerability Findings ({{ findings|length }})</div>
-
-      <div class="filter-bar">
-        <button class="filter-btn active" onclick="filterFindings('ALL',this)">All ({{ findings|length }})</button>
-        <button class="filter-btn" onclick="filterFindings('ERROR',this)" style="color:var(--red)">🔴 Critical ({{ errors|length }})</button>
-        <button class="filter-btn" onclick="filterFindings('WARNING',this)" style="color:var(--orange)">🟡 Warning ({{ warnings|length }})</button>
-        <input class="search-input" id="findingSearch" placeholder="🔍 Filter by file, rule, CWE..." oninput="searchFindings(this.value)">
+    <!-- Findings -->
+    <div class="sec" id="findings">
+      <div class="sec-head">
+        <div class="sec-title">Vulnerability Findings</div>
+        <div class="sec-count">{{ findings|length }} total</div>
       </div>
 
-      <table id="findingsTable">
+      <div class="filter-row">
+        <button class="fbtn on" onclick="filt('ALL',this)">All ({{ findings|length }})</button>
+        <button class="fbtn" onclick="filt('ERROR',this)" style="color:var(--danger)">Critical ({{ errs|length }})</button>
+        <button class="fbtn" onclick="filt('WARNING',this)" style="color:var(--warn)">Warning ({{ warns|length }})</button>
+        <input class="fsearch" id="fsearch" placeholder="Filter by file, rule, CWE..." oninput="fsrch(this.value)">
+      </div>
+
+      <table>
         <thead>
           <tr>
-            <th>Severity</th>
-            <th>Rule / Message</th>
-            <th>Location</th>
-            <th>MITRE</th>
+            <th>Severity</th><th>Rule / Description</th><th>Location</th><th>MITRE</th>
             {% if findings and findings[0].get('fix_suggestion') %}<th>Fix</th>{% endif %}
           </tr>
         </thead>
         <tbody>
           {% for f in findings %}
-          <tr class="finding-row" data-severity="{{ f.get('severity','') }}" data-text="{{ (f.get('rule_id','') + f.get('file','') + (f.get('cwe') or '') + (f.get('attack_technique') or ''))|lower }}">
+          <tr class="fr" data-sev="{{ f.get('severity','') }}" data-txt="{{ (f.get('rule_id','') + ' ' + f.get('file','') + ' ' + (f.get('cwe') or '') + ' ' + (f.get('attack_technique') or ''))|lower }}">
             <td><span class="sev sev-{{ f.get('severity','INFO') }}">{{ f.get('severity','INFO') }}</span></td>
             <td>
-              <div><code>{{ f.get('rule_id','') }}</code></div>
-              <div style="color:var(--text2);margin-top:4px;font-size:12px;line-height:1.4">{{ f.get('message','')[:120] }}</div>
+              <code style="font-size:11px">{{ f.get('rule_id','') }}</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">{{ f.get('message','')[:110] }}</div>
             </td>
             <td>
-              <code style="color:var(--cyan)">{{ f.get('file','') }}</code>
-              <div style="color:var(--text3);font-size:11px">Line {{ f.get('line_start','') }}</div>
+              <code style="font-size:11px;color:var(--teal)">{{ f.get('file','') }}</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L{{ f.get('line_start','') }}</div>
             </td>
             <td>
               {% if f.get('cwe') %}<span class="tag tag-cwe">{{ f.cwe }}</span>{% endif %}
@@ -485,8 +687,8 @@
             {% if f.get('fix_suggestion') %}
             <td>
               <details>
-                <summary>View AI Fix →</summary>
-                <div class="fix-content">{{ f.fix_suggestion }}</div>
+                <summary>View fix</summary>
+                <div class="fix-pre">{{ f.fix_suggestion }}</div>
               </details>
             </td>
             {% endif %}
@@ -494,11 +696,14 @@
           {% endfor %}
         </tbody>
       </table>
-    </section>
+    </div>
 
-    <!-- ══ DEPENDENCY CVEs ══ -->
-    <section class="section" id="cves">
-      <div class="section-title"><span class="icon">📦</span> Dependency Vulnerabilities ({{ dep_vulns|length }})</div>
+    <!-- CVEs -->
+    <div class="sec" id="cves">
+      <div class="sec-head">
+        <div class="sec-title">Dependency CVEs</div>
+        <div class="sec-count">{{ dep_vulns|length }}</div>
+      </div>
       {% if dep_vulns %}
       <table>
         <thead><tr><th>Ecosystem</th><th>Package</th><th>Version</th><th>CVE / ID</th><th>Description</th><th>Fix</th></tr></thead>
@@ -506,180 +711,178 @@
           {% for v in dep_vulns %}
           <tr>
             <td><span class="tag tag-tactic">{{ v.get('ecosystem','') }}</span></td>
-            <td><code>{{ v.get('package','') }}</code></td>
-            <td><code>{{ v.get('version','') }}</code></td>
-            <td><span class="cve-badge">{{ v.get('vuln_id','—') }}</span></td>
-            <td style="color:var(--text2);font-size:12px">{{ v.get('description','')[:100] }}</td>
-            <td style="color:var(--green);font-size:12px">{{ ', '.join(v.get('fix_versions',[])) if v.get('fix_versions') else ('✅ Available' if v.get('fix_available') else '—') }}</td>
+            <td><code style="font-size:11px">{{ v.get('package','') }}</code></td>
+            <td><code style="font-size:11px">{{ v.get('version','') }}</code></td>
+            <td><span class="cve-id">{{ v.get('vuln_id','N/A') }}</span></td>
+            <td style="font-size:12px;color:var(--sub)">{{ v.get('description','')[:90] }}</td>
+            <td style="font-size:12px;color:var(--ok)">{{ ', '.join(v.get('fix_versions',[])) if v.get('fix_versions') else ('Available' if v.get('fix_available') else 'N/A') }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
       {% else %}
-      <div style="padding:32px;text-align:center;color:var(--green);background:var(--bg2);border:1px solid var(--border);border-radius:10px">
-        ✅ No known CVEs detected in dependencies
+      <div style="padding:32px;text-align:center;color:var(--ok);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px">
+        No known CVEs detected in dependencies.
       </div>
       {% endif %}
-    </section>
+    </div>
 
-    <!-- ══ SANDBOX ══ -->
-    <section class="section" id="sandbox">
-      <div class="section-title"><span class="icon">🐳</span> Sandbox Runtime Analysis</div>
+    <!-- Sandbox -->
+    <div class="sec" id="sandbox">
+      <div class="sec-head"><div class="sec-title">Sandbox Runtime Analysis</div></div>
       {% if rt %}
-        <div class="sandbox-status">
-          <div class="status-dot {% if rt.get('suspicious_behaviors') %}warn{% else %}ok{% endif %}"></div>
+        <div class="sandbox-hd">
+          <div class="sdot {% if rt.get('suspicious_behaviors') %}r{% else %}g{% endif %}"></div>
           <div>
-            <strong>Container exited with code {{ rt.get('exit_code','—') }}</strong>
-            <div style="color:var(--text2);font-size:12px;margin-top:2px">
-              {{ rt.get('suspicious_behaviors',[])|length }} suspicious behavior(s) ·
-              {{ rt.get('outbound_connections',[])|length }} outbound connection(s) ·
+            <strong>Container exited {{ rt.get('exit_code','N/A') }}</strong>
+            <div style="color:var(--sub);font-size:12px;margin-top:2px;font-family:'Geist Mono',monospace">
+              {{ rt.get('suspicious_behaviors',[])|length }} suspicious behaviors /
+              {{ rt.get('outbound_connections',[])|length }} outbound connections /
               {{ rt.get('processes_spawned',[])|length }} processes spawned
             </div>
           </div>
         </div>
-
         {% if rt.get('suspicious_behaviors') %}
-        <h4 style="color:var(--red);margin-bottom:10px">⚠️ Suspicious Behaviors Detected</h4>
-        <ul class="suspicious-list">
-          {% for b in rt.suspicious_behaviors %}
-          <li class="suspicious-item">⚠️ {{ b }}</li>
-          {% endfor %}
-        </ul>
+        <div class="eyebrow" style="margin-bottom:8px">Suspicious Behaviors</div>
+        {% for b in rt.suspicious_behaviors %}<div class="susp-item">{{ b }}</div>{% endfor %}
         {% endif %}
-
         {% if rt.get('outbound_connections') %}
-        <h4 style="margin:16px 0 10px;color:var(--text2)">🌐 Outbound Connections Attempted</h4>
-        {% for c in rt.outbound_connections %}
-        <div class="conn-item">{{ c.host }}:{{ c.port }}</div>
-        {% endfor %}
+        <div class="eyebrow" style="margin:14px 0 8px">Outbound Connections</div>
+        {% for c in rt.outbound_connections %}<div class="conn-item">{{ c.host }}:{{ c.port }}</div>{% endfor %}
         {% endif %}
-
         {% if rt.get('stdout') %}
-        <h4 style="margin:16px 0 10px;color:var(--text2)">📋 Container Output</h4>
-        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text2);white-space:pre-wrap;max-height:300px;overflow-y:auto">{{ rt.stdout }}</div>
+        <div class="eyebrow" style="margin:14px 0 8px">Container Output</div>
+        <div class="stdout-box">{{ rt.stdout }}</div>
         {% endif %}
       {% else %}
-        <div style="padding:32px;text-align:center;color:var(--text3);background:var(--bg2);border:1px solid var(--border);border-radius:10px">
-          Sandbox was not enabled for this scan. Re-run with 🐳 Docker Sandbox option enabled.
+        <div style="padding:28px;text-align:center;color:var(--muted);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px">
+          Sandbox not enabled for this scan. Re-run with Docker Sandbox option active.
         </div>
       {% endif %}
-    </section>
+    </div>
 
-  </div><!-- /main -->
-</div><!-- /layout -->
+  </div>
+</div>
 
 <script>
-// ── Chart data from Jinja ──────────────────────────────────────────────────
 const findings = {{ findings | tojson }};
 const ghInfo   = {{ gh | tojson }};
 
-// ── Severity donut ──
-const sev = { ERROR: 0, WARNING: 0, INFO: 0 };
-findings.forEach(f => sev[f.severity] = (sev[f.severity]||0) + 1);
-new Chart(document.getElementById('chartSeverity'), {
-  type: 'doughnut',
-  data: {
-    labels: ['Critical', 'Warning', 'Info'],
-    datasets: [{ data: [sev.ERROR, sev.WARNING, sev.INFO],
-      backgroundColor: ['rgba(248,81,73,.8)','rgba(210,153,34,.8)','rgba(88,166,255,.8)'],
-      borderColor: ['#f85149','#d29922','#58a6ff'], borderWidth: 2,
-    }]
+// Severity donut
+const sevCounts = {ERROR:0,WARNING:0,INFO:0};
+findings.forEach(f => sevCounts[f.severity] = (sevCounts[f.severity]||0)+1);
+new Chart(document.getElementById('cSeverity'),{
+  type:'doughnut',
+  data:{
+    labels:['Critical','Warning','Info'],
+    datasets:[{data:[sevCounts.ERROR,sevCounts.WARNING,sevCounts.INFO],
+      backgroundColor:['rgba(242,87,87,.75)','rgba(230,168,23,.75)','rgba(79,142,247,.75)'],
+      borderColor:['#f25757','#e6a817','#4f8ef7'],borderWidth:2}]
   },
-  options: { plugins: { legend: { labels: { color: '#8b949e', font: { size: 12 } } } }, cutout: '65%' }
+  options:{cutout:'68%',plugins:{legend:{labels:{color:'#8b96a4',font:{family:'Geist Mono',size:11}}}}}
 });
 
-// ── ATT&CK radar ──
-const techMap = {};
-findings.forEach(f => { if(f.attack_technique) techMap[f.attack_technique] = (techMap[f.attack_technique]||0)+1; });
-const techLabels = Object.keys(techMap);
-const techData   = Object.values(techMap);
-new Chart(document.getElementById('chartMitre'), {
-  type: 'radar',
-  data: {
-    labels: techLabels.length ? techLabels : ['No ATT&CK data'],
-    datasets: [{ label: 'Findings', data: techLabels.length ? techData : [0],
-      backgroundColor: 'rgba(88,166,255,.15)', borderColor: '#58a6ff',
-      pointBackgroundColor: '#58a6ff', pointRadius: 4,
-    }]
+// Radar
+const techMap={};
+findings.forEach(f=>{if(f.attack_technique)techMap[f.attack_technique]=(techMap[f.attack_technique]||0)+1});
+new Chart(document.getElementById('cRadar'),{
+  type:'radar',
+  data:{
+    labels:Object.keys(techMap).length?Object.keys(techMap):['None'],
+    datasets:[{label:'Hits',data:Object.keys(techMap).length?Object.values(techMap):[0],
+      backgroundColor:'rgba(79,142,247,.12)',borderColor:'#4f8ef7',
+      pointBackgroundColor:'#4f8ef7',pointRadius:3}]
   },
-  options: {
-    scales: { r: { ticks: { color:'#6e7681', backdropColor:'transparent', stepSize:1 }, grid: { color:'#30363d' }, pointLabels: { color:'#8b949e', font:{size:10} } } },
-    plugins: { legend: { display: false } }
-  }
+  options:{scales:{r:{ticks:{color:'#4a5568',backdropColor:'transparent',stepSize:1},
+    grid:{color:'#252b35'},pointLabels:{color:'#8b96a4',font:{family:'Geist Mono',size:9}}}},
+    plugins:{legend:{display:false}}}
 });
 
-// ── File heatmap ──
-const fileMap = {};
-findings.forEach(f => { fileMap[f.file] = (fileMap[f.file]||0)+1; });
-const sortedFiles = Object.entries(fileMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
-const maxCount = sortedFiles[0]?.[1] || 1;
-const heatColors = ['#f85149','#d29922','#58a6ff','#3fb950'];
-const hm = document.getElementById('fileHeatmap');
-sortedFiles.forEach(([file,count],i) => {
-  const pct = Math.round(count/maxCount*100);
-  const color = count >= 5 ? heatColors[0] : count >= 3 ? heatColors[1] : heatColors[2];
-  const name = file.split(/[/\\]/).pop();
-  hm.innerHTML += `<div class="hm-row">
-    <span class="hm-file" title="${file}">${name}</span>
-    <div class="hm-bar-bg"><div class="hm-bar" style="width:${pct}%;background:${color}">${count}</div></div>
-    <span class="hm-count">${count}</span>
-  </div>`;
+// File heatmap
+const fileMap={};
+findings.forEach(f=>{fileMap[f.file]=(fileMap[f.file]||0)+1});
+const sortedF=Object.entries(fileMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+const maxN=sortedF[0]?.[1]||1;
+const hmEl=document.getElementById('fileHm');
+sortedF.forEach(([file,n])=>{
+  const pct=Math.round(n/maxN*100);
+  const col=n>=5?'#f25757':n>=3?'#e6a817':'#4f8ef7';
+  const nm=file.split(/[/\\]/).pop();
+  hmEl.innerHTML+=`<div class="hm-row">
+    <span class="hm-name" title="${file}">${nm}</span>
+    <div class="hm-track"><div class="hm-fill" style="width:${pct}%;background:${col}">${n}</div></div>
+    <span class="hm-n">${n}</span></div>`;
 });
 
-// ── Trend bar chart ──
-const filesSorted = Object.entries(fileMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
-new Chart(document.getElementById('chartTrend'), {
-  type: 'bar',
-  data: {
-    labels: filesSorted.map(([f])=>f.split(/[/\\]/).pop()),
-    datasets: [
-      { label:'Critical', data: filesSorted.map(([f])=>findings.filter(x=>x.file===f&&x.severity==='ERROR').length), backgroundColor:'rgba(248,81,73,.7)', borderRadius:4 },
-      { label:'Warning',  data: filesSorted.map(([f])=>findings.filter(x=>x.file===f&&x.severity==='WARNING').length), backgroundColor:'rgba(210,153,34,.7)', borderRadius:4 },
+// Stacked bar
+const top6=Object.entries(fileMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
+new Chart(document.getElementById('cStackBar'),{
+  type:'bar',
+  data:{
+    labels:top6.map(([f])=>f.split(/[/\\]/).pop()),
+    datasets:[
+      {label:'Critical',data:top6.map(([f])=>findings.filter(x=>x.file===f&&x.severity==='ERROR').length),backgroundColor:'rgba(242,87,87,.7)',borderRadius:3},
+      {label:'Warning', data:top6.map(([f])=>findings.filter(x=>x.file===f&&x.severity==='WARNING').length),backgroundColor:'rgba(230,168,23,.7)',borderRadius:3},
     ]
   },
-  options: {
-    plugins: { legend: { labels: { color:'#8b949e', font:{size:11} } } },
-    scales: {
-      x: { stacked:true, ticks:{color:'#6e7681',font:{size:10}}, grid:{color:'#21262d'} },
-      y: { stacked:true, ticks:{color:'#6e7681',stepSize:1}, grid:{color:'#21262d'} }
-    }
-  }
+  options:{plugins:{legend:{labels:{color:'#8b96a4',font:{family:'Geist Mono',size:10}}}},
+    scales:{x:{stacked:true,ticks:{color:'#4a5568',font:{family:'Geist Mono',size:9}},grid:{color:'#1f242d'}},
+            y:{stacked:true,ticks:{color:'#4a5568',stepSize:1,font:{family:'Geist Mono',size:9}},grid:{color:'#1f242d'}}}}
 });
 
-// ── Language risk ──
-const langs = ghInfo.languages || {};
-const langNames = Object.keys(langs).slice(0,6);
-const langRisk  = langNames.map(l => langs[l]);
-const langColorMap = {Python:'rgba(53,114,165,.7)',JavaScript:'rgba(241,224,90,.7)',TypeScript:'rgba(43,116,137,.7)',PHP:'rgba(79,93,149,.7)',Java:'rgba(176,114,25,.7)',Go:'rgba(0,173,216,.7)',Shell:'rgba(137,224,81,.7)'};
-new Chart(document.getElementById('chartLangRisk'), {
-  type: 'polarArea',
-  data: {
-    labels: langNames.length ? langNames : ['No data'],
-    datasets: [{ data: langNames.length ? langRisk : [100],
-      backgroundColor: langNames.map(l=>langColorMap[l]||'rgba(88,166,255,.5)'),
-    }]
-  },
-  options: { plugins: { legend: { labels: { color:'#8b949e', font:{size:11} } } }, scales: { r: { ticks:{color:'#6e7681',backdropColor:'transparent'}, grid:{color:'#30363d'} } } }
+// Polar (language)
+const langs=ghInfo.languages||{};
+const lnames=Object.keys(langs).slice(0,6);
+const lcolors={Python:'rgba(53,114,165,.7)',JavaScript:'rgba(241,224,90,.7)',TypeScript:'rgba(43,116,137,.7)',PHP:'rgba(79,93,149,.7)',Java:'rgba(176,114,25,.7)',Go:'rgba(0,173,216,.7)',Shell:'rgba(137,224,81,.7)',HTML:'rgba(227,76,38,.7)'};
+new Chart(document.getElementById('cLangPolar'),{
+  type:'polarArea',
+  data:{labels:lnames.length?lnames:['N/A'],datasets:[{data:lnames.length?lnames.map(l=>langs[l]):[100],
+    backgroundColor:lnames.map(l=>lcolors[l]||'rgba(79,142,247,.5)')}]},
+  options:{plugins:{legend:{labels:{color:'#8b96a4',font:{family:'Geist Mono',size:10}}}},
+    scales:{r:{ticks:{color:'#4a5568',backdropColor:'transparent'},grid:{color:'#252b35'}}}}
 });
 
-// ── Filter / search ──
-function filterFindings(sev, btn) {
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.finding-row').forEach(r=>{
-    r.style.display = (sev==='ALL'||r.dataset.severity===sev)?'':'none';
-  });
+// CWE bar
+const cweMap={};
+findings.forEach(f=>{if(f.cwe)cweMap[f.cwe]=(cweMap[f.cwe]||0)+1});
+const cweSorted=Object.entries(cweMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+new Chart(document.getElementById('cCwe'),{
+  type:'bar',
+  data:{labels:cweSorted.map(([c])=>c),datasets:[{label:'Findings',
+    data:cweSorted.map(([,n])=>n),
+    backgroundColor:'rgba(167,139,250,.65)',borderColor:'#a78bfa',borderWidth:1,borderRadius:3}]},
+  options:{indexAxis:'y',plugins:{legend:{display:false}},
+    scales:{x:{ticks:{color:'#4a5568',stepSize:1,font:{family:'Geist Mono',size:9}},grid:{color:'#1f242d'}},
+            y:{ticks:{color:'#8b96a4',font:{family:'Geist Mono',size:9}},grid:{color:'#1f242d'}}}}
+});
+
+// Tactic doughnut
+const tacMap={};
+findings.forEach(f=>{if(f.attack_tactic)tacMap[f.attack_tactic]=(tacMap[f.attack_tactic]||0)+1});
+const tacColors=['rgba(79,142,247,.75)','rgba(242,87,87,.75)','rgba(230,168,23,.75)','rgba(167,139,250,.75)','rgba(62,207,121,.75)','rgba(78,201,176,.75)'];
+new Chart(document.getElementById('cTactic'),{
+  type:'doughnut',
+  data:{labels:Object.keys(tacMap).length?Object.keys(tacMap):['None'],
+    datasets:[{data:Object.keys(tacMap).length?Object.values(tacMap):[1],
+      backgroundColor:Object.keys(tacMap).map((_,i)=>tacColors[i%tacColors.length]),
+      borderWidth:2}]},
+  options:{cutout:'55%',plugins:{legend:{labels:{color:'#8b96a4',font:{family:'Geist Mono',size:10}}}}}
+});
+
+// Filter/search
+function filt(sev,btn){
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.fr').forEach(r=>r.style.display=(sev==='ALL'||r.dataset.sev===sev)?'':'none');
 }
-function searchFindings(q) {
-  const qLow = q.toLowerCase();
-  document.querySelectorAll('.finding-row').forEach(r=>{
-    r.style.display = r.dataset.text.includes(qLow)?'':'none';
-  });
+function fsrch(q){
+  const ql=q.toLowerCase();
+  document.querySelectorAll('.fr').forEach(r=>r.style.display=r.dataset.txt.includes(ql)?'':'none');
 }
-function scrollTo(id) {
+function go(id,el){
   document.getElementById(id)?.scrollIntoView({behavior:'smooth'});
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  event.target.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));
+  el.classList.add('on');
 }
 </script>
 </body>
