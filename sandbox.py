@@ -12,7 +12,7 @@ from typing import Optional
 import docker  # pip install docker
 
 
-SANDBOX_IMAGE = "python:3.12-slim"  # overridden per-project type
+SANDBOX_IMAGE = "python:3.12-slim"  # default; _detect_project_type overrides this
 MAX_RUN_SECONDS = 60
 NETWORK_NAME = "secreview_isolated"
 
@@ -30,17 +30,24 @@ class RuntimeObservation:
 
 
 def _detect_project_type(repo_path: str) -> tuple[str, str]:
-    """Return (docker_image, start_command) based on detected project type."""
+    """Return (docker_image, start_command) based on detected project type.
+    Uses full (non-slim) images so strace + apt are available for observation.
+    """
     p = Path(repo_path)
     if (p / "package.json").exists():
-        return "node:20-slim", "npm install && npm start"
+        return "node:20", "npm install 2>/dev/null; timeout 10 npm start 2>&1 || echo 'node app done'"
     if (p / "requirements.txt").exists() or (p / "pyproject.toml").exists():
-        return SANDBOX_IMAGE, "pip install -r requirements.txt 2>/dev/null; python main.py 2>/dev/null || python app.py 2>/dev/null || python -m flask run 2>/dev/null || echo 'No entry point found'"
+        return "python:3.12", (
+            "pip install -r requirements.txt 2>/dev/null; "
+            "timeout 10 python main.py 2>&1 || "
+            "timeout 10 python app.py 2>&1 || "
+            "echo 'Python app done'"
+        )
     if (p / "pom.xml").exists():
-        return "maven:3.9-eclipse-temurin-21", "mvn package -q && java -jar target/*.jar"
+        return "maven:3.9-eclipse-temurin-21", "mvn package -q 2>/dev/null && timeout 10 java -jar target/*.jar 2>&1 || echo 'Java app done'"
     if (p / "go.mod").exists():
-        return "golang:1.22-alpine", "go run ."
-    return SANDBOX_IMAGE, "echo 'No recognisable entry point'"
+        return "golang:1.22", "timeout 10 go run . 2>&1 || echo 'Go app done'"
+    return "python:3.12", "echo 'No recognisable entry point'"
 
 
 def _create_isolated_network(client: "docker.DockerClient") -> str:
@@ -97,9 +104,11 @@ def run_in_sandbox(repo_path: str, timeout: int = MAX_RUN_SECONDS) -> RuntimeObs
     print(f"[*] Sandbox: image={image}, cmd={start_cmd}")
 
     # Wrap with strace to capture file writes and process spawns
+    # Full images have apt; strace installed before running the app
     traced_cmd = (
-        f"apt-get install -qq -y strace 2>/dev/null; "
-        f"strace -e trace=openat,execve,connect -o /tmp/strace.log -ff sh -c '{start_cmd}'"
+        f"apt-get update -qq 2>/dev/null && apt-get install -qq -y strace 2>/dev/null; "
+        f"strace -e trace=openat,execve,connect -o /tmp/strace.log -ff sh -c '{start_cmd}' 2>/tmp/app.stderr; "
+        f"cat /tmp/app.stderr 2>/dev/null; echo '---STRACE_DONE---'"
     )
 
     try:
