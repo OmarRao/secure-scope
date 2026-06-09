@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureScope — GitHub Security Analyzer</title>
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117; --bg2: #161b22; --bg3: #21262d;
+      --border: #30363d; --border2: #484f58;
+      --text: #e6edf3; --text2: #8b949e; --text3: #6e7681;
+      --red: #f85149; --orange: #d29922; --green: #3fb950;
+      --blue: #58a6ff; --purple: #bc8cff; --cyan: #39d353;
+      --accent: #238636; --accent2: #1f6feb;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
+
+    /* ── Header ── */
+    header {
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 16px 32px; display: flex; align-items: center; gap: 12px;
+    }
+    header .logo { font-size: 20px; font-weight: 700; color: var(--text); }
+    header .logo span { color: var(--blue); }
+    header .badge {
+      background: rgba(88,166,255,.15); color: var(--blue);
+      border: 1px solid rgba(88,166,255,.3); border-radius: 20px;
+      font-size: 11px; font-weight: 600; padding: 2px 10px; letter-spacing: .5px;
+    }
+    header .spacer { flex: 1; }
+    header .gh-link { color: var(--text2); text-decoration: none; font-size: 13px; }
+    header .gh-link:hover { color: var(--text); }
+
+    /* ── Hero ── */
+    .hero {
+      max-width: 860px; margin: 80px auto 0; padding: 0 24px; text-align: center;
+    }
+    .hero h1 {
+      font-size: 48px; font-weight: 700; line-height: 1.15;
+      background: linear-gradient(135deg, #e6edf3 0%, #58a6ff 50%, #bc8cff 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+    .hero p { font-size: 18px; color: var(--text2); line-height: 1.6; margin-bottom: 48px; }
+
+    /* ── Scan box ── */
+    .scan-box {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 32px; max-width: 860px; margin: 0 auto 40px;
+    }
+    .url-row { display: flex; gap: 12px; margin-bottom: 20px; }
+    .url-input {
+      flex: 1; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px 18px; color: var(--text);
+      font-family: 'JetBrains Mono', monospace; font-size: 14px; outline: none;
+      transition: border-color .2s;
+    }
+    .url-input:focus { border-color: var(--blue); }
+    .url-input::placeholder { color: var(--text3); }
+    .scan-btn {
+      background: var(--accent2); color: #fff; border: none; border-radius: 8px;
+      padding: 14px 28px; font-size: 15px; font-weight: 600; cursor: pointer;
+      transition: background .2s, transform .1s; white-space: nowrap;
+    }
+    .scan-btn:hover { background: #388bfd; }
+    .scan-btn:active { transform: scale(.98); }
+    .scan-btn:disabled { background: var(--bg3); color: var(--text3); cursor: not-allowed; }
+
+    /* ── Options ── */
+    .options { display: flex; gap: 24px; flex-wrap: wrap; }
+    .option { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .option input[type=checkbox] { accent-color: var(--blue); width: 16px; height: 16px; }
+    .option label { font-size: 14px; color: var(--text2); cursor: pointer; }
+    .option label span { color: var(--text3); font-size: 12px; }
+
+    /* ── Progress ── */
+    .progress-wrap {
+      max-width: 860px; margin: 0 auto 32px; display: none;
+    }
+    .progress-steps { display: flex; gap: 0; margin-bottom: 16px; }
+    .step {
+      flex: 1; padding: 10px 8px; text-align: center; font-size: 12px;
+      color: var(--text3); border-bottom: 2px solid var(--border); transition: all .3s;
+    }
+    .step.active { color: var(--blue); border-color: var(--blue); }
+    .step.done { color: var(--green); border-color: var(--green); }
+    .progress-bar-bg {
+      height: 4px; background: var(--bg3); border-radius: 4px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%; background: linear-gradient(90deg, var(--blue), var(--purple));
+      border-radius: 4px; transition: width .4s ease; width: 0%;
+    }
+    .progress-msg { margin-top: 10px; font-size: 13px; color: var(--text2); text-align: center; }
+
+    /* ── Features strip ── */
+    .features {
+      max-width: 860px; margin: 0 auto 80px; padding: 0 24px;
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    }
+    .feature-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 20px;
+    }
+    .feature-card .icon { font-size: 24px; margin-bottom: 10px; }
+    .feature-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+    .feature-card p { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+    /* ── Recent scans ── */
+    .recent-wrap { max-width: 860px; margin: 0 auto 60px; padding: 0 24px; }
+    .recent-wrap h2 { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: var(--text2); }
+    .recent-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .recent-table th { text-align: left; padding: 8px 12px; color: var(--text3); border-bottom: 1px solid var(--border); }
+    .recent-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    .recent-table tr:hover td { background: var(--bg2); }
+    .recent-table a { color: var(--blue); text-decoration: none; }
+    .badge-err { background: rgba(248,81,73,.15); color: var(--red); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .badge-warn { background: rgba(210,153,34,.15); color: var(--orange); padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+
+    /* ── Error toast ── */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: rgba(248,81,73,.9);
+      color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 14px;
+      display: none; z-index: 999; max-width: 400px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🔒 Secure<span>Scope</span></div>
+  <div class="badge">MITRE ATT&CK</div>
+  <div class="spacer"></div>
+  <a href="https://github.com/OmarRao/security-review" target="_blank" class="gh-link">⭐ View on GitHub</a>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>GitHub Security Analyzer</h1>
+    <p>Paste any GitHub repository URL. We'll scan every file for vulnerabilities,<br>
+    map them to MITRE ATT&CK & CWE, run the code in an isolated sandbox,<br>
+    and generate a full visual security report.</p>
+  </div>
+
+  <div class="scan-box">
+    <div class="url-row">
+      <input class="url-input" id="repoUrl" type="text"
+        placeholder="https://github.com/owner/repository"
+        value="https://github.com/OmarRao/analyzer">
+      <button class="scan-btn" id="scanBtn" onclick="startScan()">🔍 Scan Repository</button>
+    </div>
+    <div class="options">
+      <label class="option">
+        <input type="checkbox" id="optSandbox">
+        <label for="optSandbox">🐳 Docker Sandbox <span>(runtime observation)</span></label>
+      </label>
+      <label class="option">
+        <input type="checkbox" id="optAdvisor">
+        <label for="optAdvisor">🤖 AI Fix Advisor <span>(requires Anthropic key)</span></label>
+      </label>
+    </div>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-steps">
+      <div class="step" id="step-github_info">📋 Repo Info</div>
+      <div class="step" id="step-clone">📥 Clone</div>
+      <div class="step" id="step-semgrep">🔍 Scan</div>
+      <div class="step" id="step-deps">📦 CVEs</div>
+      <div class="step" id="step-sandbox">🐳 Sandbox</div>
+      <div class="step" id="step-advisor">🤖 Advisor</div>
+      <div class="step" id="step-report">📊 Report</div>
+      <div class="step" id="step-done">✅ Done</div>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+    <div class="progress-msg" id="progressMsg">Starting scan...</div>
+  </div>
+
+  <div class="features">
+    <div class="feature-card">
+      <div class="icon">🎯</div>
+      <h3>MITRE ATT&CK Mapping</h3>
+      <p>Every finding mapped to ATT&CK technique, tactic, and CWE identifier with severity scoring.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🐳</div>
+      <h3>Docker Sandbox</h3>
+      <p>Run the app in an isolated container. Detect suspicious runtime behaviors, outbound connections, and spawned processes.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🤖</div>
+      <h3>AI Fix Advisor</h3>
+      <p>Claude generates diff-style patches for each vulnerability with commit-ready messages mapped to CWE and ATT&CK.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">📊</div>
+      <h3>Visual Reports</h3>
+      <p>Interactive charts — severity donut, MITRE radar, file heatmap, language breakdown, and commit timeline.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">📦</div>
+      <h3>Dependency CVEs</h3>
+      <p>Scans requirements.txt and package.json against known CVE databases via pip-audit and npm audit.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🚀</div>
+      <h3>Auto-Fix Commits</h3>
+      <p>Apply AI-generated patches directly to your repository branch with one click. Dry-run mode by default.</p>
+    </div>
+  </div>
+
+  <div class="recent-wrap" id="recentWrap" style="display:none">
+    <h2>Recent Scans</h2>
+    <table class="recent-table">
+      <thead><tr><th>Repository</th><th>Findings</th><th>Critical</th><th>Scanned</th><th>Report</th></tr></thead>
+      <tbody id="recentBody"></tbody>
+    </table>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const socket = io();
+  let currentStep = null;
+
+  function startScan() {
+    const url = document.getElementById('repoUrl').value.trim();
+    if (!url) return showToast('Please enter a GitHub URL');
+
+    document.getElementById('scanBtn').disabled = true;
+    document.getElementById('progressWrap').style.display = 'block';
+    document.querySelectorAll('.step').forEach(s => s.className = 'step');
+    document.getElementById('progressBar').style.width = '0%';
+
+    socket.emit('start_scan', {
+      repo_url: url,
+      sandbox: document.getElementById('optSandbox').checked,
+      advisor: document.getElementById('optAdvisor').checked,
+    });
+  }
+
+  socket.on('progress', d => {
+    if (currentStep) document.getElementById('step-' + currentStep)?.classList.replace('active','done');
+    currentStep = d.step;
+    const el = document.getElementById('step-' + d.step);
+    if (el) { el.classList.add('active'); }
+    document.getElementById('progressBar').style.width = d.pct + '%';
+    document.getElementById('progressMsg').textContent = d.message;
+  });
+
+  socket.on('github_info', info => {
+    // Preview in progress message
+    if (info.full_name) {
+      document.getElementById('progressMsg').textContent =
+        `📋 ${info.full_name} · ⭐ ${info.stars} · 🍴 ${info.forks} · ${info.language}`;
+    }
+  });
+
+  socket.on('scan_complete', d => {
+    document.getElementById('scanBtn').disabled = false;
+    document.querySelectorAll('.step').forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
+    document.getElementById('progressBar').style.width = '100%';
+    document.getElementById('progressMsg').innerHTML =
+      `✅ Scan complete — <a href="${d.report_url}" target="_blank" style="color:#58a6ff">Open Full Report →</a>`;
+    loadRecentScans();
+
+    // Auto-open report
+    setTimeout(() => window.open(d.report_url, '_blank'), 800);
+  });
+
+  socket.on('error', d => {
+    document.getElementById('scanBtn').disabled = false;
+    showToast('Error: ' + d.message);
+    document.getElementById('progressMsg').textContent = '❌ Scan failed. Check the error and retry.';
+  });
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 5000);
+  }
+
+  async function loadRecentScans() {
+    try {
+      const r = await fetch('/reports');
+      const data = await r.json();
+      if (!data.length) return;
+      const wrap = document.getElementById('recentWrap');
+      const body = document.getElementById('recentBody');
+      wrap.style.display = 'block';
+      body.innerHTML = data.map(r => `
+        <tr>
+          <td><code style="color:#58a6ff">${r.repo.replace('https://github.com/','')}</code></td>
+          <td>${r.total}</td>
+          <td><span class="badge-err">${r.errors} critical</span></td>
+          <td style="color:#8b949e">${r.generated_at?.slice(0,16) || '—'}</td>
+          <td><a href="/report/${r.filename}_ui.html" target="_blank">View →</a></td>
+        </tr>`).join('');
+    } catch(e) {}
+  }
+
+  // Allow Enter key to trigger scan
+  document.getElementById('repoUrl').addEventListener('keydown', e => {
+    if (e.key === 'Enter') startScan();
+  });
+
+  loadRecentScans();
+</script>
+</body>
+</html>
