@@ -1,0 +1,1718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureScope / analyzer</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;900&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:   #0a0c0f; --ink2: #111419; --ink3: #181c23; --ink4: #1f242d;
+      --rule:  #252b35; --rule2: #2e3540;
+      --muted: #4a5568; --dim: #6b7785; --sub: #8b96a4;
+      --body:  #c8d0db; --head: #ffffff;
+      --accent:#4f8ef7; --danger:#f25757; --warn:#e6a817; --ok:#3ecf79; --tag:#a78bfa; --teal:#4ec9b0;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--ink);color:var(--body);font-family:'Geist',sans-serif;font-size:14px;line-height:1.6}
+    ::selection{background:rgba(79,142,247,.25);color:var(--head)}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    code,pre,kbd{font-family:'Geist Mono',monospace}
+
+    /* Layout */
+    .shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+    .side{
+      background:var(--ink2);border-right:1px solid var(--rule);
+      padding:0;position:sticky;top:0;height:100vh;overflow-y:auto;
+      display:flex;flex-direction:column;
+    }
+    .side-top{padding:20px 18px;border-bottom:1px solid var(--rule)}
+    .side-logo{font-size:14px;font-weight:700;color:var(--head);letter-spacing:-.2px}
+    .side-logo sup{font-size:9px;color:var(--accent);margin-left:3px;font-weight:500;font-family:'Geist Mono',monospace}
+    .side-repo{font-size:11px;color:var(--dim);margin-top:4px;font-family:'Geist Mono',monospace;word-break:break-all}
+    .nav-grp{padding:16px 0 4px 18px;font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace}
+    .nav-item{
+      display:flex;align-items:center;gap:9px;padding:8px 18px;
+      font-size:13px;color:var(--sub);cursor:pointer;
+      transition:all .12s;border-left:2px solid transparent;
+    }
+    .nav-item:hover{background:var(--ink3);color:var(--body)}
+    .nav-item.on{background:var(--ink3);color:var(--head);border-left-color:var(--accent)}
+    .nav-ic{font-size:14px;width:16px;text-align:center;flex-shrink:0}
+    .nav-ct{
+      margin-left:auto;font-size:10px;font-weight:700;
+      font-family:'Geist Mono',monospace;padding:1px 6px;
+      border-radius:4px;
+    }
+    .ct-r{background:rgba(242,87,87,.15);color:var(--danger)}
+    .ct-w{background:rgba(230,168,23,.13);color:var(--warn)}
+    .ct-b{background:rgba(79,142,247,.13);color:var(--accent)}
+    .side-foot{margin-top:auto;padding:16px 18px;border-top:1px solid var(--rule);font-size:11px;color:var(--muted);line-height:1.7;font-family:'Geist Mono',monospace}
+
+    /* Main */
+    .content{padding:32px 36px;max-width:1080px}
+
+    /* Report banner */
+    .banner{
+      border:1px solid var(--rule2);border-radius:10px;
+      padding:24px 28px;margin-bottom:36px;
+      background:var(--ink2);
+      display:flex;justify-content:space-between;align-items:flex-start;gap:20px;
+    }
+    .banner-left h1{font-size:22px;font-weight:800;color:var(--head);letter-spacing:-.4px;margin-bottom:6px}
+    .banner-left .bsub{font-size:13px;color:var(--sub)}
+    .banner-meta{display:flex;gap:20px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--rule)}
+    .bmeta{font-size:12px;color:var(--sub);font-family:'Geist Mono',monospace}
+    .bmeta strong{color:var(--body)}
+    .banner-score{
+      text-align:center;flex-shrink:0;
+      background:var(--ink3);border:1px solid var(--rule2);
+      border-radius:10px;padding:16px 24px;
+    }
+    .score-num{font-size:44px;font-weight:900;font-family:'Geist Mono',monospace;line-height:1}
+    .score-lbl{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:6px;color:var(--muted)}
+    .score-grade{font-size:13px;font-weight:700;margin-top:4px;letter-spacing:.5px;text-transform:uppercase}
+
+    /* Section */
+    .sec{margin-bottom:52px;scroll-margin-top:20px}
+    .sec-head{
+      display:flex;align-items:center;gap:12px;
+      margin-bottom:20px;padding-bottom:14px;
+      border-bottom:1px solid var(--rule);
+    }
+    .sec-title{font-size:17px;font-weight:700;color:var(--head);letter-spacing:-.3px}
+    .sec-count{font-size:12px;font-weight:600;font-family:'Geist Mono',monospace;color:var(--muted);background:var(--ink3);border:1px solid var(--rule2);padding:2px 8px;border-radius:5px}
+    .eyebrow{font-size:10px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:6px}
+
+    /* KPI row */
+    .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:28px}
+    .kpi{background:var(--ink2);padding:18px 16px;border-right:1px solid var(--rule)}
+    .kpi:last-child{border-right:none}
+    .kpi-num{font-size:30px;font-weight:800;font-family:'Geist Mono',monospace;line-height:1;color:var(--head)}
+    .kpi-num.r{color:var(--danger)} .kpi-num.w{color:var(--warn)} .kpi-num.b{color:var(--accent)} .kpi-num.g{color:var(--ok)} .kpi-num.v{color:var(--tag)}
+    .kpi-lbl{font-size:11px;color:var(--muted);margin-top:5px;letter-spacing:.2px}
+    .kpi-sub{font-size:11px;font-family:'Geist Mono',monospace;color:var(--dim);margin-top:3px}
+
+    /* Threat level bar */
+    .threat-bar-wrap{border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:28px}
+    .threat-bar-head{background:var(--ink2);padding:16px 20px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center}
+    .threat-bar-head .eyebrow{margin-bottom:0}
+    .threat-label{font-size:13px;font-weight:700;font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:.8px}
+    .threat-track{height:10px;background:var(--ink3);position:relative;overflow:hidden}
+    .threat-fill{height:100%;transition:width .8s ease;position:relative}
+    .threat-fill::after{content:'';position:absolute;top:0;right:0;bottom:0;width:40px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15))}
+    .threat-legend{background:var(--ink2);padding:12px 20px;display:flex;gap:20px}
+    .threat-leg-item{font-size:11px;color:var(--sub);display:flex;align-items:center;gap:6px;font-family:'Geist Mono',monospace}
+    .threat-leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+    /* Charts grid */
+    .chart-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
+    .chart-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:28px}
+    .chart-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+    .cbox{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:20px}
+    .cbox-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:16px}
+    .cbox canvas{max-height:200px}
+
+    /* File heatmap */
+    .hm-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:12px}
+    .hm-name{font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub);min-width:140px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .hm-track{flex:1;background:var(--ink3);border-radius:3px;height:16px;overflow:hidden}
+    .hm-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:7px;font-size:10px;font-weight:700;color:#fff}
+    .hm-n{font-family:'Geist Mono',monospace;font-size:11px;color:var(--dim);min-width:22px;text-align:right}
+
+    /* Attack surface tiles */
+    .atk-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+    .atk-tile{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:18px}
+    .atk-tile.exposed{border-color:rgba(242,87,87,.35);background:rgba(242,87,87,.04)}
+    .atk-tile.partial{border-color:rgba(230,168,23,.3);background:rgba(230,168,23,.04)}
+    .atk-tile.safe{border-color:rgba(62,207,121,.25);background:rgba(62,207,121,.04)}
+    .atk-ic{font-size:22px;margin-bottom:10px}
+    .atk-name{font-size:12px;font-weight:700;color:var(--head);margin-bottom:4px;letter-spacing:-.1px}
+    .atk-status{font-size:11px;font-weight:600;font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:.5px}
+    .atk-status.e{color:var(--danger)} .atk-status.p{color:var(--warn)} .atk-status.s{color:var(--ok)}
+    .atk-detail{font-size:11px;color:var(--dim);margin-top:6px;line-height:1.4}
+
+    /* MITRE tiles */
+    .mitre-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:28px}
+    .mt{background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;transition:border-color .15s}
+    .mt.crit{border-color:rgba(242,87,87,.4);background:rgba(242,87,87,.04)}
+    .mt.med{border-color:rgba(230,168,23,.35);background:rgba(230,168,23,.04)}
+    .mt .tid{font-family:'Geist Mono',monospace;font-size:10px;color:var(--accent);margin-bottom:4px}
+    .mt .tname{font-size:12px;font-weight:600;color:var(--head);margin-bottom:2px;line-height:1.3}
+    .mt .ttactic{font-size:10px;color:var(--dim);font-family:'Geist Mono',monospace}
+    .mt .tct{font-size:28px;font-weight:900;font-family:'Geist Mono',monospace;margin-top:10px;line-height:1}
+    .mt.crit .tct{color:var(--danger)} .mt.med .tct{color:var(--warn)}
+
+    /* GitHub info */
+    .gh-card{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:24px;margin-bottom:16px}
+    .gh-top{display:flex;align-items:flex-start;gap:16px;margin-bottom:16px}
+    .gh-av{width:52px;height:52px;border-radius:50%;border:1px solid var(--rule2);flex-shrink:0}
+    .gh-name{font-size:20px;font-weight:800;color:var(--head);letter-spacing:-.3px}
+    .gh-desc{font-size:13px;color:var(--sub);margin-top:4px}
+    .gh-stats{display:flex;gap:20px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--rule)}
+    .gh-s{font-size:13px;color:var(--sub)} .gh-s strong{color:var(--body)}
+    .gh-topics{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+    .topic{background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.2);border-radius:4px;padding:2px 9px;font-size:11px;font-family:'Geist Mono',monospace}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+    .ibox{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:18px}
+    .ibox-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:12px}
+    .irow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--rule);font-size:13px}
+    .irow:last-child{border:none}
+    .ik{color:var(--sub)} .iv{color:var(--body);font-weight:500;text-align:right;max-width:55%}
+
+    /* Commit list */
+    .commit-list{list-style:none}
+    .commit-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--rule);font-size:12px}
+    .commit-row:last-child{border:none}
+    .csha{font-family:'Geist Mono',monospace;font-size:10px;background:rgba(79,142,247,.1);color:var(--accent);padding:2px 6px;border-radius:3px;flex-shrink:0}
+    .cmsg{color:var(--body);flex:1;line-height:1.4}
+    .cmeta{color:var(--muted);font-family:'Geist Mono',monospace;font-size:10px;white-space:nowrap}
+
+    /* Contributors */
+    .contrib-wrap{display:flex;flex-wrap:wrap;gap:10px}
+    .contrib-item{display:flex;align-items:center;gap:8px;font-size:12px}
+    .contrib-item img{width:26px;height:26px;border-radius:50%}
+    .contrib-item strong{color:var(--body)} .contrib-item span{color:var(--dim)}
+
+    /* File tree */
+    .tree-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+    .tree-item{font-family:'Geist Mono',monospace;font-size:11px;padding:3px 9px;border:1px solid var(--rule);border-radius:4px;background:var(--ink3)}
+    .tree-item.dir{color:var(--accent)} .tree-item.file{color:var(--sub)}
+
+    /* Lang bars */
+    .lang-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px}
+    .lang-n{min-width:90px;color:var(--sub);font-family:'Geist Mono',monospace;font-size:11px}
+    .lang-track{flex:1;background:var(--ink3);border-radius:3px;height:10px;overflow:hidden}
+    .lang-fill{height:100%;border-radius:3px}
+    .lang-p{min-width:36px;text-align:right;color:var(--dim);font-family:'Geist Mono',monospace;font-size:11px}
+
+    /* Findings */
+    .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+    .fbtn{background:var(--ink3);border:1px solid var(--rule2);color:var(--sub);padding:5px 13px;border-radius:5px;font-size:12px;cursor:pointer;font-family:'Geist Mono',monospace;transition:all .12s}
+    .fbtn:hover,.fbtn.on{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.08)}
+    .fsearch{background:var(--ink3);border:1px solid var(--rule2);color:var(--body);padding:5px 13px;border-radius:5px;font-size:12px;outline:none;font-family:'Geist Mono',monospace;min-width:200px}
+    .fsearch:focus{border-color:var(--accent)}
+
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{text-align:left;padding:9px 12px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;border-bottom:2px solid var(--rule)}
+    td{padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+    tr:hover td{background:rgba(255,255,255,.015)}
+
+    .sev{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;font-family:'Geist Mono',monospace;letter-spacing:.5px}
+    .sev-ERROR{background:rgba(242,87,87,.13);color:var(--danger)}
+    .sev-WARNING{background:rgba(230,168,23,.13);color:var(--warn)}
+    .sev-INFO{background:rgba(79,142,247,.13);color:var(--accent)}
+    .tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-family:'Geist Mono',monospace;margin:1px}
+    .tag-cwe{background:rgba(167,139,250,.1);color:var(--tag);border:1px solid rgba(167,139,250,.2)}
+    .tag-att{background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
+    .tag-tactic{background:rgba(78,201,176,.1);color:var(--teal);border:1px solid rgba(78,201,176,.2)}
+    details summary{cursor:pointer;color:var(--accent);font-size:11px;margin-top:5px;font-family:'Geist Mono',monospace}
+    .fix-pre{background:var(--ink);border:1px solid var(--rule);border-radius:6px;padding:10px;margin-top:7px;font-family:'Geist Mono',monospace;font-size:11px;white-space:pre-wrap;color:var(--sub);max-height:260px;overflow-y:auto;line-height:1.55}
+
+    /* CVE */
+    .cve-id{font-family:'Geist Mono',monospace;font-size:10px;background:rgba(242,87,87,.1);color:var(--danger);border:1px solid rgba(242,87,87,.2);padding:2px 7px;border-radius:4px}
+
+    /* Sandbox */
+    .sandbox-hd{display:flex;align-items:center;gap:12px;padding:16px;background:var(--ink2);border:1px solid var(--rule);border-radius:10px;margin-bottom:14px}
+    .sdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .sdot.g{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+    .sdot.r{background:var(--danger);box-shadow:0 0 8px var(--danger)}
+    .sdot.d{background:var(--muted)}
+    .susp-item{padding:8px 12px;background:rgba(242,87,87,.07);border:1px solid rgba(242,87,87,.2);border-radius:6px;margin-bottom:7px;font-size:12px;color:var(--danger);font-family:'Geist Mono',monospace}
+    .conn-item{padding:5px 10px;background:var(--ink2);border:1px solid var(--rule);border-radius:5px;margin-bottom:5px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub)}
+    .stdout-box{background:var(--ink);border:1px solid var(--rule);border-radius:8px;padding:14px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub);white-space:pre-wrap;max-height:260px;overflow-y:auto;line-height:1.55}
+
+    /* Print */
+    @media print{.side{display:none}.content{max-width:100%}}
+  </style>
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <nav class="side">
+    <div class="side-top">
+      <div class="side-logo">SecureScope<sup>BETA</sup></div>
+      <div class="side-repo">OmarRao/analyzer</div>
+    </div>
+
+    <div class="nav-grp">Overview</div>
+    <div class="nav-item on" onclick="go('top',this)"><span class="nav-ic">&#x1F4CA;</span> Summary</div>
+    <div class="nav-item" onclick="go('threat',this)"><span class="nav-ic">&#x26A1;</span> Threat Level</div>
+    <div class="nav-item" onclick="go('surface',this)"><span class="nav-ic">&#x1F3AF;</span> Attack Surface</div>
+    <div class="nav-item" onclick="go('charts',this)"><span class="nav-ic">&#x1F4C8;</span> Analysis Charts</div>
+
+    <div class="nav-grp">Repository</div>
+    <div class="nav-item" onclick="go('github',this)"><span class="nav-ic">&#x1F4CB;</span> Repo Info</div>
+    <div class="nav-item" onclick="go('mitre',this)"><span class="nav-ic">&#x1F6E1;</span> MITRE ATT&CK <span class="nav-ct ct-b">6</span></div>
+
+    <div class="nav-grp">Findings</div>
+    <div class="nav-item" onclick="go('findings',this)">
+      <span class="nav-ic">&#x1F50D;</span> Vulnerabilities
+      <span class="nav-ct ct-r">37</span>
+    </div>
+    <div class="nav-item" onclick="go('cves',this)">
+      <span class="nav-ic">&#x1F4E6;</span> Dep. CVEs
+      <span class="nav-ct ct-b">0</span>
+    </div>
+    <div class="nav-item" onclick="go('sandbox',this)">
+      <span class="nav-ic">&#x1F433;</span> Sandbox
+      
+    </div>
+
+    <div class="nav-grp">Actions</div>
+    <div class="nav-item" onclick="window.open('https://github.com/OmarRao/analyzer','_blank')"><span class="nav-ic">&#x1F517;</span> View on GitHub</div>
+    <div class="nav-item" onclick="window.print()"><span class="nav-ic">&#x1F5A8;</span> Print Report</div>
+    <div class="nav-item" onclick="window.location='/'"><span class="nav-ic">&#x2190;</span> New Scan</div>
+
+    <div class="side-foot">
+      Generated<br>2026-06-09 14:20 UTC<br><br>
+      SecureScope v1.0<br>
+      MITRE ATT&CK v14
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- Banner -->
+    <div class="banner" id="top">
+      <div class="banner-left">
+        <h1>OmarRao/analyzer</h1>
+        <div class="bsub">No description provided.</div>
+        <div class="banner-meta">
+          <span class="bmeta">Branch <strong>main</strong></span>
+          <span class="bmeta">Language <strong>Python</strong></span>
+          <span class="bmeta">License <strong>None</strong></span>
+          <span class="bmeta">2026-06-09 14:20 UTC</span>
+        </div>
+      </div>
+      <div class="banner-score">
+        <div class="eyebrow" style="margin-bottom:8px">Risk Score</div>
+        <div class="score-num" style="color:#f25757">100</div>
+        <div class="score-lbl">out of 100</div>
+        <div class="score-grade" style="color:#f25757">CRITICAL</div>
+      </div>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-num r">14</div>
+        <div class="kpi-lbl">Critical Findings</div>
+        <div class="kpi-sub">ERROR severity</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-num w">23</div>
+        <div class="kpi-lbl">Warnings</div>
+        <div class="kpi-sub">WARNING severity</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-num b">0</div>
+        <div class="kpi-lbl">Dep. CVEs</div>
+        <div class="kpi-sub">Known vulnerabilities</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-num v">6</div>
+        <div class="kpi-lbl">ATT&CK Techniques</div>
+        <div class="kpi-sub">Unique techniques</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-num d" style="color:var(--muted)">
+          N/A
+        </div>
+        <div class="kpi-lbl">Sandbox Exit</div>
+        <div class="kpi-sub">Not executed</div>
+      </div>
+    </div>
+
+    <!-- Threat Level section -->
+    <div class="sec" id="threat">
+      <div class="sec-head">
+        <div class="sec-title">Threat Level</div>
+        <div class="sec-count">Score 100/100</div>
+      </div>
+
+      <div class="threat-bar-wrap">
+        <div class="threat-bar-head">
+          <div class="eyebrow">Composite Risk Score</div>
+          <span class="threat-label" style="color:#f25757">CRITICAL</span>
+        </div>
+        <div class="threat-track">
+          <div class="threat-fill" id="threatFill"
+            style="width:100%;background:linear-gradient(90deg,
+              #f25757,#ff8c42
+              )">
+          </div>
+        </div>
+        <div class="threat-legend">
+          <span class="threat-leg-item"><span class="threat-leg-dot" style="background:#3ecf79"></span>Low (0-19)</span>
+          <span class="threat-leg-item"><span class="threat-leg-dot" style="background:#4f8ef7"></span>Medium (20-44)</span>
+          <span class="threat-leg-item"><span class="threat-leg-dot" style="background:#e6a817"></span>High (45-69)</span>
+          <span class="threat-leg-item"><span class="threat-leg-dot" style="background:#f25757"></span>Critical (70-100)</span>
+        </div>
+      </div>
+
+      <!-- Score breakdown -->
+      <div class="chart-grid-4">
+        <div class="cbox" style="text-align:center">
+          <div class="cbox-title">Critical Weight</div>
+          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--danger)">140</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">14 errors x 10 pts</div>
+        </div>
+        <div class="cbox" style="text-align:center">
+          <div class="cbox-title">Warning Weight</div>
+          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--warn)">69</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">23 warnings x 3 pts</div>
+        </div>
+        <div class="cbox" style="text-align:center">
+          <div class="cbox-title">CVE Weight</div>
+          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--accent)">0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">0 CVEs x 8 pts</div>
+        </div>
+        <div class="cbox" style="text-align:center">
+          <div class="cbox-title">Runtime Weight</div>
+          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--tag)">0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">0 behaviors x 15 pts</div>
+        </div>
+      </div>
+
+      <!-- Priority fix queue -->
+      
+      <div class="cbox">
+        <div class="cbox-title">Priority Fix Queue (Top 5 Critical)</div>
+        <table style="margin-top:8px">
+          <thead><tr><th>#</th><th>Rule</th><th>File</th><th>CWE</th><th>Technique</th></tr></thead>
+          <tbody>
+            
+            <tr>
+              <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">1</td>
+              <td><code style="font-size:11px">missing-user</code></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">Dockerfile:12</td>
+              <td><span class="tag tag-cwe">CWE-250</span></td>
+              <td><span style="color:var(--muted)">N/A</span></td>
+            </tr>
+            
+            <tr>
+              <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">2</td>
+              <td><code style="font-size:11px">tainted-sql-string</code></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">app.py:72</td>
+              <td><span class="tag tag-cwe">CWE-704</span></td>
+              <td><span style="color:var(--muted)">N/A</span></td>
+            </tr>
+            
+            <tr>
+              <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">3</td>
+              <td><code style="font-size:11px">tainted-sql-string</code></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">app.py:111</td>
+              <td><span class="tag tag-cwe">CWE-704</span></td>
+              <td><span style="color:var(--muted)">N/A</span></td>
+            </tr>
+            
+            <tr>
+              <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">4</td>
+              <td><code style="font-size:11px">subprocess-injection</code></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">app.py:125</td>
+              <td><span class="tag tag-cwe">CWE-78</span></td>
+              <td><span class="tag tag-att">T1059</span></td>
+            </tr>
+            
+            <tr>
+              <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">5</td>
+              <td><code style="font-size:11px">dangerous-subprocess-use</code></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">app.py:125</td>
+              <td><span class="tag tag-cwe">CWE-78</span></td>
+              <td><span class="tag tag-att">T1059</span></td>
+            </tr>
+            
+          </tbody>
+        </table>
+      </div>
+      
+    </div>
+
+    <!-- Attack Surface section -->
+    <div class="sec" id="surface">
+      <div class="sec-head"><div class="sec-title">Attack Surface Analysis</div></div>
+
+      
+      
+      
+      
+      
+      
+      
+      
+
+      <div class="atk-grid">
+        <div class="atk-tile exposed">
+          <div class="atk-ic">&#x1F5C4;</div>
+          <div class="atk-name">SQL Injection</div>
+          <div class="atk-status e">Exposed</div>
+          <div class="atk-detail">CWE-89 / T1190 Initial Access</div>
+        </div>
+        <div class="atk-tile exposed">
+          <div class="atk-ic">&#x1F4BB;</div>
+          <div class="atk-name">Command Injection</div>
+          <div class="atk-status e">Exposed</div>
+          <div class="atk-detail">CWE-78 / T1059 Execution</div>
+        </div>
+        <div class="atk-tile partial">
+          <div class="atk-ic">&#x1F4DC;</div>
+          <div class="atk-name">Cross-Site Scripting</div>
+          <div class="atk-status p">Detected</div>
+          <div class="atk-detail">CWE-79 / T1059.007 Execution</div>
+        </div>
+        <div class="atk-tile exposed">
+          <div class="atk-ic">&#x1F310;</div>
+          <div class="atk-name">SSRF</div>
+          <div class="atk-status e">Exposed</div>
+          <div class="atk-detail">CWE-918 / T1090 Defense Evasion</div>
+        </div>
+        <div class="atk-tile partial">
+          <div class="atk-ic">&#x1F4C1;</div>
+          <div class="atk-name">Path Traversal</div>
+          <div class="atk-status p">Detected</div>
+          <div class="atk-detail">CWE-22 / T1083 Discovery</div>
+        </div>
+        <div class="atk-tile safe">
+          <div class="atk-ic">&#x1F511;</div>
+          <div class="atk-name">Hardcoded Credentials</div>
+          <div class="atk-status s">Clear</div>
+          <div class="atk-detail">CWE-798 / T1552.001 Credential Access</div>
+        </div>
+        <div class="atk-tile partial">
+          <div class="atk-ic">&#x1F512;</div>
+          <div class="atk-name">Weak Cryptography</div>
+          <div class="atk-status p">Detected</div>
+          <div class="atk-detail">CWE-327 / T1600 Defense Evasion</div>
+        </div>
+        <div class="atk-tile safe">
+          <div class="atk-ic">&#x1F4E6;</div>
+          <div class="atk-name">Insecure Deserialization</div>
+          <div class="atk-status s">Clear</div>
+          <div class="atk-detail">CWE-502 / T1059 Execution</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="sec" id="charts">
+      <div class="sec-head"><div class="sec-title">Analysis Charts</div></div>
+
+      <div class="chart-grid-3">
+        <div class="cbox">
+          <div class="cbox-title">Severity Distribution</div>
+          <canvas id="cSeverity"></canvas>
+        </div>
+        <div class="cbox">
+          <div class="cbox-title">ATT&CK Technique Radar</div>
+          <canvas id="cRadar"></canvas>
+        </div>
+        <div class="cbox">
+          <div class="cbox-title">Findings by File</div>
+          <div id="fileHm"></div>
+        </div>
+      </div>
+
+      <div class="chart-grid-2">
+        <div class="cbox">
+          <div class="cbox-title">Severity per File (Top 6)</div>
+          <canvas id="cStackBar"></canvas>
+        </div>
+        <div class="cbox">
+          <div class="cbox-title">Language Risk Distribution</div>
+          <canvas id="cLangPolar"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-grid-2">
+        <div class="cbox">
+          <div class="cbox-title">CWE Category Breakdown</div>
+          <canvas id="cCwe"></canvas>
+        </div>
+        <div class="cbox">
+          <div class="cbox-title">Tactic Phase Distribution</div>
+          <canvas id="cTactic"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- GitHub Info -->
+    <div class="sec" id="github">
+      <div class="sec-head"><div class="sec-title">Repository Information</div></div>
+
+      <div class="gh-card">
+        <div class="gh-top">
+          <img class="gh-av" src="https://avatars.githubusercontent.com/u/31941145?v=4" alt="OmarRao">
+          <div>
+            <div class="gh-name"><a href="https://github.com/OmarRao/analyzer" target="_blank">OmarRao/analyzer</a></div>
+            <div class="gh-desc">No description provided.</div>
+          </div>
+        </div>
+        <div class="gh-stats">
+          <span class="gh-s">Stars <strong>0</strong></span>
+          <span class="gh-s">Forks <strong>0</strong></span>
+          <span class="gh-s">Watchers <strong>0</strong></span>
+          <span class="gh-s">Issues <strong>0</strong></span>
+          <span class="gh-s">Size <strong>1 KB</strong></span>
+        </div>
+        
+      </div>
+
+      <div class="info-grid">
+        <div class="ibox">
+          <div class="ibox-title">Details</div>
+          <div class="irow"><span class="ik">Owner</span><span class="iv">OmarRao</span></div>
+          <div class="irow"><span class="ik">Default Branch</span><span class="iv"><code>main</code></span></div>
+          <div class="irow"><span class="ik">License</span><span class="iv">None</span></div>
+          <div class="irow"><span class="ik">Created</span><span class="iv">Jun 09, 2026</span></div>
+          <div class="irow"><span class="ik">Last Push</span><span class="iv">Jun 09, 2026</span></div>
+          <div class="irow"><span class="ik">Size</span><span class="iv">1 KB</span></div>
+        </div>
+
+        <div class="ibox">
+          <div class="ibox-title">Language Breakdown</div>
+          
+            
+            
+            <div class="lang-row">
+              <span class="lang-n">Python</span>
+              <div class="lang-track"><div class="lang-fill" style="width:88.9%;background:#3572A5"></div></div>
+              <span class="lang-p">88.9%</span>
+            </div>
+            
+            <div class="lang-row">
+              <span class="lang-n">HTML</span>
+              <div class="lang-track"><div class="lang-fill" style="width:9.4%;background:#e34c26"></div></div>
+              <span class="lang-p">9.4%</span>
+            </div>
+            
+            <div class="lang-row">
+              <span class="lang-n">Dockerfile</span>
+              <div class="lang-track"><div class="lang-fill" style="width:1.7%;background:#4f8ef7"></div></div>
+              <span class="lang-p">1.7%</span>
+            </div>
+            
+          
+        </div>
+
+        <div class="ibox">
+          <div class="ibox-title">Recent Commits</div>
+          
+          <ul class="commit-list">
+            
+            <li class="commit-row">
+              <span class="csha">f42ba8c</span>
+              <div><div class="cmsg">Add VulnBank vulnerable app (CI workflow added separately)</div><div class="cmeta">OmarRao / Jun 09, 2026</div></div>
+            </li>
+            
+            <li class="commit-row">
+              <span class="csha">253cb88</span>
+              <div><div class="cmsg">Add VulnBank: deliberately vulnerable Flask app for security scanner tes</div><div class="cmeta">OmarRao / Jun 09, 2026</div></div>
+            </li>
+            
+          </ul>
+          
+        </div>
+
+        <div class="ibox">
+          <div class="ibox-title">Contributors</div>
+          <p style="color:var(--muted);font-size:12px">No contributor data.</p>
+        </div>
+      </div>
+
+      
+      <div class="ibox">
+        <div class="ibox-title">File Structure</div>
+        <div class="tree-wrap">
+          
+          <span class="tree-item file">&#x1F4C4; Dockerfile</span>
+          
+          <span class="tree-item file">&#x1F4C4; README.md</span>
+          
+          <span class="tree-item file">&#x1F4C4; app.py</span>
+          
+          <span class="tree-item file">&#x1F4C4; config.py</span>
+          
+          <span class="tree-item file">&#x1F4C4; requirements.txt</span>
+          
+          <span class="tree-item dir">&#x1F4C1; templates</span>
+          
+          <span class="tree-item file">&#x1F4C4; utils.py</span>
+          
+        </div>
+      </div>
+      
+    </div>
+
+    <!-- MITRE ATT&CK -->
+    <div class="sec" id="mitre">
+      <div class="sec-head">
+        <div class="sec-title">MITRE ATT&CK Coverage</div>
+        <div class="sec-count">6 techniques</div>
+      </div>
+      <div class="mitre-grid">
+        
+        <div class="mt crit">
+          <div class="tid">T1059</div>
+          <div class="tname">OS Command Injection</div>
+          <div class="ttactic">Execution</div>
+          <div class="tct">4</div>
+        </div>
+        
+        <div class="mt crit">
+          <div class="tid">T1090</div>
+          <div class="tname">SSRF</div>
+          <div class="ttactic">Defense Evasion</div>
+          <div class="tct">1</div>
+        </div>
+        
+        <div class="mt med">
+          <div class="tid">T1190</div>
+          <div class="tname">SQL Injection</div>
+          <div class="ttactic">Initial Access</div>
+          <div class="tct">7</div>
+        </div>
+        
+        <div class="mt med">
+          <div class="tid">T1059.007</div>
+          <div class="tname">XSS</div>
+          <div class="ttactic">Execution</div>
+          <div class="tct">9</div>
+        </div>
+        
+        <div class="mt med">
+          <div class="tid">T1083</div>
+          <div class="tname">Path Traversal</div>
+          <div class="ttactic">Discovery</div>
+          <div class="tct">1</div>
+        </div>
+        
+        <div class="mt med">
+          <div class="tid">T1600</div>
+          <div class="tname">Weak Cryptography</div>
+          <div class="ttactic">Defense Evasion</div>
+          <div class="tct">4</div>
+        </div>
+        
+        
+      </div>
+    </div>
+
+    <!-- Findings -->
+    <div class="sec" id="findings">
+      <div class="sec-head">
+        <div class="sec-title">Vulnerability Findings</div>
+        <div class="sec-count">37 total</div>
+      </div>
+
+      <div class="filter-row">
+        <button class="fbtn on" onclick="filt('ALL',this)">All (37)</button>
+        <button class="fbtn" onclick="filt('ERROR',this)" style="color:var(--danger)">Critical (14)</button>
+        <button class="fbtn" onclick="filt('WARNING',this)" style="color:var(--warn)">Warning (23)</button>
+        <input class="fsearch" id="fsearch" placeholder="Filter by file, rule, CWE..." oninput="fsrch(this.value)">
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Severity</th><th>Rule / Description</th><th>Location</th><th>MITRE</th>
+            
+          </tr>
+        </thead>
+        <tbody>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="dockerfile.security.missing-user.missing-user dockerfile cwe-250 ">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">dockerfile.security.missing-user.missing-user</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">By not specifying a USER, a program in the container may run as &#39;root&#39;. This is a security hazard. If an attac</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">Dockerfile</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L12</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-250</span>
+              
+              
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.flask.security.injection.tainted-sql-string.tainted-sql-string app.py cwe-704 ">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.injection.tainted-sql-string.tainted-sql-string</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input used to manually construct a SQL string. This is usually bad practice because manual const</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L72</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-704</span>
+              
+              
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.flask.security.injection.tainted-sql-string.tainted-sql-string app.py cwe-704 ">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.injection.tainted-sql-string.tainted-sql-string</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input used to manually construct a SQL string. This is usually bad practice because manual const</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L111</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-704</span>
+              
+              
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.flask.security.injection.subprocess-injection.subprocess-injection app.py cwe-78 t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.injection.subprocess-injection.subprocess-injection</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input entering a `subprocess` call unsafely. This could result in a command injection vulnerabil</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L125</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-78</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.dangerous-subprocess-use.dangerous-subprocess-use app.py cwe-78 t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.dangerous-subprocess-use.dangerous-subprocess-use</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected subprocess function &#39;check_output&#39; with user controlled data. A malicious actor could leverage this t</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L125</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-78</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.subprocess-shell-true.subprocess-shell-true app.py cwe-78 t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.subprocess-shell-true.subprocess-shell-true</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Found &#39;subprocess&#39; function &#39;check_output&#39; with &#39;shell=True&#39;. This is dangerous because this call will spawn t</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L125</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-78</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.dangerous-system-call.dangerous-system-call app.py cwe-78 t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.dangerous-system-call.dangerous-system-call</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Found user-controlled data used in a system call. This could allow a malicious actor to execute commands. Use </div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L145</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-78</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.flask.security.injection.tainted-sql-string.tainted-sql-string app.py cwe-704 ">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.injection.tainted-sql-string.tainted-sql-string</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input used to manually construct a SQL string. This is usually bad practice because manual const</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L155</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-704</span>
+              
+              
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.flask.security.injection.tainted-sql-string.tainted-sql-string app.py cwe-704 ">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.injection.tainted-sql-string.tainted-sql-string</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input used to manually construct a SQL string. This is usually bad practice because manual const</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L175</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-704</span>
+              
+              
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.flask.security.injection.tainted-sql-string.tainted-sql-string app.py cwe-704 ">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.injection.tainted-sql-string.tainted-sql-string</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input used to manually construct a SQL string. This is usually bad practice because manual const</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L177</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-704</span>
+              
+              
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.flask.security.injection.tainted-sql-string.tainted-sql-string app.py cwe-704 ">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.injection.tainted-sql-string.tainted-sql-string</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input used to manually construct a SQL string. This is usually bad practice because manual const</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L178</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-704</span>
+              
+              
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.flask.security.injection.tainted-sql-string.tainted-sql-string app.py cwe-704 ">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.injection.tainted-sql-string.tainted-sql-string</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input used to manually construct a SQL string. This is usually bad practice because manual const</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L179</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-704</span>
+              
+              
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.flask.security.injection.tainted-sql-string.tainted-sql-string app.py cwe-704 ">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.injection.tainted-sql-string.tainted-sql-string</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input used to manually construct a SQL string. This is usually bad practice because manual const</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L206</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-704</span>
+              
+              
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.django.security.injection.ssrf.ssrf-injection-urllib.ssrf-injection-urllib app.py cwe-918 t1090">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.django.security.injection.ssrf.ssrf-injection-urllib.ssrf-injection-urllib</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Data from request object is passed to a new server-side request. This could lead to a server-side request forg</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L218</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-918</span>
+              <span class="tag tag-att">T1090</span>
+              <span class="tag tag-tactic">Defense Evasion</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute app.py cwe-89 t1190">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">User-controlled data from a request is passed to &#39;execute()&#39;. This could lead to a SQL injection and therefore</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L67</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-89</span>
+              <span class="tag tag-att">T1190</span>
+              <span class="tag tag-tactic">Initial Access</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute app.py cwe-89 t1190">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">User-controlled data from a request is passed to &#39;execute()&#39;. This could lead to a SQL injection and therefore</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L68</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-89</span>
+              <span class="tag tag-att">T1190</span>
+              <span class="tag tag-tactic">Initial Access</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute app.py cwe-89 t1190">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">User-controlled data from a request is passed to &#39;execute()&#39;. This could lead to a SQL injection and therefore</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L105</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-89</span>
+              <span class="tag tag-att">T1190</span>
+              <span class="tag tag-tactic">Initial Access</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.flask.security.audit.directly-returned-format-string.directly-returned-format-string app.py cwe-79 t1059.007">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.audit.directly-returned-format-string.directly-returned-format-string</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected Flask route directly returning a formatted string. This is subject to cross-site scripting if user in</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L116</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79</span>
+              <span class="tag tag-att">T1059.007</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.django.security.injection.raw-html-format.raw-html-format app.py cwe-79 t1059.007">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.django.security.injection.raw-html-format.raw-html-format</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure </div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L116</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79</span>
+              <span class="tag tag-att">T1059.007</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.flask.security.injection.raw-html-concat.raw-html-format app.py cwe-79 t1059.007">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.injection.raw-html-concat.raw-html-format</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure </div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L116</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79</span>
+              <span class="tag tag-att">T1059.007</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.flask.security.audit.directly-returned-format-string.directly-returned-format-string app.py cwe-79 t1059.007">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.audit.directly-returned-format-string.directly-returned-format-string</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected Flask route directly returning a formatted string. This is subject to cross-site scripting if user in</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L126</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79</span>
+              <span class="tag tag-att">T1059.007</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.django.security.injection.raw-html-format.raw-html-format app.py cwe-79 t1059.007">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.django.security.injection.raw-html-format.raw-html-format</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure </div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L126</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79</span>
+              <span class="tag tag-att">T1059.007</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.flask.security.injection.raw-html-concat.raw-html-format app.py cwe-79 t1059.007">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.injection.raw-html-concat.raw-html-format</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure </div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L126</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79</span>
+              <span class="tag tag-att">T1059.007</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.django.security.injection.path-traversal.path-traversal-open.path-traversal-open app.py cwe-22 t1083">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.django.security.injection.path-traversal.path-traversal-open.path-traversal-open</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Found request data in a call to &#39;open&#39;. Ensure the request data is validated or sanitized, otherwise it could </div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L132</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-22</span>
+              <span class="tag tag-att">T1083</span>
+              <span class="tag tag-tactic">Discovery</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.flask.security.audit.directly-returned-format-string.directly-returned-format-string app.py cwe-79 t1059.007">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.audit.directly-returned-format-string.directly-returned-format-string</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected Flask route directly returning a formatted string. This is subject to cross-site scripting if user in</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L136</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79</span>
+              <span class="tag tag-att">T1059.007</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.django.security.injection.raw-html-format.raw-html-format app.py cwe-79 t1059.007">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.django.security.injection.raw-html-format.raw-html-format</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure </div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L136</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79</span>
+              <span class="tag tag-att">T1059.007</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.flask.security.injection.raw-html-concat.raw-html-format app.py cwe-79 t1059.007">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.injection.raw-html-concat.raw-html-format</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure </div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L136</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79</span>
+              <span class="tag tag-att">T1059.007</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute app.py cwe-89 t1190">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">User-controlled data from a request is passed to &#39;execute()&#39;. This could lead to a SQL injection and therefore</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L170</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-89</span>
+              <span class="tag tag-att">T1190</span>
+              <span class="tag tag-tactic">Initial Access</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute app.py cwe-89 t1190">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">User-controlled data from a request is passed to &#39;execute()&#39;. This could lead to a SQL injection and therefore</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L170</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-89</span>
+              <span class="tag tag-att">T1190</span>
+              <span class="tag tag-tactic">Initial Access</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute app.py cwe-89 t1190">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">User-controlled data from a request is passed to &#39;execute()&#39;. This could lead to a SQL injection and therefore</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L171</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-89</span>
+              <span class="tag tag-att">T1190</span>
+              <span class="tag tag-tactic">Initial Access</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute app.py cwe-89 t1190">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">User-controlled data from a request is passed to &#39;execute()&#39;. This could lead to a SQL injection and therefore</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L199</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-89</span>
+              <span class="tag tag-att">T1190</span>
+              <span class="tag tag-tactic">Initial Access</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5 app.py cwe-327 t1600">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not </div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L203</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-327</span>
+              <span class="tag tag-att">T1600</span>
+              <span class="tag tag-tactic">Defense Evasion</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.flask.security.audit.app-run-param-config.avoid_app_run_with_bad_host app.py cwe-668 ">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.audit.app-run-param-config.avoid_app_run_with_bad_host</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Running flask app with host 0.0.0.0 could expose the server publicly.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L226</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-668</span>
+              
+              
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.flask.security.audit.debug-enabled.debug-enabled app.py cwe-489 ">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.flask.security.audit.debug-enabled.debug-enabled</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected Flask app with debug=True. Do not deploy to production with this flag enabled as it will leak sensiti</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">app.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L226</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-489</span>
+              
+              
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5 utils.py cwe-327 t1600">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not </div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">utils.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L13</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-327</span>
+              <span class="tag tag-att">T1600</span>
+              <span class="tag tag-tactic">Defense Evasion</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.audit.md5-used-as-password.md5-used-as-password utils.py cwe-327 t1600">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.md5-used-as-password.md5-used-as-password</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">It looks like MD5 is used as a password hash. MD5 is not considered a secure password hash because it can be c</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">utils.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L13</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-327</span>
+              <span class="tag tag-att">T1600</span>
+              <span class="tag tag-tactic">Defense Evasion</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5 utils.py cwe-327 t1600">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not </div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)">utils.py</code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L43</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-327</span>
+              <span class="tag tag-att">T1600</span>
+              <span class="tag tag-tactic">Defense Evasion</span>
+            </td>
+            
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CVEs -->
+    <div class="sec" id="cves">
+      <div class="sec-head">
+        <div class="sec-title">Dependency CVEs</div>
+        <div class="sec-count">0</div>
+      </div>
+      
+      <div style="padding:32px;text-align:center;color:var(--ok);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px">
+        No known CVEs detected in dependencies.
+      </div>
+      
+    </div>
+
+    <!-- Sandbox -->
+    <div class="sec" id="sandbox">
+      <div class="sec-head"><div class="sec-title">Sandbox Runtime Analysis</div></div>
+      
+        <div style="padding:28px;text-align:center;color:var(--muted);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px">
+          Sandbox not enabled for this scan. Re-run with Docker Sandbox option active.
+        </div>
+      
+    </div>
+
+  </div>
+</div>
+
+<script>
+const findings = [{"attack_name": null, "attack_tactic": null, "attack_technique": null, "code_snippet": "requires login", "cwe": "CWE-250", "file": "Dockerfile", "fix_suggestion": null, "line_end": 12, "line_start": 12, "message": "By not specifying a USER, a program in the container may run as \u0027root\u0027. This is a security hazard. If an attacker can control a process running as root, they may have control over the container. Ensure that the last USER in a Dockerfile is a USER other than \u0027root\u0027.", "rule_id": "dockerfile.security.missing-user.missing-user", "severity": "ERROR"}, {"attack_name": null, "attack_tactic": null, "attack_technique": null, "code_snippet": "requires login", "cwe": "CWE-704", "file": "app.py", "fix_suggestion": null, "line_end": 72, "line_start": 72, "message": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries.", "rule_id": "python.flask.security.injection.tainted-sql-string.tainted-sql-string", "severity": "ERROR"}, {"attack_name": null, "attack_tactic": null, "attack_technique": null, "code_snippet": "requires login", "cwe": "CWE-704", "file": "app.py", "fix_suggestion": null, "line_end": 111, "line_start": 111, "message": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries.", "rule_id": "python.flask.security.injection.tainted-sql-string.tainted-sql-string", "severity": "ERROR"}, {"attack_name": "OS Command Injection", "attack_tactic": "Execution", "attack_technique": "T1059", "code_snippet": "requires login", "cwe": "CWE-78", "file": "app.py", "fix_suggestion": null, "line_end": 125, "line_start": 125, "message": "Detected user input entering a `subprocess` call unsafely. This could result in a command injection vulnerability. An attacker could use this vulnerability to execute arbitrary commands on the host, which allows them to download malware, scan sensitive data, or run any command they wish on the server. Do not let users choose the command to run. In general, prefer to use Python API versions of system commands. If you must use subprocess, use a dictionary to allowlist a set of commands.", "rule_id": "python.flask.security.injection.subprocess-injection.subprocess-injection", "severity": "ERROR"}, {"attack_name": "OS Command Injection", "attack_tactic": "Execution", "attack_technique": "T1059", "code_snippet": "requires login", "cwe": "CWE-78", "file": "app.py", "fix_suggestion": null, "line_end": 125, "line_start": 125, "message": "Detected subprocess function \u0027check_output\u0027 with user controlled data. A malicious actor could leverage this to perform command injection. You may consider using \u0027shlex.escape()\u0027.", "rule_id": "python.lang.security.dangerous-subprocess-use.dangerous-subprocess-use", "severity": "ERROR"}, {"attack_name": "OS Command Injection", "attack_tactic": "Execution", "attack_technique": "T1059", "code_snippet": "requires login", "cwe": "CWE-78", "file": "app.py", "fix_suggestion": null, "line_end": 125, "line_start": 125, "message": "Found \u0027subprocess\u0027 function \u0027check_output\u0027 with \u0027shell=True\u0027. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use \u0027shell=False\u0027 instead.", "rule_id": "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true", "severity": "ERROR"}, {"attack_name": "OS Command Injection", "attack_tactic": "Execution", "attack_technique": "T1059", "code_snippet": "requires login", "cwe": "CWE-78", "file": "app.py", "fix_suggestion": null, "line_end": 145, "line_start": 145, "message": "Found user-controlled data used in a system call. This could allow a malicious actor to execute commands. Use the \u0027subprocess\u0027 module instead, which is easier to use without accidentally exposing a command injection vulnerability.", "rule_id": "python.lang.security.dangerous-system-call.dangerous-system-call", "severity": "ERROR"}, {"attack_name": null, "attack_tactic": null, "attack_technique": null, "code_snippet": "requires login", "cwe": "CWE-704", "file": "app.py", "fix_suggestion": null, "line_end": 155, "line_start": 155, "message": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries.", "rule_id": "python.flask.security.injection.tainted-sql-string.tainted-sql-string", "severity": "ERROR"}, {"attack_name": null, "attack_tactic": null, "attack_technique": null, "code_snippet": "requires login", "cwe": "CWE-704", "file": "app.py", "fix_suggestion": null, "line_end": 175, "line_start": 175, "message": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries.", "rule_id": "python.flask.security.injection.tainted-sql-string.tainted-sql-string", "severity": "ERROR"}, {"attack_name": null, "attack_tactic": null, "attack_technique": null, "code_snippet": "requires login", "cwe": "CWE-704", "file": "app.py", "fix_suggestion": null, "line_end": 177, "line_start": 177, "message": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries.", "rule_id": "python.flask.security.injection.tainted-sql-string.tainted-sql-string", "severity": "ERROR"}, {"attack_name": null, "attack_tactic": null, "attack_technique": null, "code_snippet": "requires login", "cwe": "CWE-704", "file": "app.py", "fix_suggestion": null, "line_end": 178, "line_start": 178, "message": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries.", "rule_id": "python.flask.security.injection.tainted-sql-string.tainted-sql-string", "severity": "ERROR"}, {"attack_name": null, "attack_tactic": null, "attack_technique": null, "code_snippet": "requires login", "cwe": "CWE-704", "file": "app.py", "fix_suggestion": null, "line_end": 179, "line_start": 179, "message": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries.", "rule_id": "python.flask.security.injection.tainted-sql-string.tainted-sql-string", "severity": "ERROR"}, {"attack_name": null, "attack_tactic": null, "attack_technique": null, "code_snippet": "requires login", "cwe": "CWE-704", "file": "app.py", "fix_suggestion": null, "line_end": 206, "line_start": 206, "message": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries.", "rule_id": "python.flask.security.injection.tainted-sql-string.tainted-sql-string", "severity": "ERROR"}, {"attack_name": "SSRF", "attack_tactic": "Defense Evasion", "attack_technique": "T1090", "code_snippet": "requires login", "cwe": "CWE-918", "file": "app.py", "fix_suggestion": null, "line_end": 219, "line_start": 218, "message": "Data from request object is passed to a new server-side request. This could lead to a server-side request forgery (SSRF), which could result in attackers gaining access to private organization data. To mitigate, ensure that schemes and hosts are validated against an allowlist, do not forward the response to the user, and ensure proper authentication and transport-layer security in the proxied request.", "rule_id": "python.django.security.injection.ssrf.ssrf-injection-urllib.ssrf-injection-urllib", "severity": "ERROR"}, {"attack_name": "SQL Injection", "attack_tactic": "Initial Access", "attack_technique": "T1190", "code_snippet": "requires login", "cwe": "CWE-89", "file": "app.py", "fix_suggestion": null, "line_end": 73, "line_start": 67, "message": "User-controlled data from a request is passed to \u0027execute()\u0027. This could lead to a SQL injection and therefore protected information could be leaked. Instead, use django\u0027s QuerySets, which are built with query parameterization and therefore not vulnerable to sql injection. For example, you could use `Entry.objects.filter(date=2006)`.", "rule_id": "python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute", "severity": "WARNING"}, {"attack_name": "SQL Injection", "attack_tactic": "Initial Access", "attack_technique": "T1190", "code_snippet": "requires login", "cwe": "CWE-89", "file": "app.py", "fix_suggestion": null, "line_end": 73, "line_start": 68, "message": "User-controlled data from a request is passed to \u0027execute()\u0027. This could lead to a SQL injection and therefore protected information could be leaked. Instead, use django\u0027s QuerySets, which are built with query parameterization and therefore not vulnerable to sql injection. For example, you could use `Entry.objects.filter(date=2006)`.", "rule_id": "python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute", "severity": "WARNING"}, {"attack_name": "SQL Injection", "attack_tactic": "Initial Access", "attack_technique": "T1190", "code_snippet": "requires login", "cwe": "CWE-89", "file": "app.py", "fix_suggestion": null, "line_end": 112, "line_start": 105, "message": "User-controlled data from a request is passed to \u0027execute()\u0027. This could lead to a SQL injection and therefore protected information could be leaked. Instead, use django\u0027s QuerySets, which are built with query parameterization and therefore not vulnerable to sql injection. For example, you could use `Entry.objects.filter(date=2006)`.", "rule_id": "python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute", "severity": "WARNING"}, {"attack_name": "XSS", "attack_tactic": "Execution", "attack_technique": "T1059.007", "code_snippet": "requires login", "cwe": "CWE-79", "file": "app.py", "fix_suggestion": null, "line_end": 116, "line_start": 116, "message": "Detected Flask route directly returning a formatted string. This is subject to cross-site scripting if user input can reach the string. Consider using the template engine instead and rendering pages with \u0027render_template()\u0027.", "rule_id": "python.flask.security.audit.directly-returned-format-string.directly-returned-format-string", "severity": "WARNING"}, {"attack_name": "XSS", "attack_tactic": "Execution", "attack_technique": "T1059.007", "code_snippet": "requires login", "cwe": "CWE-79", "file": "app.py", "fix_suggestion": null, "line_end": 116, "line_start": 116, "message": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`django.shortcuts.render`) which will safely render HTML instead.", "rule_id": "python.django.security.injection.raw-html-format.raw-html-format", "severity": "WARNING"}, {"attack_name": "XSS", "attack_tactic": "Execution", "attack_technique": "T1059.007", "code_snippet": "requires login", "cwe": "CWE-79", "file": "app.py", "fix_suggestion": null, "line_end": 116, "line_start": 116, "message": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`flask.render_template`) which will safely render HTML instead.", "rule_id": "python.flask.security.injection.raw-html-concat.raw-html-format", "severity": "WARNING"}, {"attack_name": "XSS", "attack_tactic": "Execution", "attack_technique": "T1059.007", "code_snippet": "requires login", "cwe": "CWE-79", "file": "app.py", "fix_suggestion": null, "line_end": 126, "line_start": 126, "message": "Detected Flask route directly returning a formatted string. This is subject to cross-site scripting if user input can reach the string. Consider using the template engine instead and rendering pages with \u0027render_template()\u0027.", "rule_id": "python.flask.security.audit.directly-returned-format-string.directly-returned-format-string", "severity": "WARNING"}, {"attack_name": "XSS", "attack_tactic": "Execution", "attack_technique": "T1059.007", "code_snippet": "requires login", "cwe": "CWE-79", "file": "app.py", "fix_suggestion": null, "line_end": 126, "line_start": 126, "message": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`django.shortcuts.render`) which will safely render HTML instead.", "rule_id": "python.django.security.injection.raw-html-format.raw-html-format", "severity": "WARNING"}, {"attack_name": "XSS", "attack_tactic": "Execution", "attack_technique": "T1059.007", "code_snippet": "requires login", "cwe": "CWE-79", "file": "app.py", "fix_suggestion": null, "line_end": 126, "line_start": 126, "message": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`flask.render_template`) which will safely render HTML instead.", "rule_id": "python.flask.security.injection.raw-html-concat.raw-html-format", "severity": "WARNING"}, {"attack_name": "Path Traversal", "attack_tactic": "Discovery", "attack_technique": "T1083", "code_snippet": "requires login", "cwe": "CWE-22", "file": "app.py", "fix_suggestion": null, "line_end": 138, "line_start": 132, "message": "Found request data in a call to \u0027open\u0027. Ensure the request data is validated or sanitized, otherwise it could result in path traversal attacks and therefore sensitive data being leaked. To mitigate, consider using os.path.abspath or os.path.realpath or the pathlib library.", "rule_id": "python.django.security.injection.path-traversal.path-traversal-open.path-traversal-open", "severity": "WARNING"}, {"attack_name": "XSS", "attack_tactic": "Execution", "attack_technique": "T1059.007", "code_snippet": "requires login", "cwe": "CWE-79", "file": "app.py", "fix_suggestion": null, "line_end": 136, "line_start": 136, "message": "Detected Flask route directly returning a formatted string. This is subject to cross-site scripting if user input can reach the string. Consider using the template engine instead and rendering pages with \u0027render_template()\u0027.", "rule_id": "python.flask.security.audit.directly-returned-format-string.directly-returned-format-string", "severity": "WARNING"}, {"attack_name": "XSS", "attack_tactic": "Execution", "attack_technique": "T1059.007", "code_snippet": "requires login", "cwe": "CWE-79", "file": "app.py", "fix_suggestion": null, "line_end": 136, "line_start": 136, "message": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`django.shortcuts.render`) which will safely render HTML instead.", "rule_id": "python.django.security.injection.raw-html-format.raw-html-format", "severity": "WARNING"}, {"attack_name": "XSS", "attack_tactic": "Execution", "attack_technique": "T1059.007", "code_snippet": "requires login", "cwe": "CWE-79", "file": "app.py", "fix_suggestion": null, "line_end": 136, "line_start": 136, "message": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`flask.render_template`) which will safely render HTML instead.", "rule_id": "python.flask.security.injection.raw-html-concat.raw-html-format", "severity": "WARNING"}, {"attack_name": "SQL Injection", "attack_tactic": "Initial Access", "attack_technique": "T1190", "code_snippet": "requires login", "cwe": "CWE-89", "file": "app.py", "fix_suggestion": null, "line_end": 175, "line_start": 170, "message": "User-controlled data from a request is passed to \u0027execute()\u0027. This could lead to a SQL injection and therefore protected information could be leaked. Instead, use django\u0027s QuerySets, which are built with query parameterization and therefore not vulnerable to sql injection. For example, you could use `Entry.objects.filter(date=2006)`.", "rule_id": "python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute", "severity": "WARNING"}, {"attack_name": "SQL Injection", "attack_tactic": "Initial Access", "attack_technique": "T1190", "code_snippet": "requires login", "cwe": "CWE-89", "file": "app.py", "fix_suggestion": null, "line_end": 180, "line_start": 170, "message": "User-controlled data from a request is passed to \u0027execute()\u0027. This could lead to a SQL injection and therefore protected information could be leaked. Instead, use django\u0027s QuerySets, which are built with query parameterization and therefore not vulnerable to sql injection. For example, you could use `Entry.objects.filter(date=2006)`.", "rule_id": "python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute", "severity": "WARNING"}, {"attack_name": "SQL Injection", "attack_tactic": "Initial Access", "attack_technique": "T1190", "code_snippet": "requires login", "cwe": "CWE-89", "file": "app.py", "fix_suggestion": null, "line_end": 180, "line_start": 171, "message": "User-controlled data from a request is passed to \u0027execute()\u0027. This could lead to a SQL injection and therefore protected information could be leaked. Instead, use django\u0027s QuerySets, which are built with query parameterization and therefore not vulnerable to sql injection. For example, you could use `Entry.objects.filter(date=2006)`.", "rule_id": "python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute", "severity": "WARNING"}, {"attack_name": "SQL Injection", "attack_tactic": "Initial Access", "attack_technique": "T1190", "code_snippet": "requires login", "cwe": "CWE-89", "file": "app.py", "fix_suggestion": null, "line_end": 206, "line_start": 199, "message": "User-controlled data from a request is passed to \u0027execute()\u0027. This could lead to a SQL injection and therefore protected information could be leaked. Instead, use django\u0027s QuerySets, which are built with query parameterization and therefore not vulnerable to sql injection. For example, you could use `Entry.objects.filter(date=2006)`.", "rule_id": "python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute", "severity": "WARNING"}, {"attack_name": "Weak Cryptography", "attack_tactic": "Defense Evasion", "attack_technique": "T1600", "code_snippet": "requires login", "cwe": "CWE-327", "file": "app.py", "fix_suggestion": null, "line_end": 203, "line_start": 203, "message": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead.", "rule_id": "python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5", "severity": "WARNING"}, {"attack_name": null, "attack_tactic": null, "attack_technique": null, "code_snippet": "requires login", "cwe": "CWE-668", "file": "app.py", "fix_suggestion": null, "line_end": 226, "line_start": 226, "message": "Running flask app with host 0.0.0.0 could expose the server publicly.", "rule_id": "python.flask.security.audit.app-run-param-config.avoid_app_run_with_bad_host", "severity": "WARNING"}, {"attack_name": null, "attack_tactic": null, "attack_technique": null, "code_snippet": "requires login", "cwe": "CWE-489", "file": "app.py", "fix_suggestion": null, "line_end": 226, "line_start": 226, "message": "Detected Flask app with debug=True. Do not deploy to production with this flag enabled as it will leak sensitive information. Instead, consider using Flask configuration variables or setting \u0027debug\u0027 using system environment variables.", "rule_id": "python.flask.security.audit.debug-enabled.debug-enabled", "severity": "WARNING"}, {"attack_name": "Weak Cryptography", "attack_tactic": "Defense Evasion", "attack_technique": "T1600", "code_snippet": "requires login", "cwe": "CWE-327", "file": "utils.py", "fix_suggestion": null, "line_end": 13, "line_start": 13, "message": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead.", "rule_id": "python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5", "severity": "WARNING"}, {"attack_name": "Weak Cryptography", "attack_tactic": "Defense Evasion", "attack_technique": "T1600", "code_snippet": "requires login", "cwe": "CWE-327", "file": "utils.py", "fix_suggestion": null, "line_end": 13, "line_start": 13, "message": "It looks like MD5 is used as a password hash. MD5 is not considered a secure password hash because it can be cracked by an attacker in a short amount of time. Use a suitable password hashing function such as scrypt. You can use `hashlib.scrypt`.", "rule_id": "python.lang.security.audit.md5-used-as-password.md5-used-as-password", "severity": "WARNING"}, {"attack_name": "Weak Cryptography", "attack_tactic": "Defense Evasion", "attack_technique": "T1600", "code_snippet": "requires login", "cwe": "CWE-327", "file": "utils.py", "fix_suggestion": null, "line_end": 43, "line_start": 43, "message": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead.", "rule_id": "python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5", "severity": "WARNING"}];
+const ghInfo   = {"archived": false, "avatar_url": "https://avatars.githubusercontent.com/u/31941145?v=4", "contributors": [], "created_at": "Jun 09, 2026", "default_branch": "main", "description": "No description provided.", "file_tree": [{"name": "Dockerfile", "size": 200, "type": "file"}, {"name": "README.md", "size": 1216, "type": "file"}, {"name": "app.py", "size": 8399, "type": "file"}, {"name": "config.py", "size": 623, "type": "file"}, {"name": "requirements.txt", "size": 74, "type": "file"}, {"name": "templates", "size": 0, "type": "dir"}, {"name": "utils.py", "size": 1374, "type": "file"}], "forks": 0, "full_name": "OmarRao/analyzer", "homepage": null, "language": "Python", "languages": {"Dockerfile": 1.7, "HTML": 9.4, "Python": 88.9}, "license": "None", "open_issues": 0, "owner": "OmarRao", "owner_type": "User", "private": false, "pushed_at": "Jun 09, 2026", "recent_commits": [{"author": "OmarRao", "date": "Jun 09, 2026", "message": "Add VulnBank vulnerable app (CI workflow added separately)", "sha": "f42ba8c"}, {"author": "OmarRao", "date": "Jun 09, 2026", "message": "Add VulnBank: deliberately vulnerable Flask app for security scanner tes", "sha": "253cb88"}], "repo": "analyzer", "size_kb": 1, "stars": 0, "topics": [], "updated_at": "Jun 09, 2026", "url": "https://github.com/OmarRao/analyzer", "watchers": 0};
+
+// Severity donut
+const sevCounts = {ERROR:0,WARNING:0,INFO:0};
+findings.forEach(f => sevCounts[f.severity] = (sevCounts[f.severity]||0)+1);
+new Chart(document.getElementById('cSeverity'),{
+  type:'doughnut',
+  data:{
+    labels:['Critical','Warning','Info'],
+    datasets:[{data:[sevCounts.ERROR,sevCounts.WARNING,sevCounts.INFO],
+      backgroundColor:['rgba(242,87,87,.75)','rgba(230,168,23,.75)','rgba(79,142,247,.75)'],
+      borderColor:['#f25757','#e6a817','#4f8ef7'],borderWidth:2}]
+  },
+  options:{cutout:'68%',plugins:{legend:{labels:{color:'#8b96a4',font:{family:'Geist Mono',size:11}}}}}
+});
+
+// Radar
+const techMap={};
+findings.forEach(f=>{if(f.attack_technique)techMap[f.attack_technique]=(techMap[f.attack_technique]||0)+1});
+new Chart(document.getElementById('cRadar'),{
+  type:'radar',
+  data:{
+    labels:Object.keys(techMap).length?Object.keys(techMap):['None'],
+    datasets:[{label:'Hits',data:Object.keys(techMap).length?Object.values(techMap):[0],
+      backgroundColor:'rgba(79,142,247,.12)',borderColor:'#4f8ef7',
+      pointBackgroundColor:'#4f8ef7',pointRadius:3}]
+  },
+  options:{scales:{r:{ticks:{color:'#4a5568',backdropColor:'transparent',stepSize:1},
+    grid:{color:'#252b35'},pointLabels:{color:'#8b96a4',font:{family:'Geist Mono',size:9}}}},
+    plugins:{legend:{display:false}}}
+});
+
+// File heatmap
+const fileMap={};
+findings.forEach(f=>{fileMap[f.file]=(fileMap[f.file]||0)+1});
+const sortedF=Object.entries(fileMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+const maxN=sortedF[0]?.[1]||1;
+const hmEl=document.getElementById('fileHm');
+sortedF.forEach(([file,n])=>{
+  const pct=Math.round(n/maxN*100);
+  const col=n>=5?'#f25757':n>=3?'#e6a817':'#4f8ef7';
+  const nm=file.split(/[/\\]/).pop();
+  hmEl.innerHTML+=`<div class="hm-row">
+    <span class="hm-name" title="${file}">${nm}</span>
+    <div class="hm-track"><div class="hm-fill" style="width:${pct}%;background:${col}">${n}</div></div>
+    <span class="hm-n">${n}</span></div>`;
+});
+
+// Stacked bar
+const top6=Object.entries(fileMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
+new Chart(document.getElementById('cStackBar'),{
+  type:'bar',
+  data:{
+    labels:top6.map(([f])=>f.split(/[/\\]/).pop()),
+    datasets:[
+      {label:'Critical',data:top6.map(([f])=>findings.filter(x=>x.file===f&&x.severity==='ERROR').length),backgroundColor:'rgba(242,87,87,.7)',borderRadius:3},
+      {label:'Warning', data:top6.map(([f])=>findings.filter(x=>x.file===f&&x.severity==='WARNING').length),backgroundColor:'rgba(230,168,23,.7)',borderRadius:3},
+    ]
+  },
+  options:{plugins:{legend:{labels:{color:'#8b96a4',font:{family:'Geist Mono',size:10}}}},
+    scales:{x:{stacked:true,ticks:{color:'#4a5568',font:{family:'Geist Mono',size:9}},grid:{color:'#1f242d'}},
+            y:{stacked:true,ticks:{color:'#4a5568',stepSize:1,font:{family:'Geist Mono',size:9}},grid:{color:'#1f242d'}}}}
+});
+
+// Polar (language)
+const langs=ghInfo.languages||{};
+const lnames=Object.keys(langs).slice(0,6);
+const lcolors={Python:'rgba(53,114,165,.7)',JavaScript:'rgba(241,224,90,.7)',TypeScript:'rgba(43,116,137,.7)',PHP:'rgba(79,93,149,.7)',Java:'rgba(176,114,25,.7)',Go:'rgba(0,173,216,.7)',Shell:'rgba(137,224,81,.7)',HTML:'rgba(227,76,38,.7)'};
+new Chart(document.getElementById('cLangPolar'),{
+  type:'polarArea',
+  data:{labels:lnames.length?lnames:['N/A'],datasets:[{data:lnames.length?lnames.map(l=>langs[l]):[100],
+    backgroundColor:lnames.map(l=>lcolors[l]||'rgba(79,142,247,.5)')}]},
+  options:{plugins:{legend:{labels:{color:'#8b96a4',font:{family:'Geist Mono',size:10}}}},
+    scales:{r:{ticks:{color:'#4a5568',backdropColor:'transparent'},grid:{color:'#252b35'}}}}
+});
+
+// CWE bar
+const cweMap={};
+findings.forEach(f=>{if(f.cwe)cweMap[f.cwe]=(cweMap[f.cwe]||0)+1});
+const cweSorted=Object.entries(cweMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+new Chart(document.getElementById('cCwe'),{
+  type:'bar',
+  data:{labels:cweSorted.map(([c])=>c),datasets:[{label:'Findings',
+    data:cweSorted.map(([,n])=>n),
+    backgroundColor:'rgba(167,139,250,.65)',borderColor:'#a78bfa',borderWidth:1,borderRadius:3}]},
+  options:{indexAxis:'y',plugins:{legend:{display:false}},
+    scales:{x:{ticks:{color:'#4a5568',stepSize:1,font:{family:'Geist Mono',size:9}},grid:{color:'#1f242d'}},
+            y:{ticks:{color:'#8b96a4',font:{family:'Geist Mono',size:9}},grid:{color:'#1f242d'}}}}
+});
+
+// Tactic doughnut
+const tacMap={};
+findings.forEach(f=>{if(f.attack_tactic)tacMap[f.attack_tactic]=(tacMap[f.attack_tactic]||0)+1});
+const tacColors=['rgba(79,142,247,.75)','rgba(242,87,87,.75)','rgba(230,168,23,.75)','rgba(167,139,250,.75)','rgba(62,207,121,.75)','rgba(78,201,176,.75)'];
+new Chart(document.getElementById('cTactic'),{
+  type:'doughnut',
+  data:{labels:Object.keys(tacMap).length?Object.keys(tacMap):['None'],
+    datasets:[{data:Object.keys(tacMap).length?Object.values(tacMap):[1],
+      backgroundColor:Object.keys(tacMap).map((_,i)=>tacColors[i%tacColors.length]),
+      borderWidth:2}]},
+  options:{cutout:'55%',plugins:{legend:{labels:{color:'#8b96a4',font:{family:'Geist Mono',size:10}}}}}
+});
+
+// Filter/search
+function filt(sev,btn){
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.fr').forEach(r=>r.style.display=(sev==='ALL'||r.dataset.sev===sev)?'':'none');
+}
+function fsrch(q){
+  const ql=q.toLowerCase();
+  document.querySelectorAll('.fr').forEach(r=>r.style.display=r.dataset.txt.includes(ql)?'':'none');
+}
+function go(id,el){
+  document.getElementById(id)?.scrollIntoView({behavior:'smooth'});
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));
+  el.classList.add('on');
+}
+</script>
+</body>
+</html>
