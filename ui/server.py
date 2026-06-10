@@ -66,6 +66,8 @@ def handle_scan(data):
     repo_url = data.get("repo_url", "").strip()
     run_sandbox = data.get("sandbox", False)
     run_advisor = data.get("advisor", False)
+    llm_provider = data.get("llm_provider", "anthropic") or "anthropic"
+    llm_api_key = data.get("llm_api_key", "") or ""
     sid = request.sid
 
     if not repo_url or not parse_repo_url(repo_url):
@@ -100,10 +102,10 @@ def handle_scan(data):
                     obs = run_in_sandbox(workdir)
 
                 enriched = None
-                if run_advisor and os.environ.get("ANTHROPIC_API_KEY"):
+                if run_advisor and (llm_api_key or os.environ.get("ANTHROPIC_API_KEY") or llm_provider == "ollama" or llm_provider == "none"):
                     _emit(sid, "progress", {"step": "advisor", "message": f"🤖 Generating AI fix advisories for {min(len(result.findings),20)} findings...", "pct": 75})
                     from advisor import enrich_findings
-                    enriched = enrich_findings(result, obs, max_findings=20)
+                    enriched = enrich_findings(result, obs, provider=llm_provider, api_key=llm_api_key, max_findings=20)
 
                 _emit(sid, "progress", {"step": "report", "message": "📊 Building report...", "pct": 90})
 
@@ -167,6 +169,6 @@ def _emit(sid, event, data):
 
 
 if __name__ == "__main__":
-    print("\n🔒 Security Review UI")
+    print("\nSecurity Review UI")
     print("   Open: http://localhost:5001\n")
     socketio.run(app, host="0.0.0.0", port=5001, debug=False, allow_unsafe_werkzeug=True)

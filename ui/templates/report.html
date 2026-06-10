@@ -11,10 +11,23 @@
     :root {
       --ink:   #0a0c0f; --ink2: #111419; --ink3: #181c23; --ink4: #1f242d;
       --rule:  #252b35; --rule2: #2e3540;
-      --muted: #4a5568; --dim: #6b7785; --sub: #8b96a4;
-      --body:  #c8d0db; --head: #ffffff;
+      --muted: #4a5568; --dim: #6b7785; --sub: #a0aec0;
+      --body:  #e2e8f0; --head: #ffffff;
       --accent:#4f8ef7; --danger:#f25757; --warn:#e6a817; --ok:#3ecf79; --tag:#a78bfa; --teal:#4ec9b0;
     }
+    html.light {
+      --ink:   #f8f9fa; --ink2: #ffffff; --ink3: #f1f3f5; --ink4: #e9ecef;
+      --rule:  #dee2e6; --rule2: #ced4da;
+      --muted: #868e96; --dim: #6c757d; --sub: #495057;
+      --body:  #212529; --head: #000000;
+    }
+    .theme-btn {
+      background: none; border: 1px solid var(--rule2); border-radius: 6px;
+      color: var(--sub); cursor: pointer; padding: 5px 9px;
+      font-size: 14px; line-height: 1; transition: background .15s, color .15s;
+      margin-top: auto; margin-bottom: 0;
+    }
+    .theme-btn:hover { background: var(--ink3); color: var(--head); }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     html{scroll-behavior:smooth}
     body{background:var(--ink);color:var(--body);font-family:'Geist',sans-serif;font-size:14px;line-height:1.6}
@@ -297,7 +310,8 @@
     <div class="side-foot">
       Generated<br>{{ generated_at }}<br><br>
       SecureScope v1.0<br>
-      MITRE ATT&CK v14
+      MITRE ATT&CK v14<br><br>
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
     </div>
   </nav>
 
@@ -765,6 +779,28 @@
 </div>
 
 <script>
+// ── Theme toggle ──────────────────────────────────────────────────────────────
+function toggleTheme() {
+  const html = document.documentElement;
+  const btn = document.getElementById('themeBtn');
+  if (html.classList.contains('light')) {
+    html.classList.remove('light');
+    btn.textContent = '🌙';
+    localStorage.setItem('theme', 'dark');
+  } else {
+    html.classList.add('light');
+    btn.textContent = '☀️';
+    localStorage.setItem('theme', 'light');
+  }
+}
+(function() {
+  if (localStorage.getItem('theme') === 'light') {
+    document.documentElement.classList.add('light');
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = '☀️';
+  }
+})();
+
 const findings = {{ findings | tojson }};
 const ghInfo   = {{ gh | tojson }};
 
