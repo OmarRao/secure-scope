@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SecureScope / GitHub Security Analyzer</title>
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;900&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
+    /* ── Design tokens ─────────────────────────────────────────────── */
     :root {
       --ink:    #0a0c0f;
       --ink2:   #111419;
@@ -26,19 +26,21 @@
       --warn:   #e6a817;
       --ok:     #3ecf79;
       --tag:    #a78bfa;
+      --gutter: 48px;
+      --max:    1100px;
     }
     html.light {
-      --ink:    #f8f9fa;
-      --ink2:   #ffffff;
-      --ink3:   #f1f3f5;
-      --ink4:   #e9ecef;
-      --rule:   #dee2e6;
-      --rule2:  #ced4da;
-      --muted:  #868e96;
-      --dim:    #6c757d;
-      --sub:    #495057;
-      --body:   #212529;
-      --head:   #000000;
+      --ink:   #f4f6f9;
+      --ink2:  #ffffff;
+      --ink3:  #eef1f5;
+      --ink4:  #e5e9f0;
+      --rule:  #d5dae4;
+      --rule2: #c4cad6;
+      --muted: #7a8494;
+      --dim:   #5e6878;
+      --sub:   #3d4756;
+      --body:  #1a2030;
+      --head:  #000000;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
@@ -56,35 +58,45 @@
     a:hover { text-decoration: underline; }
     code, pre { font-family: 'Geist Mono', monospace; }
 
-    /* Topbar */
+    /* ── Layout wrapper ──────────────────────────────────────────────── */
+    .wrap {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 var(--gutter);
+    }
+
+    /* ── Topbar ──────────────────────────────────────────────────────── */
     .topbar {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
       background: rgba(10,12,15,.92);
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       border-bottom: 1px solid var(--rule);
+      height: 52px;
+    }
+    html.light .topbar { background: rgba(244,246,249,.94); }
+    .topbar-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 var(--gutter);
+      height: 100%;
       display: flex; align-items: center; gap: 16px;
-      padding: 0 32px; height: 52px;
     }
-    html.light .topbar { background: rgba(248,249,250,.92); }
-    .wordmark {
-      font-size: 15px; font-weight: 700; letter-spacing: -.3px;
-      color: var(--head);
-    }
+    .wordmark { font-size: 15px; font-weight: 700; letter-spacing: -.3px; color: var(--head); }
     .wordmark sup {
       font-size: 9px; font-weight: 500; color: var(--accent);
       letter-spacing: .5px; text-transform: uppercase;
-      vertical-align: top; margin-top: 4px; margin-left: 4px;
+      vertical-align: top; margin-top: 4px; margin-left: 3px;
     }
-    .divider { width: 1px; height: 18px; background: var(--rule2); }
-    .topbar-link { font-size: 13px; color: var(--sub); transition: color .15s; }
-    .topbar-link:hover { color: var(--head); text-decoration: none; }
-    .spacer { flex: 1; }
-    .topbar-badge {
+    .tb-div  { width: 1px; height: 18px; background: var(--rule2); }
+    .tb-link { font-size: 13px; color: var(--sub); transition: color .15s; }
+    .tb-link:hover { color: var(--head); text-decoration: none; }
+    .spacer  { flex: 1; }
+    .tb-badge {
       font-size: 11px; font-weight: 600; letter-spacing: .6px;
       text-transform: uppercase; color: var(--muted);
       font-family: 'Geist Mono', monospace;
     }
-    /* Theme toggle */
     .theme-btn {
       background: none; border: 1px solid var(--rule2); border-radius: 6px;
       color: var(--sub); cursor: pointer; padding: 5px 9px;
@@ -92,128 +104,215 @@
     }
     .theme-btn:hover { background: var(--ink3); color: var(--head); }
 
-    /* Hero */
-    .hero {
-      padding: 140px 32px 60px;
-      max-width: 900px; margin: 0 auto;
-    }
-    .hero-eyebrow {
+    /* ── Hero ────────────────────────────────────────────────────────── */
+    .hero { padding: 128px 0 64px; }
+    .hero-eye {
       font-size: 11px; font-weight: 600; letter-spacing: 1.4px;
       text-transform: uppercase; color: var(--accent);
       font-family: 'Geist Mono', monospace;
       margin-bottom: 20px;
       display: flex; align-items: center; gap: 8px;
     }
-    .hero-eyebrow::before {
+    .hero-eye::before {
       content: ''; display: block; width: 24px; height: 1px;
       background: var(--accent);
     }
     .hero h1 {
-      font-size: clamp(38px, 5.5vw, 64px);
-      font-weight: 900;
-      color: var(--head);
-      line-height: 1.08;
-      letter-spacing: -1.5px;
-      margin-bottom: 24px;
+      font-size: clamp(36px, 5vw, 62px); font-weight: 900;
+      color: var(--head); line-height: 1.07; letter-spacing: -1.5px;
+      margin-bottom: 22px;
     }
     .hero-sub {
-      font-size: 17px; color: var(--sub); line-height: 1.7;
-      max-width: 560px; margin-bottom: 40px;
-      font-weight: 300;
+      font-size: 17px; color: var(--sub); line-height: 1.72;
+      max-width: 560px; margin-bottom: 40px; font-weight: 300;
     }
-    /* Hero CTA */
     .hero-cta {
       background: var(--accent); color: #fff;
       border: none; border-radius: 10px;
-      padding: 15px 32px;
-      font-family: 'Geist', sans-serif;
-      font-size: 15px; font-weight: 600;
-      cursor: pointer;
+      padding: 14px 30px;
+      font-family: 'Geist', sans-serif; font-size: 15px; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
       transition: opacity .15s, transform .1s;
-      display: inline-flex; align-items: center; gap: 10px;
     }
-    .hero-cta:hover { opacity: .88; }
+    .hero-cta:hover  { opacity: .88; }
     .hero-cta:active { transform: scale(.98); }
-    .hero-cta-arrow { font-size: 18px; }
 
-    /* Progress */
-    .progress-shell {
-      max-width: 900px; margin: 0 auto 28px;
-      display: none; padding: 0 32px;
+    /* ── Scan activity area ──────────────────────────────────────────── */
+    .scan-area {
+      display: none;
+      gap: 20px;
+      margin-bottom: 40px;
+      align-items: flex-start;
     }
-    .step-track {
-      display: flex; gap: 0;
-      border: 1px solid var(--rule2);
-      border-radius: 8px; overflow: hidden;
-      margin-bottom: 14px;
+    .scan-area.visible { display: flex; }
+
+    /* Left: progress + stats */
+    .scan-left { flex: 1; min-width: 0; }
+
+    /* Progress header row: label + percentage */
+    .pbar-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
     }
-    .step-cell {
-      flex: 1; padding: 9px 4px; text-align: center;
-      font-size: 11px; font-weight: 500; letter-spacing: .2px;
-      color: var(--muted); font-family: 'Geist Mono', monospace;
-      border-right: 1px solid var(--rule2);
-      transition: all .25s;
+    .pbar-label {
+      font-size: 11px; font-weight: 600; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--muted);
+      font-family: 'Geist Mono', monospace;
+      display: flex; align-items: center; gap: 8px;
     }
-    .step-cell:last-child { border-right: none; }
-    .step-cell.live { background: rgba(79,142,247,.08); color: var(--accent); }
-    .step-cell.done { background: rgba(62,207,121,.07); color: var(--ok); }
+    /* Animated pulse dot */
+    .pulse-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    .pulse-dot.done { background: var(--ok); animation: none; }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .4; transform: scale(.7); }
+    }
+    .pbar-pct {
+      font-size: 13px; font-weight: 700; color: var(--head);
+      font-family: 'Geist Mono', monospace;
+      transition: color .3s;
+    }
+    .pbar-pct.done { color: var(--ok); }
+
+    /* Progress bar */
     .pbar-track {
-      height: 3px; background: var(--rule2); border-radius: 2px; overflow: hidden;
+      height: 6px; background: var(--rule2); border-radius: 3px;
+      overflow: hidden; margin-bottom: 14px;
+      position: relative;
     }
     .pbar-fill {
       height: 100%; width: 0%;
       background: linear-gradient(90deg, var(--accent) 0%, var(--tag) 100%);
-      border-radius: 2px; transition: width .4s ease;
+      border-radius: 3px; transition: width .5s cubic-bezier(.4,0,.2,1);
+      position: relative;
     }
-    .pbar-msg {
-      margin-top: 10px; font-size: 12px; color: var(--sub);
-      text-align: center; font-family: 'Geist Mono', monospace;
-      min-height: 18px;
+    /* Shimmer animation on the bar */
+    .pbar-fill::after {
+      content: '';
+      position: absolute; top: 0; left: -100%; right: 0; bottom: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.25) 50%, transparent 100%);
+      animation: shimmer 1.8s linear infinite;
     }
+    @keyframes shimmer { to { left: 200%; } }
 
-    /* Stat strip */
+    /* Step track */
+    .step-track {
+      display: flex;
+      border: 1px solid var(--rule2); border-radius: 8px;
+      overflow: hidden; margin-bottom: 16px;
+    }
+    .step-cell {
+      flex: 1; padding: 8px 2px; text-align: center;
+      font-size: 10px; font-weight: 500; letter-spacing: .2px;
+      color: var(--muted); font-family: 'Geist Mono', monospace;
+      border-right: 1px solid var(--rule2); transition: all .25s;
+    }
+    .step-cell:last-child { border-right: none; }
+    .step-cell.live { background: rgba(79,142,247,.1); color: var(--accent); font-weight: 700; }
+    .step-cell.done { background: rgba(62,207,121,.07); color: var(--ok); }
+
+    /* Stats strip */
     .stat-strip {
-      max-width: 900px; margin: 0 auto 64px;
-      display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+      display: grid; grid-template-columns: repeat(4, 1fr);
       border: 1px solid var(--rule); border-radius: 10px; overflow: hidden;
     }
     .stat-cell {
-      background: var(--ink2); padding: 20px 24px;
+      background: var(--ink2); padding: 18px 20px;
       border-right: 1px solid var(--rule);
     }
     .stat-cell:last-child { border-right: none; }
     .stat-num {
-      font-size: 32px; font-weight: 800; color: var(--head);
-      font-family: 'Geist Mono', monospace; letter-spacing: -1px;
-      line-height: 1;
+      font-size: 28px; font-weight: 800; color: var(--head);
+      font-family: 'Geist Mono', monospace; letter-spacing: -1px; line-height: 1;
     }
-    .stat-num.danger { color: var(--danger); }
-    .stat-num.warn   { color: var(--warn); }
-    .stat-num.ok     { color: var(--ok); }
-    .stat-num.accent { color: var(--accent); }
-    .stat-lbl { font-size: 11px; color: var(--muted); margin-top: 6px; letter-spacing: .3px; }
+    .stat-num.clr-r { color: var(--danger); }
+    .stat-num.clr-w { color: var(--warn); }
+    .stat-num.clr-b { color: var(--accent); }
+    .stat-num.clr-g { color: var(--ok); }
+    .stat-lbl { font-size: 10px; color: var(--muted); margin-top: 5px; letter-spacing: .3px; }
 
-    /* Features grid */
-    .features-wrap { max-width: 900px; margin: 0 auto 80px; padding: 0 32px; }
-    .section-eyebrow {
+    /* Right: live log panel */
+    .scan-right {
+      width: 340px; flex-shrink: 0;
+      background: var(--ink2);
+      border: 1px solid var(--rule2); border-radius: 10px;
+      overflow: hidden;
+    }
+    .log-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--rule2);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .log-title {
+      font-size: 11px; font-weight: 600; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--muted);
+      font-family: 'Geist Mono', monospace;
+    }
+    .log-body {
+      padding: 8px 0;
+      max-height: 260px; overflow-y: auto;
+    }
+    .log-body::-webkit-scrollbar { width: 4px; }
+    .log-body::-webkit-scrollbar-track { background: transparent; }
+    .log-body::-webkit-scrollbar-thumb { background: var(--rule2); border-radius: 2px; }
+    .log-entry {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 7px 16px; border-bottom: 1px solid var(--rule);
+      animation: fadeIn .3s ease;
+    }
+    .log-entry:last-child { border-bottom: none; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .log-icon {
+      width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; margin-top: 1px;
+    }
+    .log-icon.running {
+      background: rgba(79,142,247,.15); color: var(--accent);
+      animation: spin 1.2s linear infinite;
+    }
+    .log-icon.done { background: rgba(62,207,121,.15); color: var(--ok); }
+    .log-icon.error { background: rgba(242,87,87,.15); color: var(--danger); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .log-text { flex: 1; min-width: 0; }
+    .log-step-name {
+      font-size: 12px; font-weight: 600; color: var(--head);
+      margin-bottom: 1px;
+    }
+    .log-step-detail {
+      font-size: 11px; color: var(--sub);
+      font-family: 'Geist Mono', monospace;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .log-time {
+      font-size: 10px; color: var(--muted);
+      font-family: 'Geist Mono', monospace; flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ── Section eyebrow ─────────────────────────────────────────────── */
+    .eye {
       font-size: 10px; font-weight: 600; letter-spacing: 1.4px;
       text-transform: uppercase; color: var(--muted);
       font-family: 'Geist Mono', monospace;
       margin-bottom: 20px;
       display: flex; align-items: center; gap: 8px;
     }
-    .section-eyebrow::before {
-      content: ''; display: block;
-      width: 16px; height: 1px; background: var(--rule2);
-    }
-    .feature-grid {
+    .eye::before { content: ''; display: block; width: 16px; height: 1px; background: var(--rule2); }
+
+    /* ── Feature grid ────────────────────────────────────────────────── */
+    .features { margin-bottom: 72px; }
+    .feat-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
       border: 1px solid var(--rule); border-radius: 10px; overflow: hidden;
     }
     .feat {
       background: var(--ink2); padding: 24px;
-      border-right: 1px solid var(--rule);
-      border-bottom: 1px solid var(--rule);
+      border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
       transition: background .15s;
     }
     .feat:hover { background: var(--ink3); }
@@ -223,14 +322,32 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 16px; margin-bottom: 14px;
     }
-    .feat h3 {
-      font-size: 14px; font-weight: 600; color: var(--head);
-      margin-bottom: 8px; letter-spacing: -.2px;
-    }
-    .feat p { font-size: 13px; color: var(--sub); line-height: 1.55; }
+    .feat h3 { font-size: 14px; font-weight: 600; color: var(--head); margin-bottom: 8px; letter-spacing: -.2px; }
+    .feat p  { font-size: 13px; color: var(--sub); line-height: 1.55; }
 
-    /* Recent scans */
-    .recent-wrap { max-width: 900px; margin: 0 auto 80px; display: none; padding: 0 32px; }
+    /* ── Why This Matters ────────────────────────────────────────────── */
+    .why { margin-bottom: 80px; }
+    .why-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+    }
+    .why-card {
+      background: var(--ink2);
+      border: 1px solid var(--rule); border-radius: 10px;
+      padding: 24px 26px;
+    }
+    .why-num {
+      font-size: 36px; font-weight: 900; letter-spacing: -1.5px;
+      color: var(--accent); font-family: 'Geist Mono', monospace;
+      line-height: 1; margin-bottom: 6px;
+    }
+    .why-num.r { color: var(--danger); }
+    .why-num.o { color: var(--warn); }
+    .why-num.g { color: var(--ok); }
+    .why-stat { font-size: 13px; font-weight: 600; color: var(--head); margin-bottom: 8px; }
+    .why-text { font-size: 13px; color: var(--sub); line-height: 1.6; }
+
+    /* ── Recent scans ────────────────────────────────────────────────── */
+    .recent { margin-bottom: 72px; display: none; }
     .recent-head {
       display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 12px;
@@ -246,15 +363,64 @@
     .tbl td { padding: 11px 14px; border-bottom: 1px solid var(--rule); }
     .tbl tr:last-child td { border-bottom: none; }
     .tbl tr:hover td { background: var(--ink2); }
-    .pill {
-      display: inline-block; padding: 2px 9px;
-      border-radius: 5px; font-size: 11px; font-weight: 600;
-      font-family: 'Geist Mono', monospace;
-    }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; font-family: 'Geist Mono', monospace; }
     .pill-r { background: rgba(242,87,87,.12); color: var(--danger); }
     .pill-w { background: rgba(230,168,23,.12); color: var(--warn); }
 
-    /* Toast */
+    /* ── Footer ──────────────────────────────────────────────────────── */
+    .footer-wrap {
+      border-top: 1px solid var(--rule);
+      background: var(--ink2);
+    }
+    .footer-top {
+      padding: 48px var(--gutter) 40px;
+      max-width: var(--max);
+      margin: 0 auto;
+      display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 48px;
+    }
+    .footer-brand .wordmark { font-size: 16px; margin-bottom: 10px; display: block; }
+    .footer-brand p {
+      font-size: 13px; color: var(--sub); line-height: 1.65; max-width: 300px;
+    }
+    .footer-col h4 {
+      font-size: 11px; font-weight: 700; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--muted);
+      font-family: 'Geist Mono', monospace; margin-bottom: 14px;
+    }
+    .footer-col a {
+      display: block; font-size: 13px; color: var(--sub);
+      margin-bottom: 8px; transition: color .15s;
+    }
+    .footer-col a:hover { color: var(--head); text-decoration: none; }
+    .footer-bottom {
+      border-top: 1px solid var(--rule);
+      padding: 18px var(--gutter);
+      max-width: var(--max); margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .founder-block {
+      display: flex; align-items: center; gap: 14px;
+    }
+    .founder-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--tag));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; color: #fff;
+      flex-shrink: 0;
+    }
+    .founder-name {
+      font-size: 13px; font-weight: 700; color: var(--head);
+      margin-bottom: 2px;
+    }
+    .founder-title {
+      font-size: 11px; color: var(--sub);
+    }
+    .footer-copy {
+      font-size: 11px; color: var(--muted);
+    }
+
+    /* ── Toast ───────────────────────────────────────────────────────── */
     .toast {
       position: fixed; bottom: 24px; right: 24px;
       background: rgba(242,87,87,.95); color: #fff;
@@ -263,15 +429,7 @@
       max-width: 380px; font-family: 'Geist Mono', monospace;
     }
 
-    /* Footer */
-    .footer {
-      border-top: 1px solid var(--rule);
-      padding: 24px 32px;
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 12px; color: var(--muted); max-width: 900px; margin: 0 auto;
-    }
-
-    /* ── Modal overlay ── */
+    /* ── Modal overlay ───────────────────────────────────────────────── */
     .modal-overlay {
       position: fixed; inset: 0; z-index: 9999;
       background: rgba(0,0,0,.75);
@@ -281,20 +439,14 @@
       transition: opacity .2s;
     }
     .modal-overlay.open { opacity: 1; pointer-events: all; }
-
     .modal {
-      background: #111419;
-      border: 1px solid #2e3540;
-      border-radius: 16px;
-      width: 100%; max-width: 560px;
-      padding: 32px;
-      position: relative;
-      transform: translateY(12px);
-      transition: transform .2s;
+      background: #111419; border: 1px solid #2e3540;
+      border-radius: 16px; width: 100%; max-width: 560px;
+      padding: 32px; position: relative;
+      transform: translateY(12px); transition: transform .2s;
       max-height: 90vh; overflow-y: auto;
     }
     .modal-overlay.open .modal { transform: translateY(0); }
-
     .modal-close {
       position: absolute; top: 18px; right: 18px;
       background: none; border: 1px solid #2e3540; border-radius: 6px;
@@ -303,8 +455,7 @@
       font-size: 14px; transition: background .15s, color .15s;
     }
     .modal-close:hover { background: #1f242d; color: #fff; }
-
-    .step-indicator {
+    .step-ind {
       font-size: 11px; font-family: 'Geist Mono', monospace;
       color: #4f8ef7; font-weight: 600; letter-spacing: .8px;
       text-transform: uppercase; margin-bottom: 8px;
@@ -313,99 +464,58 @@
       font-size: 22px; font-weight: 800; color: #fff;
       letter-spacing: -.4px; margin-bottom: 6px;
     }
-    .modal-sub {
-      font-size: 13px; color: #a0aec0; margin-bottom: 28px; line-height: 1.6;
-    }
-
-    /* Wizard steps */
+    .modal-sub { font-size: 13px; color: #a0aec0; margin-bottom: 28px; line-height: 1.6; }
     .wizard-step { display: none; }
     .wizard-step.active { display: block; }
-
-    /* Modal field */
     .field-label {
       font-size: 11px; font-weight: 600; letter-spacing: .8px;
       text-transform: uppercase; color: #6b7785;
-      font-family: 'Geist Mono', monospace;
-      margin-bottom: 8px;
+      font-family: 'Geist Mono', monospace; margin-bottom: 8px;
     }
     .modal-input {
-      width: 100%;
-      background: #0a0c0f;
-      border: 1px solid #2e3540;
-      border-radius: 8px;
-      padding: 13px 16px;
-      color: #fff;
-      font-family: 'Geist Mono', monospace;
-      font-size: 13px;
-      outline: none;
-      transition: border-color .2s;
-      margin-bottom: 16px;
+      width: 100%; background: #0a0c0f;
+      border: 1px solid #2e3540; border-radius: 8px;
+      padding: 13px 16px; color: #fff;
+      font-family: 'Geist Mono', monospace; font-size: 13px;
+      outline: none; transition: border-color .2s; margin-bottom: 16px;
     }
     .modal-input:focus { border-color: #4f8ef7; }
     .modal-input::placeholder { color: #4a5568; }
-
-    /* Provider cards */
     .provider-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
       margin-bottom: 20px;
     }
     .provider-card {
-      background: #0a0c0f;
-      border: 1.5px solid #2e3540;
-      border-radius: 10px;
-      padding: 14px 12px;
-      cursor: pointer;
-      transition: border-color .15s, background .15s;
+      background: #0a0c0f; border: 1.5px solid #2e3540;
+      border-radius: 10px; padding: 14px 12px;
+      cursor: pointer; transition: border-color .15s, background .15s;
       user-select: none;
     }
     .provider-card:hover { border-color: #4a5568; background: #111419; }
-    .provider-card.selected {
-      border-color: #4f8ef7;
-      background: rgba(79,142,247,.08);
-    }
+    .provider-card.selected { border-color: #4f8ef7; background: rgba(79,142,247,.08); }
     .provider-card input[type=radio] { display: none; }
-    .provider-name {
-      font-size: 13px; font-weight: 600; color: #e2e8f0;
-      margin-bottom: 3px; line-height: 1.3;
-    }
-    .provider-model {
-      font-size: 10px; color: #6b7785; font-family: 'Geist Mono', monospace;
-      margin-bottom: 6px;
-    }
+    .provider-name { font-size: 13px; font-weight: 600; color: #e2e8f0; margin-bottom: 3px; line-height: 1.3; }
+    .provider-model { font-size: 10px; color: #6b7785; font-family: 'Geist Mono', monospace; margin-bottom: 6px; }
     .provider-badge {
       display: inline-block; font-size: 10px; font-weight: 600;
-      font-family: 'Geist Mono', monospace;
-      padding: 2px 7px; border-radius: 4px;
+      font-family: 'Geist Mono', monospace; padding: 2px 7px; border-radius: 4px;
       background: rgba(79,142,247,.13); color: #4f8ef7;
     }
-    .provider-card.selected .provider-badge {
-      background: rgba(79,142,247,.22); color: #7eb3ff;
-    }
-
-    /* API key row */
     .apikey-wrap { margin-bottom: 4px; }
     .apikey-label {
       font-size: 11px; font-weight: 600; letter-spacing: .8px;
       text-transform: uppercase; color: #6b7785;
-      font-family: 'Geist Mono', monospace;
-      margin-bottom: 8px;
+      font-family: 'Geist Mono', monospace; margin-bottom: 8px;
     }
-
-    /* Toggle */
     .toggle-row {
       display: flex; align-items: center; justify-content: space-between;
       padding: 14px 0; border-bottom: 1px solid #1f242d;
     }
     .toggle-row:last-of-type { border-bottom: none; }
     .toggle-info { flex: 1; }
-    .toggle-name {
-      font-size: 14px; font-weight: 500; color: #e2e8f0; margin-bottom: 3px;
-    }
+    .toggle-name { font-size: 14px; font-weight: 500; color: #e2e8f0; margin-bottom: 3px; }
     .toggle-desc { font-size: 12px; color: #6b7785; }
-    .toggle {
-      position: relative; width: 40px; height: 22px; flex-shrink: 0;
-      margin-left: 16px;
-    }
+    .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; margin-left: 16px; }
     .toggle input { opacity: 0; width: 0; height: 0; }
     .toggle-track {
       position: absolute; inset: 0; background: #1f242d;
@@ -414,19 +524,14 @@
     }
     .toggle input:checked + .toggle-track { background: #4f8ef7; border-color: #4f8ef7; }
     .toggle-track::after {
-      content: ''; position: absolute;
-      top: 2px; left: 2px;
-      width: 16px; height: 16px;
-      background: #fff; border-radius: 50%;
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 16px; height: 16px; background: #fff; border-radius: 50%;
       transition: transform .2s;
     }
     .toggle input:checked + .toggle-track::after { transform: translateX(18px); }
-
-    /* Wizard footer */
     .wizard-footer {
       display: flex; justify-content: space-between; align-items: center;
-      margin-top: 28px; padding-top: 20px;
-      border-top: 1px solid #1f242d;
+      margin-top: 28px; padding-top: 20px; border-top: 1px solid #1f242d;
     }
     .btn-back {
       background: none; border: 1px solid #2e3540; border-radius: 8px;
@@ -443,178 +548,262 @@
       cursor: pointer; transition: background .15s, color .15s, opacity .15s;
     }
     .btn-next:hover { background: #252b35; color: #fff; }
-    .btn-next.accent {
-      background: #4f8ef7; border-color: #4f8ef7; color: #fff;
-    }
+    .btn-next.accent { background: #4f8ef7; border-color: #4f8ef7; color: #fff; }
     .btn-next.accent:hover { opacity: .88; }
-    .btn-next:disabled { opacity: .4; cursor: not-allowed; }
-
-    /* Progress dots */
-    .step-dots {
-      display: flex; gap: 6px; align-items: center;
-    }
+    .step-dots { display: flex; gap: 6px; align-items: center; }
     .step-dot {
       width: 6px; height: 6px; border-radius: 50%;
-      background: #2e3540; transition: background .2s, width .2s;
+      background: #2e3540; transition: all .2s;
     }
     .step-dot.active { background: #4f8ef7; width: 18px; border-radius: 3px; }
-    .step-dot.done { background: #3ecf79; }
-
-    /* GitHub token sub-field */
+    .step-dot.done   { background: #3ecf79; }
     .gh-token-wrap { margin-top: 12px; display: none; }
   </style>
 </head>
 <body>
 
+<!-- ── Topbar ─────────────────────────────────────────────────────── -->
 <nav class="topbar">
-  <div class="wordmark">SecureScope<sup>BETA</sup></div>
-  <div class="divider"></div>
-  <a class="topbar-link" href="https://github.com/OmarRao/security-review" target="_blank">Docs</a>
-  <a class="topbar-link" href="#recent">History</a>
-  <div class="spacer"></div>
-  <span class="topbar-badge">MITRE ATT&CK v14</span>
-  <div class="divider"></div>
-  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
+  <div class="topbar-inner">
+    <div class="wordmark">SecureScope<sup>BETA</sup></div>
+    <div class="tb-div"></div>
+    <a class="tb-link" href="https://github.com/OmarRao/security-review" target="_blank">Docs</a>
+    <a class="tb-link" href="#recent">History</a>
+    <div class="spacer"></div>
+    <span class="tb-badge">MITRE ATT&CK v14</span>
+    <div class="tb-div"></div>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode">&#x1F319;</button>
+  </div>
 </nav>
 
-<main style="padding: 0">
+<main>
 
-  <div class="hero" style="padding-left:32px;padding-right:32px;">
-    <div class="hero-eyebrow">Static Analysis / Runtime Observation / AI Remediation</div>
-    <h1>Security Analysis<br>for any GitHub Repo</h1>
-    <p class="hero-sub">
-      Paste a GitHub URL. SecureScope clones the repo, runs a full static scan,
-      maps every finding to MITRE ATT&CK and CWE, optionally executes the code in
-      an isolated Docker sandbox, and generates a visual threat report in seconds.
-    </p>
-    <button class="hero-cta" onclick="openModal()">
-      <span>Analyze Repository</span>
-      <span class="hero-cta-arrow">&#x2192;</span>
-    </button>
+  <!-- ── Hero ──────────────────────────────────────────────────────── -->
+  <div class="wrap">
+    <div class="hero">
+      <div class="hero-eye">Static Analysis / Runtime Observation / AI Remediation</div>
+      <h1>Security Analysis<br>for any GitHub Repo</h1>
+      <p class="hero-sub">
+        Paste a GitHub URL. SecureScope clones the repo, runs a full static scan,
+        maps every finding to MITRE ATT&amp;CK and CWE, optionally executes the code
+        in an isolated Docker sandbox, and generates a visual threat report in seconds.
+      </p>
+      <button class="hero-cta" onclick="openModal()">
+        Analyze Repository &nbsp;&#x2192;
+      </button>
+    </div>
+
+    <!-- ── Scan activity area (shown when scan is running) ──────────── -->
+    <div class="scan-area" id="scanArea">
+
+      <!-- Left column: progress bar + step track + stats -->
+      <div class="scan-left">
+        <div class="pbar-header">
+          <div class="pbar-label">
+            <div class="pulse-dot" id="pulseDot"></div>
+            Scan Progress
+          </div>
+          <div class="pbar-pct" id="pbarPct">0%</div>
+        </div>
+        <div class="pbar-track">
+          <div class="pbar-fill" id="pbarFill"></div>
+        </div>
+
+        <div class="step-track">
+          <div class="step-cell" id="s-github_info">Repo Info</div>
+          <div class="step-cell" id="s-clone">Clone</div>
+          <div class="step-cell" id="s-semgrep">Semgrep</div>
+          <div class="step-cell" id="s-deps">CVEs</div>
+          <div class="step-cell" id="s-sandbox">Sandbox</div>
+          <div class="step-cell" id="s-advisor">Advisor</div>
+          <div class="step-cell" id="s-report">Build</div>
+          <div class="step-cell" id="s-done">Done</div>
+        </div>
+
+        <div class="stat-strip" id="statStrip">
+          <div class="stat-cell">
+            <div class="stat-num clr-r" id="statCrit">0</div>
+            <div class="stat-lbl">Critical Findings</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-num clr-w" id="statWarn">0</div>
+            <div class="stat-lbl">Warnings</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-num clr-b" id="statCve">0</div>
+            <div class="stat-lbl">Dependency CVEs</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-num clr-g" id="statLang">--</div>
+            <div class="stat-lbl">Primary Language</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column: live step log -->
+      <div class="scan-right" id="scanLog">
+        <div class="log-header">
+          <div class="pulse-dot" id="logPulseDot"></div>
+          <div class="log-title">Live Pipeline</div>
+        </div>
+        <div class="log-body" id="logBody">
+          <div class="log-entry" id="logInit">
+            <div class="log-icon running">&#x21BB;</div>
+            <div class="log-text">
+              <div class="log-step-name">Initializing</div>
+              <div class="log-step-detail">Connecting to scan pipeline...</div>
+            </div>
+            <div class="log-time" id="logInitTime"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /scan-area -->
+
+    <!-- ── Capabilities ───────────────────────────────────────────── -->
+    <div class="features">
+      <div class="eye">Capabilities</div>
+      <div class="feat-grid">
+        <div class="feat">
+          <div class="feat-icon">&#x1F3AF;</div>
+          <h3>MITRE ATT&amp;CK Mapping</h3>
+          <p>Every vulnerability mapped to a technique ID, tactic phase, and CWE identifier with severity scoring.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#x1F433;</div>
+          <h3>Docker Sandbox</h3>
+          <p>Executes the target repo in an isolated container. Captures file writes, spawned processes and attempted network connections.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#x1F916;</div>
+          <h3>Multi-LLM AI Advisor</h3>
+          <p>Choose from Anthropic Claude, GPT-4o, Gemini, Groq, or a local Ollama model to generate diff-style patches.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#x1F4CA;</div>
+          <h3>Threat Scoring</h3>
+          <p>Composite risk score from severity, exploitability, attack surface exposure and dependency CVE count.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#x1F4E6;</div>
+          <h3>Dependency CVEs</h3>
+          <p>Audits requirements.txt and package.json against known CVE databases via pip-audit and npm audit.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#x1F680;</div>
+          <h3>Auto-Fix Commits</h3>
+          <p>Push AI-generated patches directly to a target branch. Dry-run mode is on by default for safety.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Why This Matters ──────────────────────────────────────── -->
+    <div class="why">
+      <div class="eye">Why This Matters</div>
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="why-num r">84%</div>
+          <div class="why-stat">of data breaches involve a vulnerability in application code</div>
+          <div class="why-text">Most security incidents trace back to code-level weaknesses that static analysis can detect before they reach production. SecureScope catches them at the source, before a threat actor does.</div>
+        </div>
+        <div class="why-card">
+          <div class="why-num o">$4.88M</div>
+          <div class="why-stat">average cost of a data breach in 2024 (IBM Security Report)</div>
+          <div class="why-text">Early detection during development costs a fraction of post-breach remediation. Every finding caught here is a potential incident avoided and significant financial and reputational risk eliminated.</div>
+        </div>
+        <div class="why-card">
+          <div class="why-num">560+</div>
+          <div class="why-stat">MITRE ATT&amp;CK techniques mapped to real code patterns</div>
+          <div class="why-text">Understanding how attackers think is as important as fixing the bug. SecureScope maps every CWE finding to the attacker's playbook so defenders can prioritize by exploitability, not just severity.</div>
+        </div>
+        <div class="why-card">
+          <div class="why-num g">92%</div>
+          <div class="why-stat">of vulnerabilities have a known fix available immediately</div>
+          <div class="why-text">The gap between knowing about a vulnerability and fixing it is where risk lives. The AI Fix Advisor closes that gap instantly with commit-ready patches, removing the delay between discovery and remediation.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Recent scans ───────────────────────────────────────────── -->
+    <div class="recent" id="recentWrap" id="recent">
+      <div class="recent-head">
+        <div class="eye" style="margin-bottom:0">Recent Scans</div>
+      </div>
+      <table class="tbl">
+        <thead>
+          <tr><th>Repository</th><th>Findings</th><th>Critical</th><th>Scanned</th><th>Report</th></tr>
+        </thead>
+        <tbody id="recentBody"></tbody>
+      </table>
+    </div>
+
+  </div><!-- /wrap -->
+
+  <!-- ── Footer ────────────────────────────────────────────────────── -->
+  <div class="footer-wrap">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <span class="wordmark">SecureScope<sup>BETA</sup></span>
+        <p>An open-source AI-powered security analysis platform for GitHub repositories. Maps findings to MITRE ATT&amp;CK and CWE, generates AI-assisted remediations, and produces interactive visual threat reports.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <a href="https://github.com/OmarRao/security-review" target="_blank">GitHub Repository</a>
+        <a href="https://htmlpreview.github.io/?https://github.com/OmarRao/security-review/blob/main/reports/sample_report_ui.html" target="_blank">Sample Report</a>
+        <a href="https://attack.mitre.org/" target="_blank">MITRE ATT&amp;CK</a>
+        <a href="https://cwe.mitre.org/top25/" target="_blank">CWE Top 25</a>
+      </div>
+      <div class="footer-col">
+        <h4>Demo Target</h4>
+        <a href="https://github.com/OmarRao/analyzer" target="_blank">OmarRao/analyzer</a>
+        <a href="https://htmlpreview.github.io/?https://github.com/OmarRao/security-review/blob/main/reports/sample_report_ui.html" target="_blank">View Sample Report</a>
+        <a href="https://semgrep.dev/docs/" target="_blank">Semgrep Docs</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="founder-block">
+        <div class="founder-avatar">OR</div>
+        <div>
+          <div class="founder-name">Omar Rao</div>
+          <div class="founder-title">Engineer by trait &nbsp;&middot;&nbsp; Data Resilience, Privacy &amp; Cybersecurity Expert &nbsp;&middot;&nbsp; Founder, SecureScope</div>
+        </div>
+      </div>
+      <div class="footer-copy">
+        SecureScope &nbsp;&middot;&nbsp; MITRE ATT&amp;CK v14 &nbsp;&middot;&nbsp; CWE Top 25 &nbsp;&middot;&nbsp; Open Source
+      </div>
+    </div>
   </div>
 
-  <!-- Progress -->
-  <div class="progress-shell" id="progressShell">
-    <div class="step-track">
-      <div class="step-cell" id="s-github_info">Repo Info</div>
-      <div class="step-cell" id="s-clone">Clone</div>
-      <div class="step-cell" id="s-semgrep">Semgrep</div>
-      <div class="step-cell" id="s-deps">CVEs</div>
-      <div class="step-cell" id="s-sandbox">Sandbox</div>
-      <div class="step-cell" id="s-advisor">Advisor</div>
-      <div class="step-cell" id="s-report">Build</div>
-      <div class="step-cell" id="s-done">Done</div>
-    </div>
-    <div class="pbar-track"><div class="pbar-fill" id="pbarFill"></div></div>
-    <div class="pbar-msg" id="pbarMsg">Initialising scan pipeline...</div>
-  </div>
-
-  <!-- Live stats strip (populated during scan) -->
-  <div class="stat-strip" id="statStrip" style="display:none;margin-left:32px;margin-right:32px;max-width:calc(900px - 0px)">
-    <div class="stat-cell">
-      <div class="stat-num danger" id="statCrit">0</div>
-      <div class="stat-lbl">Critical Findings</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-num warn" id="statWarn">0</div>
-      <div class="stat-lbl">Warnings</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-num accent" id="statCve">0</div>
-      <div class="stat-lbl">Dependency CVEs</div>
-    </div>
-    <div class="stat-cell">
-      <div class="stat-num ok" id="statLang">...</div>
-      <div class="stat-lbl">Primary Language</div>
-    </div>
-  </div>
-
-  <!-- Features -->
-  <div class="features-wrap">
-    <div class="section-eyebrow">Capabilities</div>
-    <div class="feature-grid">
-      <div class="feat">
-        <div class="feat-icon">&#x1F3AF;</div>
-        <h3>MITRE ATT&CK Mapping</h3>
-        <p>Every vulnerability mapped to a technique ID, tactic phase, and CWE identifier with severity scoring.</p>
-      </div>
-      <div class="feat">
-        <div class="feat-icon">&#x1F433;</div>
-        <h3>Docker Sandbox</h3>
-        <p>Executes the target repo in an isolated container. Captures file writes, spawned processes and attempted network connections.</p>
-      </div>
-      <div class="feat">
-        <div class="feat-icon">&#x1F916;</div>
-        <h3>AI Fix Advisor</h3>
-        <p>Choose from Anthropic Claude, GPT-4o, Gemini, Groq, or a local Ollama model to generate diff-style patches.</p>
-      </div>
-      <div class="feat">
-        <div class="feat-icon">&#x1F4CA;</div>
-        <h3>Threat Scoring</h3>
-        <p>Composite risk score from severity, exploitability, attack surface exposure and dependency CVE count.</p>
-      </div>
-      <div class="feat">
-        <div class="feat-icon">&#x1F4E6;</div>
-        <h3>Dependency CVEs</h3>
-        <p>Audits requirements.txt and package.json against known CVE databases via pip-audit and npm audit.</p>
-      </div>
-      <div class="feat">
-        <div class="feat-icon">&#x1F680;</div>
-        <h3>Auto-Fix Commits</h3>
-        <p>Push AI-generated patches directly to a target branch. Dry-run mode is on by default for safety.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Recent scans -->
-  <div class="recent-wrap" id="recentWrap" id="recent">
-    <div class="recent-head">
-      <div class="section-eyebrow" style="margin-bottom:0">Recent Scans</div>
-    </div>
-    <table class="tbl">
-      <thead>
-        <tr>
-          <th>Repository</th><th>Findings</th><th>Critical</th><th>Scanned</th><th>Report</th>
-        </tr>
-      </thead>
-      <tbody id="recentBody"></tbody>
-    </table>
-  </div>
-
-  <div class="footer">
-    <span>SecureScope / MITRE ATT&CK v14 / CWE Top 25</span>
-    <a href="https://github.com/OmarRao/security-review" target="_blank">github.com/OmarRao/security-review</a>
-  </div>
 </main>
 
-<!-- ── Modal Wizard ── -->
+<!-- ── Toast ─────────────────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<!-- ── Modal Wizard ──────────────────────────────────────────────── -->
 <div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
 
     <!-- Step 1: Repository -->
     <div class="wizard-step active" id="step1">
-      <div class="step-indicator">Step 1 of 3 — Repository</div>
+      <div class="step-ind">Step 1 of 3 &mdash; Repository</div>
       <div class="modal-title" id="modalTitle">Analyze Repository</div>
       <div class="modal-sub">Enter the GitHub repository you want to scan for security vulnerabilities.</div>
-
       <div class="field-label">GitHub URL</div>
       <input class="modal-input" id="wizRepoUrl" type="text"
         placeholder="https://github.com/owner/repository"
         value="https://github.com/OmarRao/analyzer"
         autocomplete="off" spellcheck="false">
-
       <div class="field-label">Branch</div>
       <input class="modal-input" id="wizBranch" type="text"
         placeholder="main" value="main"
         autocomplete="off" spellcheck="false">
-
       <div class="wizard-footer">
         <button class="btn-back hidden">Back</button>
         <div class="step-dots">
-          <div class="step-dot active" id="dot1"></div>
-          <div class="step-dot" id="dot2"></div>
-          <div class="step-dot" id="dot3"></div>
+          <div class="step-dot active"></div>
+          <div class="step-dot"></div>
+          <div class="step-dot"></div>
         </div>
         <button class="btn-next" onclick="goStep(2)">Next &rarr;</button>
       </div>
@@ -622,68 +811,58 @@
 
     <!-- Step 2: AI Provider -->
     <div class="wizard-step" id="step2">
-      <div class="step-indicator">Step 2 of 3 — AI Provider</div>
+      <div class="step-ind">Step 2 of 3 &mdash; AI Provider</div>
       <div class="modal-title">Choose AI Advisor</div>
       <div class="modal-sub">Select which LLM to use for fix generation. All free tiers supported.</div>
-
       <div class="provider-grid" id="providerGrid">
-
         <label class="provider-card selected" data-provider="anthropic">
           <input type="radio" name="provider" value="anthropic" checked>
           <div class="provider-name">Anthropic Claude</div>
           <div class="provider-model">claude-sonnet-4-5</div>
           <span class="provider-badge">Best quality</span>
         </label>
-
         <label class="provider-card" data-provider="openai">
           <input type="radio" name="provider" value="openai">
           <div class="provider-name">OpenAI GPT-4o</div>
           <div class="provider-model">gpt-4o</div>
           <span class="provider-badge">Fast &amp; capable</span>
         </label>
-
         <label class="provider-card" data-provider="gemini">
           <input type="radio" name="provider" value="gemini">
           <div class="provider-name">Google Gemini</div>
           <div class="provider-model">gemini-1.5-flash</div>
           <span class="provider-badge">Free tier</span>
         </label>
-
         <label class="provider-card" data-provider="groq">
           <input type="radio" name="provider" value="groq">
           <div class="provider-name">Groq Llama 3.1</div>
           <div class="provider-model">llama-3.1-70b-versatile</div>
           <span class="provider-badge">Ultra fast</span>
         </label>
-
         <label class="provider-card" data-provider="ollama">
           <input type="radio" name="provider" value="ollama">
           <div class="provider-name">Ollama (local)</div>
           <div class="provider-model">llama3</div>
           <span class="provider-badge">No API key</span>
         </label>
-
         <label class="provider-card" data-provider="none">
           <input type="radio" name="provider" value="none">
           <div class="provider-name">None</div>
           <div class="provider-model">skip advisor</div>
           <span class="provider-badge">Skip advisor</span>
         </label>
-
       </div>
-
       <div class="apikey-wrap" id="apikeyWrap">
-        <div class="apikey-label" id="apikeyLabel">API Key — Anthropic</div>
+        <div class="apikey-label" id="apikeyLabel">API Key &mdash; Anthropic</div>
         <input class="modal-input" id="wizApiKey" type="password"
           placeholder="sk-ant-..." autocomplete="off">
       </div>
-
       <div class="wizard-footer">
         <button class="btn-back" onclick="goStep(1)">&larr; Back</button>
         <div class="step-dots">
-          <div class="step-dot done" id="dot1b"></div>
-          <div class="step-dot active" id="dot2b"></div>
-          <div class="step-dot" id="dot3b"></div>
+          <div class="step-dot done"></div>
+          <div class="step-dot active"></div>
+          <div class="step-dot"></div>
         </div>
         <button class="btn-next" onclick="goStep(3)">Next &rarr;</button>
       </div>
@@ -691,21 +870,19 @@
 
     <!-- Step 3: Scan Options -->
     <div class="wizard-step" id="step3">
-      <div class="step-indicator">Step 3 of 3 — Options</div>
+      <div class="step-ind">Step 3 of 3 &mdash; Options</div>
       <div class="modal-title">Scan Options</div>
       <div class="modal-sub">Configure additional scan behaviors.</div>
-
       <div class="toggle-row">
         <div class="toggle-info">
           <div class="toggle-name">Docker Sandbox</div>
-          <div class="toggle-desc">Execute code in isolated container — captures file writes, processes &amp; network calls</div>
+          <div class="toggle-desc">Execute code in isolated container &mdash; captures file writes, processes &amp; network calls</div>
         </div>
         <label class="toggle">
           <input type="checkbox" id="wizSandbox">
           <div class="toggle-track"></div>
         </label>
       </div>
-
       <div class="toggle-row">
         <div class="toggle-info">
           <div class="toggle-name">Auto-commit Fixes</div>
@@ -716,41 +893,38 @@
           <div class="toggle-track"></div>
         </label>
       </div>
-
       <div class="gh-token-wrap" id="ghTokenWrap">
         <div class="field-label">GitHub Token</div>
         <input class="modal-input" id="wizGhToken" type="password"
           placeholder="ghp_..." autocomplete="off">
       </div>
-
       <div class="wizard-footer">
         <button class="btn-back" onclick="goStep(2)">&larr; Back</button>
         <div class="step-dots">
-          <div class="step-dot done" id="dot1c"></div>
-          <div class="step-dot done" id="dot2c"></div>
-          <div class="step-dot active" id="dot3c"></div>
+          <div class="step-dot done"></div>
+          <div class="step-dot done"></div>
+          <div class="step-dot active"></div>
         </div>
-        <button class="btn-next accent" id="runScanBtn" onclick="startScan()">Run Scan</button>
+        <button class="btn-next accent" onclick="startScan()">Run Scan</button>
       </div>
     </div>
 
   </div>
 </div>
 
-<div class="toast" id="toast"></div>
-
 <script>
 const socket = io();
 let activeStep = null;
 let currentWizStep = 1;
+let scanStartTime = null;
 
-// ── Theme ──────────────────────────────────────────────────────────────────────
+// ── Theme ──────────────────────────────────────────────────────────
 function toggleTheme() {
   const html = document.documentElement;
-  const btn = document.getElementById('themeBtn');
+  const btn  = document.getElementById('themeBtn');
   if (html.classList.contains('light')) {
     html.classList.remove('light');
-    btn.textContent = '🌙';
+    btn.textContent = '\u{1F319}';
     localStorage.setItem('theme', 'dark');
   } else {
     html.classList.add('light');
@@ -758,7 +932,6 @@ function toggleTheme() {
     localStorage.setItem('theme', 'light');
   }
 }
-// Restore theme
 (function() {
   if (localStorage.getItem('theme') === 'light') {
     document.documentElement.classList.add('light');
@@ -766,7 +939,7 @@ function toggleTheme() {
   }
 })();
 
-// ── Modal ──────────────────────────────────────────────────────────────────────
+// ── Modal ─────────────────────────────────────────────────────────
 function openModal() {
   document.getElementById('modalOverlay').classList.add('open');
   document.getElementById('wizRepoUrl').focus();
@@ -779,40 +952,35 @@ function handleOverlayClick(e) {
 }
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
-  if (e.key === 'Enter') {
-    const overlay = document.getElementById('modalOverlay');
-    if (!overlay.classList.contains('open')) return;
+  if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('open')) {
     if (currentWizStep === 1) goStep(2);
     else if (currentWizStep === 2) goStep(3);
     else if (currentWizStep === 3) startScan();
   }
 });
-
 function goStep(n) {
-  // Hide all steps
   document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
   document.getElementById('step' + n).classList.add('active');
   currentWizStep = n;
 }
 
-// ── Provider card selection ────────────────────────────────────────────────────
-const API_KEY_PLACEHOLDERS = {
-  anthropic: 'sk-ant-...',
-  openai: 'sk-...',
-  gemini: 'AIza...',
-  groq: 'gsk_...',
-  ollama: '',
-  none: '',
-};
-const API_KEY_LABELS = {
+// ── Provider selection ────────────────────────────────────────────
+const KEY_LABELS = {
   anthropic: 'API Key — Anthropic',
-  openai: 'API Key — OpenAI',
-  gemini: 'API Key — Google AI',
-  groq: 'API Key — Groq',
-  ollama: '',
-  none: '',
+  openai:    'API Key — OpenAI',
+  gemini:    'API Key — Google AI',
+  groq:      'API Key — Groq',
+  ollama:    '',
+  none:      '',
 };
-
+const KEY_PLACEHOLDERS = {
+  anthropic: 'sk-ant-...',
+  openai:    'sk-...',
+  gemini:    'AIza...',
+  groq:      'gsk_...',
+  ollama:    '',
+  none:      '',
+};
 document.getElementById('providerGrid').addEventListener('click', function(e) {
   const card = e.target.closest('.provider-card');
   if (!card) return;
@@ -820,65 +988,107 @@ document.getElementById('providerGrid').addEventListener('click', function(e) {
   card.classList.add('selected');
   const radio = card.querySelector('input[type=radio]');
   if (radio) radio.checked = true;
-  updateApiKeyField(card.dataset.provider);
-});
-
-function updateApiKeyField(provider) {
+  const p = card.dataset.provider;
   const wrap = document.getElementById('apikeyWrap');
-  const label = document.getElementById('apikeyLabel');
-  const input = document.getElementById('wizApiKey');
-  if (provider === 'ollama' || provider === 'none') {
+  if (p === 'ollama' || p === 'none') {
     wrap.style.display = 'none';
   } else {
     wrap.style.display = 'block';
-    label.textContent = API_KEY_LABELS[provider] || 'API Key';
-    input.placeholder = API_KEY_PLACEHOLDERS[provider] || '';
+    document.getElementById('apikeyLabel').textContent = KEY_LABELS[p] || 'API Key';
+    document.getElementById('wizApiKey').placeholder = KEY_PLACEHOLDERS[p] || '';
   }
-}
-
+});
 function getSelectedProvider() {
   const checked = document.querySelector('input[name=provider]:checked');
   return checked ? checked.value : 'anthropic';
 }
 
-// ── GitHub token toggle ────────────────────────────────────────────────────────
+// ── GH token toggle ───────────────────────────────────────────────
 function toggleGhToken() {
-  const show = document.getElementById('wizAutoCommit').checked;
-  document.getElementById('ghTokenWrap').style.display = show ? 'block' : 'none';
+  document.getElementById('ghTokenWrap').style.display =
+    document.getElementById('wizAutoCommit').checked ? 'block' : 'none';
 }
 
-// ── Start scan ─────────────────────────────────────────────────────────────────
+// ── Log helpers ───────────────────────────────────────────────────
+const STEP_NAMES = {
+  github_info: 'Fetching Repo Info',
+  clone:       'Cloning Repository',
+  semgrep:     'Running Semgrep',
+  deps:        'Checking CVEs',
+  sandbox:     'Docker Sandbox',
+  advisor:     'AI Fix Advisor',
+  report:      'Building Report',
+  done:        'Scan Complete',
+};
+function nowStr() {
+  return new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+function addLogEntry(stepKey, detail, status) {
+  const body = document.getElementById('logBody');
+  // Mark previous running icon as done
+  body.querySelectorAll('.log-icon.running').forEach(ic => {
+    ic.classList.remove('running');
+    ic.classList.add('done');
+    ic.textContent = '✓';
+  });
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  const iconClass = status === 'done' ? 'done' : status === 'error' ? 'error' : 'running';
+  const iconChar  = status === 'done' ? '✓' : status === 'error' ? '✗' : '↻';
+  entry.innerHTML = `
+    <div class="log-icon ${iconClass}">${iconChar}</div>
+    <div class="log-text">
+      <div class="log-step-name">${STEP_NAMES[stepKey] || stepKey}</div>
+      <div class="log-step-detail">${detail}</div>
+    </div>
+    <div class="log-time">${nowStr()}</div>
+  `;
+  body.appendChild(entry);
+  body.scrollTop = body.scrollHeight;
+}
+
+// ── Start scan ────────────────────────────────────────────────────
 function startScan() {
   const url = document.getElementById('wizRepoUrl').value.trim();
   if (!url) { toast('Enter a GitHub repository URL'); goStep(1); return; }
 
   const selectedProvider = getSelectedProvider();
-  const apiKeyValue = document.getElementById('wizApiKey').value.trim();
-  const runSandbox = document.getElementById('wizSandbox').checked;
-  const runAutoCommit = document.getElementById('wizAutoCommit').checked;
-  const ghToken = document.getElementById('wizGhToken').value.trim();
-  const runAdvisor = selectedProvider !== 'none';
+  const apiKeyValue  = document.getElementById('wizApiKey').value.trim();
+  const runSandbox   = document.getElementById('wizSandbox').checked;
+  const runAutoCommit= document.getElementById('wizAutoCommit').checked;
+  const ghToken      = document.getElementById('wizGhToken').value.trim();
+  const runAdvisor   = selectedProvider !== 'none';
 
   closeModal();
+  scanStartTime = Date.now();
 
-  document.getElementById('progressShell').style.display = 'block';
-  document.getElementById('statStrip').style.display = 'grid';
+  // Show scan area
+  document.getElementById('scanArea').classList.add('visible');
   document.querySelectorAll('.step-cell').forEach(c => c.className = 'step-cell');
   document.getElementById('pbarFill').style.width = '0%';
-  document.getElementById('pbarMsg').textContent = 'Starting scan pipeline...';
+  document.getElementById('pbarPct').textContent = '0%';
+  document.getElementById('pbarPct').classList.remove('done');
+  document.getElementById('pulseDot').classList.remove('done');
+  document.getElementById('logPulseDot').classList.remove('done');
+
+  // Reset log
+  const logBody = document.getElementById('logBody');
+  logBody.innerHTML = '';
+  addLogEntry('clone', 'Connecting to scan pipeline...', 'running');
 
   socket.emit('start_scan', {
-    repo_url: url,
-    branch: document.getElementById('wizBranch').value.trim() || 'main',
-    sandbox: runSandbox,
-    advisor: runAdvisor,
-    auto_commit: runAutoCommit,
+    repo_url:     url,
+    branch:       document.getElementById('wizBranch').value.trim() || 'main',
+    sandbox:      runSandbox,
+    advisor:      runAdvisor,
+    auto_commit:  runAutoCommit,
     github_token: ghToken,
     llm_provider: selectedProvider,
-    llm_api_key: apiKeyValue,
+    llm_api_key:  apiKeyValue,
   });
 }
 
+// ── Socket events ─────────────────────────────────────────────────
 socket.on('progress', d => {
   if (activeStep) {
     const prev = document.getElementById('s-' + activeStep);
@@ -887,45 +1097,81 @@ socket.on('progress', d => {
   activeStep = d.step;
   const el = document.getElementById('s-' + d.step);
   if (el) el.className = 'step-cell live';
+
   document.getElementById('pbarFill').style.width = d.pct + '%';
-  document.getElementById('pbarMsg').textContent = d.message;
+  document.getElementById('pbarPct').textContent  = Math.round(d.pct) + '%';
+
+  // Strip emoji from message for log detail
+  const detail = d.message.replace(/[\u{1F000}-\u{1FFFF}]/gu, '').trim();
+  addLogEntry(d.step, detail, 'running');
 });
 
 socket.on('github_info', info => {
   if (info.language) document.getElementById('statLang').textContent = info.language;
-  if (info.stars !== undefined) {
-    document.getElementById('pbarMsg').textContent =
-      info.full_name + ' / ' + info.stars + ' stars / ' + info.language;
-  }
 });
 
 socket.on('scan_complete', d => {
+  // All steps green
   document.querySelectorAll('.step-cell').forEach(c => c.className = 'step-cell done');
   document.getElementById('pbarFill').style.width = '100%';
+  document.getElementById('pbarPct').textContent  = '100%';
+  document.getElementById('pbarPct').classList.add('done');
+  document.getElementById('pulseDot').classList.add('done');
+  document.getElementById('logPulseDot').classList.add('done');
 
   const sev = d.summary?.by_severity || {};
-  document.getElementById('statCrit').textContent = sev.ERROR || 0;
+  document.getElementById('statCrit').textContent = sev.ERROR   || 0;
   document.getElementById('statWarn').textContent = sev.WARNING || 0;
   document.getElementById('statCve').textContent  = d.summary?.dependency_vulns || 0;
 
-  document.getElementById('pbarMsg').innerHTML =
-    'Scan complete. <a href="' + d.report_url + '" target="_blank" style="color:#4f8ef7">Open Report</a>';
+  // Final log entry with link
+  const logBody = document.getElementById('logBody');
+  logBody.querySelectorAll('.log-icon.running').forEach(ic => {
+    ic.classList.remove('running'); ic.classList.add('done'); ic.textContent = '✓';
+  });
+  const done = document.createElement('div');
+  done.className = 'log-entry';
+  done.innerHTML = `
+    <div class="log-icon done">✓</div>
+    <div class="log-text">
+      <div class="log-step-name">Report Ready</div>
+      <div class="log-step-detail"><a href="${d.report_url}" target="_blank" style="color:#4f8ef7">Open full report &rarr;</a></div>
+    </div>
+    <div class="log-time">${nowStr()}</div>
+  `;
+  logBody.appendChild(done);
+  logBody.scrollTop = logBody.scrollHeight;
 
   loadRecent();
   setTimeout(() => window.open(d.report_url, '_blank'), 700);
 });
 
 socket.on('error', d => {
-  toast('Error: ' + d.message);
-  document.getElementById('pbarMsg').textContent = 'Scan failed. Check the error and retry.';
+  const logBody = document.getElementById('logBody');
+  logBody.querySelectorAll('.log-icon.running').forEach(ic => {
+    ic.classList.remove('running'); ic.classList.add('error'); ic.textContent = '✗';
+  });
+  const errEntry = document.createElement('div');
+  errEntry.className = 'log-entry';
+  errEntry.innerHTML = `
+    <div class="log-icon error">✗</div>
+    <div class="log-text">
+      <div class="log-step-name">Scan Failed</div>
+      <div class="log-step-detail">${d.message}</div>
+    </div>
+    <div class="log-time">${nowStr()}</div>
+  `;
+  logBody.appendChild(errEntry);
+  logBody.scrollTop = logBody.scrollHeight;
+  toast('Scan failed: ' + d.message);
 });
 
+// ── Helpers ───────────────────────────────────────────────────────
 function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.style.display = 'block';
   setTimeout(() => t.style.display = 'none', 5000);
 }
-
 async function loadRecent() {
   try {
     const data = await (await fetch('/reports')).json();
@@ -936,7 +1182,7 @@ async function loadRecent() {
         <td><code style="color:#4f8ef7;font-size:12px">${r.repo.replace('https://github.com/','')}</code></td>
         <td style="font-family:'Geist Mono',monospace;font-size:12px">${r.total}</td>
         <td><span class="pill pill-r">${r.errors} critical</span></td>
-        <td style="color:#6b7785;font-size:12px">${(r.generated_at||'').slice(0,16)}</td>
+        <td style="font-size:12px;color:var(--dim)">${(r.generated_at||'').slice(0,16)}</td>
         <td><a href="/report/${r.filename}_ui.html" target="_blank" style="font-size:12px">Open</a></td>
       </tr>`).join('');
   } catch(e) {}

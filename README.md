@@ -8,7 +8,9 @@
 
 SecureScope scans any GitHub repository for security vulnerabilities, maps every finding to the MITRE ATT&CK framework and CWE identifiers, computes a composite threat score, and produces a visual interactive report. Optionally runs the target code in an isolated Docker sandbox to observe runtime behaviour, and uses an AI advisor to generate diff-style patches for each finding.
 
-**[View Sample Report](reports/sample_report_ui.html)**
+**[View Full Sample Report &rarr;](https://htmlpreview.github.io/?https://github.com/OmarRao/security-review/blob/main/reports/sample_report_ui.html)**
+
+> Opens the complete interactive HTML threat report — threat scoring, MITRE ATT&CK mapping, Chart.js visualizations, and full findings table — rendered directly from GitHub.
 
 ---
 
@@ -63,7 +65,7 @@ Configure Docker sandbox execution and optional auto-commit of AI-generated fixe
 
 The screenshots below are taken from a live scan of [`OmarRao/analyzer`](https://github.com/OmarRao/analyzer), a deliberately vulnerable Python Flask banking application containing 1000+ findings across multiple MITRE ATT&CK techniques.
 
-**[View Full Sample Report](reports/sample_report_ui.html)**
+**[View Full Sample Report &rarr;](https://htmlpreview.github.io/?https://github.com/OmarRao/security-review/blob/main/reports/sample_report_ui.html)**
 
 ---
 
