@@ -90,16 +90,66 @@
     .score-lbl{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:6px;color:var(--muted)}
     .score-grade{font-size:13px;font-weight:700;margin-top:4px;letter-spacing:.5px;text-transform:uppercase}
 
-    /* Section */
-    .sec{margin-bottom:52px;scroll-margin-top:20px}
+    /* ── Jump bar ──────────────────────────────────────────────────── */
+    .jump-bar{
+      display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px;
+      padding:14px 18px;background:var(--ink2);border:1px solid var(--rule);
+      border-radius:10px;
+    }
+    .jump-lbl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+      color:var(--muted);font-family:'Geist Mono',monospace;width:100%;margin-bottom:4px}
+    .jump-pill{
+      display:inline-flex;align-items:center;gap:5px;
+      padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;
+      background:var(--ink3);border:1px solid var(--rule2);color:var(--sub);
+      cursor:pointer;transition:all .12s;font-family:'Geist Mono',monospace;
+      text-decoration:none;
+    }
+    .jump-pill:hover{background:rgba(79,142,247,.1);border-color:var(--accent);color:var(--accent);text-decoration:none}
+    .jump-pill.danger{border-color:rgba(242,87,87,.3);color:var(--danger);background:rgba(242,87,87,.06)}
+    .jump-pill.danger:hover{background:rgba(242,87,87,.12)}
+    .jump-pill.warn{border-color:rgba(230,168,23,.3);color:var(--warn);background:rgba(230,168,23,.06)}
+
+    /* ── Ransomware top summary strip ──────────────────────────────── */
+    .rw-top-strip{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+      border:1px solid rgba(242,87,87,.25);border-radius:10px;
+      overflow:hidden;margin-bottom:28px;
+      background:var(--rule);
+    }
+    .rw-top-cell{
+      background:rgba(242,87,87,.04);padding:16px 18px;
+      border-right:1px solid rgba(242,87,87,.15);
+    }
+    .rw-top-cell:last-child{border-right:none}
+    .rw-top-label{font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;
+      color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:5px}
+    .rw-top-val{font-size:22px;font-weight:900;font-family:'Geist Mono',monospace;
+      letter-spacing:-1px;line-height:1;margin-bottom:3px}
+    .rw-top-sub{font-size:11px;color:var(--dim);font-weight:500}
+
+    /* ── Collapsible sections ──────────────────────────────────────── */
+    .sec{margin-bottom:36px;scroll-margin-top:24px;
+      border:1px solid var(--rule);border-radius:10px;overflow:hidden}
     .sec-head{
       display:flex;align-items:center;gap:12px;
-      margin-bottom:20px;padding-bottom:14px;
+      padding:14px 20px;background:var(--ink2);
+      cursor:pointer;user-select:none;
       border-bottom:1px solid var(--rule);
+      transition:background .12s;
     }
-    .sec-title{font-size:17px;font-weight:700;color:var(--head);letter-spacing:-.3px}
-    .sec-count{font-size:12px;font-weight:600;font-family:'Geist Mono',monospace;color:var(--muted);background:var(--ink3);border:1px solid var(--rule2);padding:2px 8px;border-radius:5px}
-    .eyebrow{font-size:10px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:6px}
+    .sec-head:hover{background:var(--ink3)}
+    .sec-title{font-size:15px;font-weight:700;color:var(--head);letter-spacing:-.2px}
+    .sec-count{font-size:11px;font-weight:600;font-family:'Geist Mono',monospace;
+      color:var(--muted);background:var(--ink3);border:1px solid var(--rule2);
+      padding:2px 8px;border-radius:5px}
+    .sec-chevron{margin-left:auto;font-size:11px;color:var(--muted);
+      transition:transform .2s;flex-shrink:0}
+    .sec.collapsed .sec-chevron{transform:rotate(-90deg)}
+    .sec-body{padding:20px}
+    .sec.collapsed .sec-body{display:none}
+    .eyebrow{font-size:10px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;
+      color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:6px}
 
     /* KPI row */
     .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:28px}
@@ -463,12 +513,63 @@
       </div>
     </div>
 
+    <!-- Ransomware top summary strip -->
+    {% set rw = ransomware %}
+    {% if rw %}
+    <div class="rw-top-strip" onclick="go('ransomware', document.querySelector('.nav-item:has(.nav-ic)'))" style="cursor:pointer" title="Jump to Ransomware Intelligence section">
+      <div class="rw-top-cell">
+        <div class="rw-top-label">&#x1F9EC; Ransomware Risk</div>
+        <div class="rw-top-val" style="color:{% if rw.ransomware_score >= 70 %}var(--danger){% elif rw.ransomware_score >= 40 %}var(--warn){% else %}var(--ok){% endif %}">{{ rw.ransomware_score }}<span style="font-size:13px;font-weight:500;color:var(--muted)">/100</span></div>
+        <div class="rw-top-sub">{% if rw.ransomware_score >= 70 %}HIGH RISK{% elif rw.ransomware_score >= 40 %}MODERATE{% else %}LOW RISK{% endif %}</div>
+      </div>
+      <div class="rw-top-cell">
+        <div class="rw-top-label">&#x1F4A5; Blast Radius</div>
+        <div class="rw-top-val" style="color:{{ rw.blast_color }}">{{ rw.blast_radius_score }}<span style="font-size:13px;font-weight:500;color:var(--muted)">/100</span></div>
+        <div class="rw-top-sub">{{ rw.blast_label }}</div>
+      </div>
+      <div class="rw-top-cell">
+        <div class="rw-top-label">&#x1F6A8; APT / Nation-State</div>
+        {% if rw.is_apt %}
+          <div class="rw-top-val" style="color:var(--tag)">{{ rw.apt_confidence }}%</div>
+          <div class="rw-top-sub">APT DETECTED &mdash; {{ rw.primary_family.family.origin_flag }} {{ rw.primary_family.family.origin }}</div>
+        {% elif rw.family_matches %}
+          <div class="rw-top-val" style="color:var(--warn)">{{ rw.family_matches[0].confidence }}%</div>
+          <div class="rw-top-sub">Criminal group match</div>
+        {% else %}
+          <div class="rw-top-val" style="color:var(--ok)">None</div>
+          <div class="rw-top-sub">Not detected</div>
+        {% endif %}
+      </div>
+      <div class="rw-top-cell">
+        <div class="rw-top-label">&#x1F9E9; Behaviors / Families</div>
+        <div class="rw-top-val" style="color:{% if rw.behavior_count >= 6 %}var(--danger){% elif rw.behavior_count >= 3 %}var(--warn){% else %}var(--ok){% endif %}">{{ rw.behavior_count }}</div>
+        <div class="rw-top-sub">{{ rw.family_matches|length }} family match{{ 'es' if rw.family_matches|length != 1 else '' }} &mdash; <a onclick="scrollTo('ransomware')" href="#ransomware" style="color:var(--accent);font-size:11px">View Intel &#x2192;</a></div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Jump-to navigation bar -->
+    <div class="jump-bar">
+      <div class="jump-lbl">Jump to section</div>
+      <a class="jump-pill" href="#threat" onclick="go('threat',this);return false;">&#x26A1; Threat Level</a>
+      <a class="jump-pill" href="#surface" onclick="go('surface',this);return false;">&#x1F3AF; Attack Surface</a>
+      <a class="jump-pill" href="#charts" onclick="go('charts',this);return false;">&#x1F4C8; Charts</a>
+      <a class="jump-pill" href="#github" onclick="go('github',this);return false;">&#x1F4CB; Repo Info</a>
+      <a class="jump-pill" href="#mitre" onclick="go('mitre',this);return false;">&#x1F6E1; MITRE ATT&amp;CK</a>
+      <a class="jump-pill danger" href="#findings" onclick="go('findings',this);return false;">&#x1F50D; Findings ({{ findings|length }})</a>
+      <a class="jump-pill" href="#cves" onclick="go('cves',this);return false;">&#x1F4E6; CVEs</a>
+      <a class="jump-pill" href="#sandbox" onclick="go('sandbox',this);return false;">&#x1F433; Sandbox</a>
+      <a class="jump-pill warn" href="#ransomware" onclick="go('ransomware',this);return false;">&#x1F9EC; Ransomware Intel</a>
+    </div>
+
     <!-- Threat Level section -->
     <div class="sec" id="threat">
-      <div class="sec-head">
-        <div class="sec-title">Threat Level</div>
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x26A1; Threat Level</div>
         <div class="sec-count">Score {{ score }}/100</div>
+        <span class="sec-chevron">&#x25BC;</span>
       </div>
+      <div class="sec-body">
 
       <div class="threat-bar-wrap">
         <div class="threat-bar-head">
@@ -536,11 +637,16 @@
         </table>
       </div>
       {% endif %}
+      </div><!-- /sec-body threat -->
     </div>
 
     <!-- Attack Surface section -->
     <div class="sec" id="surface">
-      <div class="sec-head"><div class="sec-title">Attack Surface Analysis</div></div>
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F3AF; Attack Surface Analysis</div>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
 
       {% set has_sqli   = findings | selectattr('cwe','eq','CWE-89')  | list | length > 0 %}
       {% set has_xss    = findings | selectattr('cwe','eq','CWE-79')  | list | length > 0 %}
@@ -601,11 +707,16 @@
           <div class="atk-detail">CWE-502 / T1059 Execution</div>
         </div>
       </div>
+      </div><!-- /sec-body surface -->
     </div>
 
     <!-- Charts -->
     <div class="sec" id="charts">
-      <div class="sec-head"><div class="sec-title">Analysis Charts</div></div>
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F4C8; Analysis Charts</div>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
 
       <div class="chart-grid-3">
         <div class="cbox">
@@ -643,11 +754,16 @@
           <canvas id="cTactic"></canvas>
         </div>
       </div>
+      </div><!-- /sec-body charts -->
     </div>
 
     <!-- GitHub Info -->
     <div class="sec" id="github">
-      <div class="sec-head"><div class="sec-title">Repository Information</div></div>
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F4CB; Repository Information</div>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
 
       <div class="gh-card">
         <div class="gh-top">
@@ -733,14 +849,17 @@
         </div>
       </div>
       {% endif %}
+      </div><!-- /sec-body github -->
     </div>
 
     <!-- MITRE ATT&CK -->
     <div class="sec" id="mitre">
-      <div class="sec-head">
-        <div class="sec-title">MITRE ATT&CK Coverage</div>
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F6E1; MITRE ATT&amp;CK Coverage</div>
         <div class="sec-count">{{ tcounts|length }} techniques</div>
+        <span class="sec-chevron">&#x25BC;</span>
       </div>
+      <div class="sec-body">
       <div class="mitre-grid">
         {% for tech, info in tcounts.items() %}
         <div class="mt {% if info.sev == 'ERROR' %}crit{% else %}med{% endif %}">
@@ -752,15 +871,17 @@
         {% endfor %}
         {% if not tcounts %}<div style="color:var(--muted);font-size:13px">No ATT&CK techniques mapped in this scan.</div>{% endif %}
       </div>
+      </div><!-- /sec-body mitre -->
     </div>
 
     <!-- Findings -->
     <div class="sec" id="findings">
-      <div class="sec-head">
-        <div class="sec-title">Vulnerability Findings</div>
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F50D; Vulnerability Findings</div>
         <div class="sec-count">{{ findings|length }} total</div>
+        <span class="sec-chevron">&#x25BC;</span>
       </div>
-
+      <div class="sec-body">
       <div class="filter-row">
         <button class="fbtn on" onclick="filt('ALL',this)">All ({{ findings|length }})</button>
         <button class="fbtn" onclick="filt('ERROR',this)" style="color:var(--danger)">Critical ({{ errs|length }})</button>
@@ -804,14 +925,17 @@
           {% endfor %}
         </tbody>
       </table>
+      </div><!-- /sec-body findings -->
     </div>
 
     <!-- CVEs -->
     <div class="sec" id="cves">
-      <div class="sec-head">
-        <div class="sec-title">Dependency CVEs</div>
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F4E6; Dependency CVEs</div>
         <div class="sec-count">{{ dep_vulns|length }}</div>
+        <span class="sec-chevron">&#x25BC;</span>
       </div>
+      <div class="sec-body">
       {% if dep_vulns %}
       <table>
         <thead><tr><th>Ecosystem</th><th>Package</th><th>Version</th><th>CVE / ID</th><th>Description</th><th>Fix</th></tr></thead>
@@ -833,11 +957,16 @@
         No known CVEs detected in dependencies.
       </div>
       {% endif %}
+      </div><!-- /sec-body cves -->
     </div>
 
     <!-- Sandbox -->
     <div class="sec" id="sandbox">
-      <div class="sec-head"><div class="sec-title">Sandbox Runtime Analysis</div></div>
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F433; Sandbox Runtime Analysis</div>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
       {% if rt %}
         <div class="sandbox-hd">
           <div class="sdot {% if rt.get('suspicious_behaviors') %}r{% else %}g{% endif %}"></div>
@@ -867,6 +996,7 @@
           Sandbox not enabled for this scan. Re-run with Docker Sandbox option active.
         </div>
       {% endif %}
+      </div><!-- /sec-body sandbox -->
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════ -->
@@ -874,14 +1004,16 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     {% set rw = ransomware %}
     <div class="sec" id="ransomware">
-      <div class="sec-head">
+      <div class="sec-head" onclick="toggleSec(this)">
         <div class="sec-title">&#x1F9EC; Ransomware Intelligence</div>
         {% if rw %}
           <span class="sec-count" style="{% if rw.ransomware_score >= 60 %}color:var(--danger){% elif rw.ransomware_score >= 30 %}color:var(--warn){% else %}color:var(--ok){% endif %}">
             Score {{ rw.ransomware_score }}/100
           </span>
         {% endif %}
+        <span class="sec-chevron">&#x25BC;</span>
       </div>
+      <div class="sec-body">
 
       {% if rw %}
 
@@ -1110,6 +1242,7 @@
         Ransomware analysis not available for this scan.
       </div>
       {% endif %}
+      </div><!-- /sec-body ransomware -->
     </div>
     <!-- /ransomware -->
 
@@ -1117,6 +1250,31 @@
 </div>
 
 <script>
+// ── Collapsible sections ──────────────────────────────────────────────────────
+function toggleSec(head) {
+  const sec = head.closest('.sec');
+  if (!sec) return;
+  sec.classList.toggle('collapsed');
+  const id = sec.id;
+  if (id) {
+    try {
+      const collapsed = JSON.parse(localStorage.getItem('sec_collapsed') || '{}');
+      if (sec.classList.contains('collapsed')) collapsed[id] = true;
+      else delete collapsed[id];
+      localStorage.setItem('sec_collapsed', JSON.stringify(collapsed));
+    } catch(e) {}
+  }
+}
+(function restoreSections() {
+  try {
+    const collapsed = JSON.parse(localStorage.getItem('sec_collapsed') || '{}');
+    Object.keys(collapsed).forEach(id => {
+      const sec = document.getElementById(id);
+      if (sec) sec.classList.add('collapsed');
+    });
+  } catch(e) {}
+})();
+
 // ── Theme toggle ──────────────────────────────────────────────────────────────
 function toggleTheme() {
   const html = document.documentElement;
