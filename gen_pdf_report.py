@@ -370,15 +370,7 @@ HTML = f"""<!DOCTYPE html>
     /* ── Page setup ───────────────────────────────────────────────── */
     @page {{
       size: A4;
-      margin: 18mm 16mm 22mm 16mm;
-      @bottom-center {{
-        content: "SecureScope Security Report  ·  {esc(OWNER)}/{esc(REPO_SLUG)}  ·  Page " counter(page) " of " counter(pages);
-        font-family: 'Geist Mono', monospace;
-        font-size: 8pt;
-        color: #9ca3af;
-        border-top: 1px solid #e5e7eb;
-        padding-top: 6pt;
-      }}
+      margin: 18mm 16mm 20mm 16mm;
     }}
 
     /* ── Base ─────────────────────────────────────────────────────── */
@@ -935,17 +927,16 @@ async def render():
                 path=str(OUT_PDF),
                 format="A4",
                 print_background=True,
-                margin={"top": "0mm", "bottom": "0mm", "left": "0mm", "right": "0mm"},
+                margin={"top": "18mm", "bottom": "14mm", "left": "16mm", "right": "16mm"},
                 display_header_footer=True,
                 header_template="<span></span>",
-                footer_template="""
-                  <div style="width:100%;padding:0 16mm;display:flex;justify-content:space-between;
-                              font-family:'Courier New',monospace;font-size:8px;color:#9ca3af;
-                              border-top:1px solid #e5e7eb;padding-top:4px;">
-                    <span>SecureScope Security Report &nbsp;&#183;&nbsp; """
+                footer_template="""<div style="width:100%;padding:0 16mm;display:flex;
+                    justify-content:space-between;font-family:'Courier New',monospace;
+                    font-size:8px;color:#9ca3af;border-top:1px solid #e5e7eb;padding-top:5px;">
+                  <span>SecureScope Security Report &nbsp;&middot;&nbsp; """
                     + esc(OWNER) + "/" + esc(REPO_SLUG) + """</span>
-                    <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
-                  </div>""",
+                  <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
+                </div>""",
             )
             await browser.close()
     finally:
