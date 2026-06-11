@@ -35,7 +35,12 @@ elif score >= 45: grade, gcolor = 'HIGH',     '#e6a817'
 elif score >= 20: grade, gcolor = 'MEDIUM',   '#4f8ef7'
 else:             grade, gcolor = 'LOW',      '#3ecf79'
 
-print(f'[3/3] Building HTML report (score={score}, grade={grade})...')
+print('[3/4] Running ransomware intelligence analysis...')
+from ransomware import detect as ransomware_detect
+rw_report = ransomware_detect(findings)
+print(f'      score={rw_report.ransomware_score}  blast={rw_report.blast_label}  behaviors={rw_report.behavior_count}  families={len(rw_report.family_matches)}')
+
+print(f'[4/4] Building HTML report (score={score}, grade={grade})...')
 with app.app_context():
     html = render_template(
         'report.html',
@@ -47,6 +52,7 @@ with app.app_context():
         summary=result.summary(),
         findings=findings,
         dependency_vulns=result.dependency_vulns,
+        ransomware=rw_report,
         runtime=None,
         score=score,
         grade=grade,

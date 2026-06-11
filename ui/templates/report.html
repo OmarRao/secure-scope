@@ -239,6 +239,95 @@
     .conn-item{padding:5px 10px;background:var(--ink2);border:1px solid var(--rule);border-radius:5px;margin-bottom:5px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub)}
     .stdout-box{background:var(--ink);border:1px solid var(--rule);border-radius:8px;padding:14px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub);white-space:pre-wrap;max-height:260px;overflow-y:auto;line-height:1.55}
 
+    /* ── Ransomware Section ─────────────────────────────────────────── */
+    .rw-hero{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+    .rw-card{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:18px 20px}
+    .rw-card.danger{border-color:rgba(242,87,87,.4);background:rgba(242,87,87,.04)}
+    .rw-card.warn{border-color:rgba(230,168,23,.35);background:rgba(230,168,23,.04)}
+    .rw-card.apt{border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.04)}
+    .rw-score-num{font-size:40px;font-weight:900;font-family:'Geist Mono',monospace;line-height:1;letter-spacing:-1.5px}
+    .rw-score-lbl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:4px;font-family:'Geist Mono',monospace}
+    .rw-grade{font-size:13px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;margin-top:6px;font-family:'Geist Mono',monospace}
+
+    /* Blast radius meter */
+    .blast-meter{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:18px 20px;margin-bottom:20px}
+    .blast-track{height:12px;background:var(--ink3);border-radius:6px;overflow:hidden;margin:10px 0 6px;position:relative}
+    .blast-segments{position:absolute;inset:0;display:flex}
+    .blast-seg{height:100%;opacity:.2}
+    .blast-fill{height:100%;border-radius:6px;transition:width 1s cubic-bezier(.4,0,.2,1);position:relative;z-index:1}
+    .blast-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 70%,rgba(255,255,255,.2))}
+    .blast-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:10px;font-family:'Geist Mono',monospace}
+    .blast-leg{display:flex;align-items:center;gap:5px;color:var(--muted)}
+    .blast-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+    /* Behavior grid */
+    .beh-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+    .beh-tile{background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;transition:border-color .15s}
+    .beh-tile.crit{border-color:rgba(242,87,87,.35);background:rgba(242,87,87,.04)}
+    .beh-tile.high{border-color:rgba(230,168,23,.3);background:rgba(230,168,23,.04)}
+    .beh-ic{font-size:18px;margin-bottom:7px}
+    .beh-name{font-size:12px;font-weight:700;color:var(--head);margin-bottom:3px}
+    .beh-mitre{font-size:10px;font-family:'Geist Mono',monospace;color:var(--accent);margin-bottom:4px}
+    .beh-desc{font-size:11px;color:var(--dim);line-height:1.45}
+    .beh-count{font-size:10px;font-weight:700;font-family:'Geist Mono',monospace;margin-top:7px;color:var(--muted)}
+
+    /* Family cards */
+    .fam-list{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+    .fam-card{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+    .fam-card.primary{border-color:rgba(242,87,87,.4)}
+    .fam-head{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border-bottom:1px solid var(--rule)}
+    .fam-conf{flex-shrink:0;width:52px;height:52px;border-radius:8px;background:var(--ink3);display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--rule2)}
+    .fam-conf-num{font-size:17px;font-weight:900;font-family:'Geist Mono',monospace;line-height:1}
+    .fam-conf-lbl{font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace}
+    .fam-info{flex:1}
+    .fam-name{font-size:15px;font-weight:800;color:var(--head);margin-bottom:3px;letter-spacing:-.2px}
+    .fam-alias{font-size:11px;color:var(--dim);font-family:'Geist Mono',monospace;margin-bottom:6px}
+    .fam-tags{display:flex;flex-wrap:wrap;gap:5px}
+    .fam-tag{font-size:10px;font-family:'Geist Mono',monospace;padding:2px 8px;border-radius:4px;font-weight:600}
+    .fam-origin{background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
+    .fam-status-active{background:rgba(242,87,87,.12);color:var(--danger);border:1px solid rgba(242,87,87,.25)}
+    .fam-status-other{background:rgba(230,168,23,.12);color:var(--warn);border:1px solid rgba(230,168,23,.25)}
+    .fam-apt{background:rgba(167,139,250,.12);color:var(--tag);border:1px solid rgba(167,139,250,.25)}
+    .fam-body{padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:12px}
+    .fam-desc{color:var(--sub);line-height:1.6;grid-column:1/-1}
+    .fam-col h4{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:8px}
+    .fam-victim{font-size:11px;color:var(--dim);margin-bottom:3px;font-family:'Geist Mono',monospace}
+    .fam-matched{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+    .fam-mb{font-size:10px;font-family:'Geist Mono',monospace;padding:2px 7px;border-radius:3px;background:rgba(242,87,87,.1);color:var(--danger);border:1px solid rgba(242,87,87,.2)}
+    .fam-sector{display:inline-block;font-size:10px;font-family:'Geist Mono',monospace;padding:2px 7px;border-radius:3px;margin:2px;background:var(--ink3);border:1px solid var(--rule2);color:var(--sub)}
+
+    /* CVE ransomware table */
+    .rw-cve-row{display:grid;grid-template-columns:120px 1fr 80px 90px;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--rule);font-size:12px}
+    .rw-cve-row:last-child{border:none}
+    .rw-cve-id{font-family:'Geist Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(242,87,87,.1);color:var(--danger);border:1px solid rgba(242,87,87,.2)}
+    .rw-cve-cvss{font-family:'Geist Mono',monospace;font-weight:700;font-size:13px;text-align:center}
+    .rw-cve-fam{font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)}
+
+    /* Affected sections */
+    .aff-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--rule);font-size:12px}
+    .aff-row:last-child{border:none}
+    .aff-file{font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .aff-beh{display:flex;flex-wrap:wrap;gap:4px}
+    .aff-b{font-size:10px;font-family:'Geist Mono',monospace;padding:2px 6px;border-radius:3px;background:rgba(230,168,23,.1);color:var(--warn);border:1px solid rgba(230,168,23,.2)}
+    .aff-cnt{font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;color:var(--muted);min-width:30px;text-align:right}
+
+    /* Global map */
+    .map-wrap{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:20px}
+    .map-canvas-wrap{position:relative;background:var(--ink2)}
+    #rwMapSvg{width:100%;height:auto;display:block}
+    .map-legend{padding:12px 16px;border-top:1px solid var(--rule);display:flex;gap:16px;flex-wrap:wrap;font-size:11px;font-family:'Geist Mono',monospace;color:var(--muted)}
+    .map-leg-item{display:flex;align-items:center;gap:6px}
+    .map-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+    /* APT attribution panel */
+    .apt-panel{background:rgba(167,139,250,.04);border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:18px 20px;margin-bottom:20px;display:flex;gap:18px;align-items:flex-start}
+    .apt-badge{flex-shrink:0;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);border-radius:8px;padding:12px 16px;text-align:center;min-width:80px}
+    .apt-badge-ic{font-size:24px;margin-bottom:4px}
+    .apt-badge-lbl{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--tag);font-family:'Geist Mono',monospace}
+    .apt-body{flex:1}
+    .apt-title{font-size:14px;font-weight:800;color:var(--head);margin-bottom:4px}
+    .apt-sub{font-size:12px;color:var(--sub);line-height:1.6}
+
     /* Print */
     @media print{.side{display:none}.content{max-width:100%}}
   </style>
@@ -300,6 +389,11 @@
     <div class="nav-item" onclick="go('sandbox',this)">
       <span class="nav-ic">&#x1F433;</span> Sandbox
       {% if rt.get('suspicious_behaviors') %}<span class="nav-ct ct-r">{{ rt.suspicious_behaviors|length }}</span>{% endif %}
+    </div>
+
+    <div class="nav-item" onclick="go('ransomware',this)">
+      <span class="nav-ic">&#x1F9EC;</span> Ransomware Intel
+      {% set rw = ransomware %}{% if rw and rw.ransomware_score >= 40 %}<span class="nav-ct ct-r">&#x26A0;</span>{% endif %}
     </div>
 
     <div class="nav-grp">Actions</div>
@@ -775,6 +869,250 @@
       {% endif %}
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- RANSOMWARE INTELLIGENCE                                          -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    {% set rw = ransomware %}
+    <div class="sec" id="ransomware">
+      <div class="sec-head">
+        <div class="sec-title">&#x1F9EC; Ransomware Intelligence</div>
+        {% if rw %}
+          <span class="sec-count" style="{% if rw.ransomware_score >= 60 %}color:var(--danger){% elif rw.ransomware_score >= 30 %}color:var(--warn){% else %}color:var(--ok){% endif %}">
+            Score {{ rw.ransomware_score }}/100
+          </span>
+        {% endif %}
+      </div>
+
+      {% if rw %}
+
+      {# ── Hero KPI row ──────────────────────────────────────────────── #}
+      <div class="rw-hero">
+        <div class="rw-card {% if rw.ransomware_score >= 60 %}danger{% elif rw.ransomware_score >= 30 %}warn{% endif %}">
+          <div class="eyebrow">Ransomware Risk</div>
+          <div class="rw-score-num" style="color:{% if rw.ransomware_score >= 60 %}var(--danger){% elif rw.ransomware_score >= 30 %}var(--warn){% else %}var(--ok){% endif %}">{{ rw.ransomware_score }}</div>
+          <div class="rw-score-lbl">/ 100</div>
+          <div class="rw-grade" style="color:{% if rw.ransomware_score >= 70 %}var(--danger){% elif rw.ransomware_score >= 40 %}var(--warn){% else %}var(--ok){% endif %}">
+            {% if rw.ransomware_score >= 70 %}HIGH RISK{% elif rw.ransomware_score >= 40 %}MODERATE{% else %}LOW RISK{% endif %}
+          </div>
+        </div>
+        <div class="rw-card {% if rw.blast_label in ['CATASTROPHIC','SEVERE'] %}danger{% elif rw.blast_label == 'HIGH' %}warn{% endif %}">
+          <div class="eyebrow">Blast Radius</div>
+          <div class="rw-score-num" style="color:{{ rw.blast_color }}">{{ rw.blast_radius_score }}</div>
+          <div class="rw-score-lbl">/ 100</div>
+          <div class="rw-grade" style="color:{{ rw.blast_color }}">{{ rw.blast_label }}</div>
+        </div>
+        <div class="rw-card {% if rw.is_apt %}apt{% endif %}">
+          <div class="eyebrow">APT Likelihood</div>
+          {% if rw.is_apt %}
+            <div class="rw-score-num" style="color:var(--tag)">{{ rw.apt_confidence }}%</div>
+            <div class="rw-score-lbl">confidence</div>
+            <div class="rw-grade" style="color:var(--tag)">APT DETECTED</div>
+          {% elif rw.family_matches %}
+            <div class="rw-score-num" style="color:var(--warn)">{{ rw.family_matches[0].confidence }}%</div>
+            <div class="rw-score-lbl">match confidence</div>
+            <div class="rw-grade" style="color:var(--warn)">CRIMINAL GROUP</div>
+          {% else %}
+            <div class="rw-score-num" style="color:var(--ok)">0%</div>
+            <div class="rw-score-lbl">confidence</div>
+            <div class="rw-grade" style="color:var(--ok)">NOT DETECTED</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# ── APT Panel ─────────────────────────────────────────────────── #}
+      {% if rw.is_apt and rw.primary_family %}
+      <div class="apt-panel">
+        <div class="apt-badge">
+          <div class="apt-badge-ic">&#x1F6A8;</div>
+          <div class="apt-badge-lbl">APT Alert</div>
+        </div>
+        <div class="apt-body">
+          <div class="apt-title">Nation-State / Advanced Persistent Threat Indicators Detected</div>
+          <div class="apt-sub">
+            Behavioral patterns in this codebase match TTPs attributed to
+            <strong style="color:var(--tag)">{{ rw.primary_family.family.apt_group }}</strong>
+            — origin {{ rw.primary_family.family.origin_flag }} {{ rw.primary_family.family.origin }}.
+            This group has conducted ransomware and/or cyber-espionage campaigns against
+            {{ rw.primary_family.family.sectors_targeted | join(', ') }} sectors.
+            Confidence: <strong style="color:var(--tag)">{{ rw.apt_confidence }}%</strong>.
+            Immediate incident response recommended.
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      {# ── Blast Radius Meter ─────────────────────────────────────────── #}
+      <div class="blast-meter">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div class="eyebrow" style="margin:0">Blast Radius Assessment</div>
+          <span style="font-size:13px;font-weight:800;font-family:'Geist Mono',monospace;color:{{ rw.blast_color }}">{{ rw.blast_label }}</span>
+        </div>
+        <div style="font-size:12px;color:var(--sub);margin-bottom:8px">{{ rw.blast_description }}</div>
+        <div class="blast-track">
+          <div class="blast-segments">
+            <div class="blast-seg" style="width:20%;background:#16a34a"></div>
+            <div class="blast-seg" style="width:20%;background:#2563eb"></div>
+            <div class="blast-seg" style="width:20%;background:#d97706"></div>
+            <div class="blast-seg" style="width:20%;background:#dc2626"></div>
+            <div class="blast-seg" style="width:20%;background:#7c3aed"></div>
+          </div>
+          <div class="blast-fill" style="width:{{ rw.blast_radius_score }}%;background:{{ rw.blast_color }}"></div>
+        </div>
+        <div class="blast-legend">
+          <span class="blast-leg"><span class="blast-dot" style="background:#16a34a"></span>LOW</span>
+          <span class="blast-leg"><span class="blast-dot" style="background:#2563eb"></span>MODERATE</span>
+          <span class="blast-leg"><span class="blast-dot" style="background:#d97706"></span>HIGH</span>
+          <span class="blast-leg"><span class="blast-dot" style="background:#dc2626"></span>SEVERE</span>
+          <span class="blast-leg"><span class="blast-dot" style="background:#7c3aed"></span>CATASTROPHIC</span>
+        </div>
+      </div>
+
+      {# ── Detected Ransomware Behaviors ─────────────────────────────── #}
+      {% if rw.detected_behaviors %}
+      <div class="eyebrow" style="margin-bottom:12px">Detected Ransomware Behaviors ({{ rw.behavior_count }})</div>
+      <div class="beh-grid">
+        {% for beh in rw.detected_behaviors %}
+        <div class="beh-tile {% if beh.severity == 'CRITICAL' %}crit{% elif beh.severity == 'HIGH' %}high{% endif %}">
+          <div class="beh-ic">{{ beh.icon }}</div>
+          <div class="beh-name">{{ beh.label }}</div>
+          <div class="beh-mitre">{{ beh.mitre }}</div>
+          <div class="beh-desc">{{ beh.description }}</div>
+          <div class="beh-count">{{ beh.match_count }} finding{{ 's' if beh.match_count != 1 else '' }} matched &nbsp;·&nbsp;
+            <span style="color:{% if beh.severity == 'CRITICAL' %}var(--danger){% elif beh.severity == 'HIGH' %}var(--warn){% else %}var(--ok){% endif %}">{{ beh.severity }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="padding:28px;text-align:center;color:var(--muted);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px;margin-bottom:20px">
+        No ransomware behavioral patterns detected in current findings.
+      </div>
+      {% endif %}
+
+      {# ── Matched Ransomware Families ───────────────────────────────── #}
+      {% if rw.family_matches %}
+      <div class="sec-head" style="margin-top:28px"><div class="sec-title" style="font-size:14px">Matched Ransomware Families</div><span class="sec-count">{{ rw.family_matches | length }} matched</span></div>
+      <div class="fam-list">
+        {% for match in rw.family_matches[:4] %}
+        {% set fam = match.family %}
+        <div class="fam-card {% if loop.index == 1 %}primary{% endif %}">
+          <div class="fam-head">
+            <div class="fam-conf" style="border-color:{% if match.confidence >= 70 %}rgba(242,87,87,.4){% elif match.confidence >= 40 %}rgba(230,168,23,.35){% else %}var(--rule2){% endif %}">
+              <div class="fam-conf-num" style="color:{% if match.confidence >= 70 %}var(--danger){% elif match.confidence >= 40 %}var(--warn){% else %}var(--sub){% endif %}">{{ match.confidence }}%</div>
+              <div class="fam-conf-lbl">match</div>
+            </div>
+            <div class="fam-info">
+              <div class="fam-name">{{ fam.name }}</div>
+              <div class="fam-alias">{{ fam.alias[:2] | join(' · ') }}</div>
+              <div class="fam-tags">
+                <span class="fam-tag fam-origin">{{ fam.origin_flag }} {{ fam.origin }}</span>
+                <span class="fam-tag {% if fam.status == 'ACTIVE' %}fam-status-active{% else %}fam-status-other{% endif %}">{{ fam.status }}</span>
+                {% if 'Nation-State' in fam.type or 'APT' in fam.apt_group %}<span class="fam-tag fam-apt">APT</span>{% endif %}
+                <span class="fam-tag" style="background:var(--ink3);border:1px solid var(--rule2);color:var(--dim)">Since {{ fam.active_since }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="fam-body">
+            <div class="fam-desc">{{ fam.description }}</div>
+            <div class="fam-col">
+              <h4>Sectors Targeted</h4>
+              {% for s in fam.sectors_targeted %}<span class="fam-sector">{{ s }}</span>{% endfor %}
+            </div>
+            <div class="fam-col">
+              <h4>Known Victims</h4>
+              {% for v in fam.known_victims[:3] %}<div class="fam-victim">· {{ v }}</div>{% endfor %}
+            </div>
+            {% if match.matched_behaviors %}
+            <div style="grid-column:1/-1">
+              <h4>Matched Behavior Patterns</h4>
+              <div class="fam-matched">
+                {% for b in match.matched_behaviors %}<span class="fam-mb">{{ b | replace('_',' ') }}</span>{% endfor %}
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {# ── Global Impact Map ─────────────────────────────────────────── #}
+      {% if rw.primary_family %}
+      <div class="sec-head" style="margin-top:28px">
+        <div class="sec-title" style="font-size:14px">Global Impact Map — {{ rw.primary_family.family.name }}</div>
+        <span class="sec-count">{{ rw.primary_family.family.impact_regions | length }} affected regions</span>
+      </div>
+      <div class="map-wrap">
+        <div class="map-canvas-wrap" style="padding:12px 16px">
+          <canvas id="rwMapCanvas" style="width:100%;max-height:320px"></canvas>
+        </div>
+        <div class="map-legend">
+          <div style="font-size:11px;color:var(--sub);margin-right:8px;font-weight:600">Affected countries:</div>
+          {% for region in rw.primary_family.family.impact_regions[:6] %}
+          <div class="map-leg-item">
+            <div class="map-leg-dot" style="background:{% if region.incidents >= 500 %}#dc2626{% elif region.incidents >= 200 %}#d97706{% elif region.incidents >= 100 %}#2563eb{% else %}#6b7280{% endif %}"></div>
+            <span>{{ region.country }} ({{ region.incidents }}+)</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# ── Active CVE Variants ────────────────────────────────────────── #}
+      {% if rw.active_cves %}
+      <div class="sec-head" style="margin-top:28px">
+        <div class="sec-title" style="font-size:14px">Active CVE Variants Exploited by Matched Families</div>
+        <span class="sec-count">{{ rw.active_cves | length }} CVEs</span>
+      </div>
+      <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:20px">
+        <div style="display:grid;grid-template-columns:120px 1fr 80px 90px;gap:12px;padding:8px 14px;background:var(--ink3);border-bottom:2px solid var(--rule)">
+          <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">CVE ID</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Vulnerability / Description</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;text-align:center">CVSS</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Family</span>
+        </div>
+        {% for cve in rw.active_cves %}
+        <div class="rw-cve-row">
+          <div><span class="rw-cve-id">{{ cve.id }}</span></div>
+          <div>
+            <div style="font-weight:700;color:var(--body);margin-bottom:2px">{{ cve.name }}</div>
+            <div class="rw-cve-fam">{{ cve.desc | truncate(90) }}</div>
+          </div>
+          <div class="rw-cve-cvss" style="color:{% if cve.cvss >= 9 %}var(--danger){% elif cve.cvss >= 7 %}var(--warn){% else %}var(--ok){% endif %}">{{ cve.cvss }}</div>
+          <div style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)">{{ cve.family_name }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {# ── Affected Code Sections ─────────────────────────────────────── #}
+      {% if rw.affected_sections %}
+      <div class="sec-head" style="margin-top:28px">
+        <div class="sec-title" style="font-size:14px">Affected Code Sections</div>
+        <span class="sec-count">{{ rw.affected_sections | length }} files</span>
+      </div>
+      <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:20px">
+        {% for sec in rw.affected_sections %}
+        <div class="aff-row">
+          <span class="aff-file" title="{{ sec.file }}">{{ sec.file }}</span>
+          <div class="aff-beh">
+            {% for bname in sec.behaviors[:3] %}<span class="aff-b">{{ bname | replace('_',' ') | truncate(22, killwords=True) }}</span>{% endfor %}
+          </div>
+          <span class="aff-cnt">{{ sec.behavior_count }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% else %}
+      {# No ransomware object passed — fallback #}
+      <div style="padding:28px;text-align:center;color:var(--muted);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px">
+        Ransomware analysis not available for this scan.
+      </div>
+      {% endif %}
+    </div>
+    <!-- /ransomware -->
+
   </div>
 </div>
 
@@ -905,7 +1243,84 @@ new Chart(document.getElementById('cTactic'),{
   options:{cutout:'55%',plugins:{legend:{labels:{color:'#8b96a4',font:{family:'Geist Mono',size:10}}}}}
 });
 
-// Filter/search
+// ── Ransomware Global Impact Map ─────────────────────────────────────────────
+(function(){
+  const canvas = document.getElementById('rwMapCanvas');
+  if (!canvas) return;
+  const regions = {{ (ransomware.primary_family.family.impact_regions if ransomware and ransomware.primary_family else []) | tojson }};
+  if (!regions.length) return;
+
+  // Approximate Mercator projection for A4-ish viewport
+  function project(lat, lon, W, H) {
+    const x = (lon + 180) / 360 * W;
+    const latRad = lat * Math.PI / 180;
+    const mercN = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
+    const y = H / 2 - (mercN / Math.PI) * H * 0.5;
+    return [x, y];
+  }
+
+  const W = canvas.offsetWidth || 800;
+  const H = Math.round(W * 0.44);
+  canvas.width  = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  const isDark = !document.documentElement.classList.contains('light');
+  ctx.fillStyle = isDark ? '#111419' : '#f1f5f9';
+  ctx.fillRect(0, 0, W, H);
+
+  // Simple world outline using a minimal SVG-converted path would be too large;
+  // draw grid lines instead as context
+  ctx.strokeStyle = isDark ? '#252b35' : '#d1d5db';
+  ctx.lineWidth = 0.5;
+  for (let lon = -180; lon <= 180; lon += 30) {
+    const [x] = project(0, lon, W, H);
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let lat = -60; lat <= 75; lat += 30) {
+    const [, y] = project(lat, 0, W, H);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Lat/lon labels
+  ctx.fillStyle = isDark ? '#4a5568' : '#9ca3af';
+  ctx.font = '9px Geist Mono, monospace';
+  ctx.textAlign = 'center';
+  for (let lon = -150; lon <= 150; lon += 60) {
+    const [x] = project(0, lon, W, H);
+    ctx.fillText(lon + '°', x, H - 4);
+  }
+
+  // Draw impact circles
+  regions.forEach(r => {
+    const [x, y] = project(r.coords[0], r.coords[1], W, H);
+    const inc = r.incidents || 10;
+    const radius = Math.min(6 + Math.log(inc) * 2.5, 28);
+    const color = inc >= 500 ? '#dc2626' : inc >= 200 ? '#d97706' : inc >= 100 ? '#2563eb' : '#6b7280';
+
+    // Outer glow
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, radius * 1.8);
+    grad.addColorStop(0, color.replace('#', 'rgba(') + ',0.3)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(x, y, radius * 1.8, 0, Math.PI * 2);
+    ctx.fillStyle = grad; ctx.fill();
+
+    // Main dot
+    ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = color + 'cc'; ctx.fill();
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Country label
+    ctx.fillStyle = isDark ? '#e2e8f0' : '#1f2937';
+    ctx.font = 'bold 10px Geist, sans-serif';
+    ctx.textAlign = 'center';
+    const shortName = r.country.replace('United States','USA').replace('United Kingdom','UK').replace('Australia','AUS');
+    ctx.fillText(shortName, x, y - radius - 4);
+  });
+})();
+
+// ── Filter/search ─────────────────────────────────────────────────────────────
 function filt(sev,btn){
   document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');

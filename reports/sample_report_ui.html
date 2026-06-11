@@ -239,6 +239,95 @@
     .conn-item{padding:5px 10px;background:var(--ink2);border:1px solid var(--rule);border-radius:5px;margin-bottom:5px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub)}
     .stdout-box{background:var(--ink);border:1px solid var(--rule);border-radius:8px;padding:14px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub);white-space:pre-wrap;max-height:260px;overflow-y:auto;line-height:1.55}
 
+    /* ── Ransomware Section ─────────────────────────────────────────── */
+    .rw-hero{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+    .rw-card{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:18px 20px}
+    .rw-card.danger{border-color:rgba(242,87,87,.4);background:rgba(242,87,87,.04)}
+    .rw-card.warn{border-color:rgba(230,168,23,.35);background:rgba(230,168,23,.04)}
+    .rw-card.apt{border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.04)}
+    .rw-score-num{font-size:40px;font-weight:900;font-family:'Geist Mono',monospace;line-height:1;letter-spacing:-1.5px}
+    .rw-score-lbl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:4px;font-family:'Geist Mono',monospace}
+    .rw-grade{font-size:13px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;margin-top:6px;font-family:'Geist Mono',monospace}
+
+    /* Blast radius meter */
+    .blast-meter{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:18px 20px;margin-bottom:20px}
+    .blast-track{height:12px;background:var(--ink3);border-radius:6px;overflow:hidden;margin:10px 0 6px;position:relative}
+    .blast-segments{position:absolute;inset:0;display:flex}
+    .blast-seg{height:100%;opacity:.2}
+    .blast-fill{height:100%;border-radius:6px;transition:width 1s cubic-bezier(.4,0,.2,1);position:relative;z-index:1}
+    .blast-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 70%,rgba(255,255,255,.2))}
+    .blast-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:10px;font-family:'Geist Mono',monospace}
+    .blast-leg{display:flex;align-items:center;gap:5px;color:var(--muted)}
+    .blast-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+    /* Behavior grid */
+    .beh-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+    .beh-tile{background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;transition:border-color .15s}
+    .beh-tile.crit{border-color:rgba(242,87,87,.35);background:rgba(242,87,87,.04)}
+    .beh-tile.high{border-color:rgba(230,168,23,.3);background:rgba(230,168,23,.04)}
+    .beh-ic{font-size:18px;margin-bottom:7px}
+    .beh-name{font-size:12px;font-weight:700;color:var(--head);margin-bottom:3px}
+    .beh-mitre{font-size:10px;font-family:'Geist Mono',monospace;color:var(--accent);margin-bottom:4px}
+    .beh-desc{font-size:11px;color:var(--dim);line-height:1.45}
+    .beh-count{font-size:10px;font-weight:700;font-family:'Geist Mono',monospace;margin-top:7px;color:var(--muted)}
+
+    /* Family cards */
+    .fam-list{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+    .fam-card{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+    .fam-card.primary{border-color:rgba(242,87,87,.4)}
+    .fam-head{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border-bottom:1px solid var(--rule)}
+    .fam-conf{flex-shrink:0;width:52px;height:52px;border-radius:8px;background:var(--ink3);display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--rule2)}
+    .fam-conf-num{font-size:17px;font-weight:900;font-family:'Geist Mono',monospace;line-height:1}
+    .fam-conf-lbl{font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace}
+    .fam-info{flex:1}
+    .fam-name{font-size:15px;font-weight:800;color:var(--head);margin-bottom:3px;letter-spacing:-.2px}
+    .fam-alias{font-size:11px;color:var(--dim);font-family:'Geist Mono',monospace;margin-bottom:6px}
+    .fam-tags{display:flex;flex-wrap:wrap;gap:5px}
+    .fam-tag{font-size:10px;font-family:'Geist Mono',monospace;padding:2px 8px;border-radius:4px;font-weight:600}
+    .fam-origin{background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
+    .fam-status-active{background:rgba(242,87,87,.12);color:var(--danger);border:1px solid rgba(242,87,87,.25)}
+    .fam-status-other{background:rgba(230,168,23,.12);color:var(--warn);border:1px solid rgba(230,168,23,.25)}
+    .fam-apt{background:rgba(167,139,250,.12);color:var(--tag);border:1px solid rgba(167,139,250,.25)}
+    .fam-body{padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:12px}
+    .fam-desc{color:var(--sub);line-height:1.6;grid-column:1/-1}
+    .fam-col h4{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:8px}
+    .fam-victim{font-size:11px;color:var(--dim);margin-bottom:3px;font-family:'Geist Mono',monospace}
+    .fam-matched{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+    .fam-mb{font-size:10px;font-family:'Geist Mono',monospace;padding:2px 7px;border-radius:3px;background:rgba(242,87,87,.1);color:var(--danger);border:1px solid rgba(242,87,87,.2)}
+    .fam-sector{display:inline-block;font-size:10px;font-family:'Geist Mono',monospace;padding:2px 7px;border-radius:3px;margin:2px;background:var(--ink3);border:1px solid var(--rule2);color:var(--sub)}
+
+    /* CVE ransomware table */
+    .rw-cve-row{display:grid;grid-template-columns:120px 1fr 80px 90px;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--rule);font-size:12px}
+    .rw-cve-row:last-child{border:none}
+    .rw-cve-id{font-family:'Geist Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(242,87,87,.1);color:var(--danger);border:1px solid rgba(242,87,87,.2)}
+    .rw-cve-cvss{font-family:'Geist Mono',monospace;font-weight:700;font-size:13px;text-align:center}
+    .rw-cve-fam{font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)}
+
+    /* Affected sections */
+    .aff-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--rule);font-size:12px}
+    .aff-row:last-child{border:none}
+    .aff-file{font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .aff-beh{display:flex;flex-wrap:wrap;gap:4px}
+    .aff-b{font-size:10px;font-family:'Geist Mono',monospace;padding:2px 6px;border-radius:3px;background:rgba(230,168,23,.1);color:var(--warn);border:1px solid rgba(230,168,23,.2)}
+    .aff-cnt{font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;color:var(--muted);min-width:30px;text-align:right}
+
+    /* Global map */
+    .map-wrap{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:20px}
+    .map-canvas-wrap{position:relative;background:var(--ink2)}
+    #rwMapSvg{width:100%;height:auto;display:block}
+    .map-legend{padding:12px 16px;border-top:1px solid var(--rule);display:flex;gap:16px;flex-wrap:wrap;font-size:11px;font-family:'Geist Mono',monospace;color:var(--muted)}
+    .map-leg-item{display:flex;align-items:center;gap:6px}
+    .map-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+    /* APT attribution panel */
+    .apt-panel{background:rgba(167,139,250,.04);border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:18px 20px;margin-bottom:20px;display:flex;gap:18px;align-items:flex-start}
+    .apt-badge{flex-shrink:0;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);border-radius:8px;padding:12px 16px;text-align:center;min-width:80px}
+    .apt-badge-ic{font-size:24px;margin-bottom:4px}
+    .apt-badge-lbl{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--tag);font-family:'Geist Mono',monospace}
+    .apt-body{flex:1}
+    .apt-title{font-size:14px;font-weight:800;color:var(--head);margin-bottom:4px}
+    .apt-sub{font-size:12px;color:var(--sub);line-height:1.6}
+
     /* Print */
     @media print{.side{display:none}.content{max-width:100%}}
   </style>
@@ -2008,13 +2097,18 @@
       
     </div>
 
+    <div class="nav-item" onclick="go('ransomware',this)">
+      <span class="nav-ic">&#x1F9EC;</span> Ransomware Intel
+      <span class="nav-ct ct-r">&#x26A0;</span>
+    </div>
+
     <div class="nav-grp">Actions</div>
     <div class="nav-item" onclick="window.open('https://github.com/OmarRao/analyzer','_blank')"><span class="nav-ic">&#x1F517;</span> View on GitHub</div>
     <div class="nav-item" onclick="window.print()"><span class="nav-ic">&#x1F5A8;</span> Print Report</div>
     <div class="nav-item" onclick="window.location='/'"><span class="nav-ic">&#x2190;</span> New Scan</div>
 
     <div class="side-foot">
-      Generated<br>2026-06-10 09:16 UTC<br><br>
+      Generated<br>2026-06-11 09:31 UTC<br><br>
       SecureScope v1.0<br>
       MITRE ATT&CK v14<br><br>
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
@@ -2033,7 +2127,7 @@
           <span class="bmeta">Branch <strong>main</strong></span>
           <span class="bmeta">Language <strong>Python</strong></span>
           <span class="bmeta">License <strong>None</strong></span>
-          <span class="bmeta">2026-06-10 09:16 UTC</span>
+          <span class="bmeta">2026-06-11 09:31 UTC</span>
         </div>
       </div>
       <div class="banner-score">
@@ -9978,6 +10072,628 @@
       
     </div>
 
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- RANSOMWARE INTELLIGENCE                                          -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <div class="sec" id="ransomware">
+      <div class="sec-head">
+        <div class="sec-title">&#x1F9EC; Ransomware Intelligence</div>
+        
+          <span class="sec-count" style="color:var(--danger)">
+            Score 100/100
+          </span>
+        
+      </div>
+
+      
+
+      
+      <div class="rw-hero">
+        <div class="rw-card danger">
+          <div class="eyebrow">Ransomware Risk</div>
+          <div class="rw-score-num" style="color:var(--danger)">100</div>
+          <div class="rw-score-lbl">/ 100</div>
+          <div class="rw-grade" style="color:var(--danger)">
+            HIGH RISK
+          </div>
+        </div>
+        <div class="rw-card danger">
+          <div class="eyebrow">Blast Radius</div>
+          <div class="rw-score-num" style="color:#7c3aed">100</div>
+          <div class="rw-score-lbl">/ 100</div>
+          <div class="rw-grade" style="color:#7c3aed">CATASTROPHIC</div>
+        </div>
+        <div class="rw-card apt">
+          <div class="eyebrow">APT Likelihood</div>
+          
+            <div class="rw-score-num" style="color:var(--tag)">81%</div>
+            <div class="rw-score-lbl">confidence</div>
+            <div class="rw-grade" style="color:var(--tag)">APT DETECTED</div>
+          
+        </div>
+      </div>
+
+      
+      
+      <div class="apt-panel">
+        <div class="apt-badge">
+          <div class="apt-badge-ic">&#x1F6A8;</div>
+          <div class="apt-badge-lbl">APT Alert</div>
+        </div>
+        <div class="apt-body">
+          <div class="apt-title">Nation-State / Advanced Persistent Threat Indicators Detected</div>
+          <div class="apt-sub">
+            Behavioral patterns in this codebase match TTPs attributed to
+            <strong style="color:var(--tag)">TA505 / FIN11</strong>
+            — origin 🇷🇺 Russia / Ukraine.
+            This group has conducted ransomware and/or cyber-espionage campaigns against
+            Finance, Healthcare, Education, Government sectors.
+            Confidence: <strong style="color:var(--tag)">81%</strong>.
+            Immediate incident response recommended.
+          </div>
+        </div>
+      </div>
+      
+
+      
+      <div class="blast-meter">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div class="eyebrow" style="margin:0">Blast Radius Assessment</div>
+          <span style="font-size:13px;font-weight:800;font-family:'Geist Mono',monospace;color:#7c3aed">CATASTROPHIC</span>
+        </div>
+        <div style="font-size:12px;color:var(--sub);margin-bottom:8px">Full infrastructure compromise. Data encryption, exfiltration, and unrecoverable destruction likely.</div>
+        <div class="blast-track">
+          <div class="blast-segments">
+            <div class="blast-seg" style="width:20%;background:#16a34a"></div>
+            <div class="blast-seg" style="width:20%;background:#2563eb"></div>
+            <div class="blast-seg" style="width:20%;background:#d97706"></div>
+            <div class="blast-seg" style="width:20%;background:#dc2626"></div>
+            <div class="blast-seg" style="width:20%;background:#7c3aed"></div>
+          </div>
+          <div class="blast-fill" style="width:100%;background:#7c3aed"></div>
+        </div>
+        <div class="blast-legend">
+          <span class="blast-leg"><span class="blast-dot" style="background:#16a34a"></span>LOW</span>
+          <span class="blast-leg"><span class="blast-dot" style="background:#2563eb"></span>MODERATE</span>
+          <span class="blast-leg"><span class="blast-dot" style="background:#d97706"></span>HIGH</span>
+          <span class="blast-leg"><span class="blast-dot" style="background:#dc2626"></span>SEVERE</span>
+          <span class="blast-leg"><span class="blast-dot" style="background:#7c3aed"></span>CATASTROPHIC</span>
+        </div>
+      </div>
+
+      
+      
+      <div class="eyebrow" style="margin-bottom:12px">Detected Ransomware Behaviors (11)</div>
+      <div class="beh-grid">
+        
+        <div class="beh-tile crit">
+          <div class="beh-ic">🔪</div>
+          <div class="beh-name">Security Process Kill</div>
+          <div class="beh-mitre">T1562.001</div>
+          <div class="beh-desc">Terminates AV/EDR/backup processes before encryption</div>
+          <div class="beh-count">103 findings matched &nbsp;·&nbsp;
+            <span style="color:var(--danger)">CRITICAL</span>
+          </div>
+        </div>
+        
+        <div class="beh-tile crit">
+          <div class="beh-ic">⚡</div>
+          <div class="beh-name">Command Injection (Execution)</div>
+          <div class="beh-mitre">T1059</div>
+          <div class="beh-desc">OS command injection enables direct payload execution</div>
+          <div class="beh-count">103 findings matched &nbsp;·&nbsp;
+            <span style="color:var(--danger)">CRITICAL</span>
+          </div>
+        </div>
+        
+        <div class="beh-tile crit">
+          <div class="beh-ic">🔐</div>
+          <div class="beh-name">File Encryption</div>
+          <div class="beh-mitre">T1486</div>
+          <div class="beh-desc">Reads and re-encrypts files using symmetric/asymmetric crypto</div>
+          <div class="beh-count">36 findings matched &nbsp;·&nbsp;
+            <span style="color:var(--danger)">CRITICAL</span>
+          </div>
+        </div>
+        
+        <div class="beh-tile crit">
+          <div class="beh-ic">🔑</div>
+          <div class="beh-name">Credential Harvesting</div>
+          <div class="beh-mitre">T1552</div>
+          <div class="beh-desc">Extracts credentials from memory, files, or environment variables</div>
+          <div class="beh-count">11 findings matched &nbsp;·&nbsp;
+            <span style="color:var(--danger)">CRITICAL</span>
+          </div>
+        </div>
+        
+        <div class="beh-tile crit">
+          <div class="beh-ic">📌</div>
+          <div class="beh-name">Hardcoded Credentials</div>
+          <div class="beh-mitre">T1552.001</div>
+          <div class="beh-desc">Hardcoded secrets enable attackers to authenticate and deploy ransomware</div>
+          <div class="beh-count">11 findings matched &nbsp;·&nbsp;
+            <span style="color:var(--danger)">CRITICAL</span>
+          </div>
+        </div>
+        
+        <div class="beh-tile high">
+          <div class="beh-ic">💉</div>
+          <div class="beh-name">SQL Injection (Initial Access)</div>
+          <div class="beh-mitre">T1190</div>
+          <div class="beh-desc">SQLi can be used for initial access or credential theft to deliver ransomware</div>
+          <div class="beh-count">287 findings matched &nbsp;·&nbsp;
+            <span style="color:var(--warn)">HIGH</span>
+          </div>
+        </div>
+        
+        <div class="beh-tile high">
+          <div class="beh-ic">🌐</div>
+          <div class="beh-name">Lateral Movement</div>
+          <div class="beh-mitre">T1021</div>
+          <div class="beh-desc">Spreads to other systems via network shares, RDP, or SMB</div>
+          <div class="beh-count">103 findings matched &nbsp;·&nbsp;
+            <span style="color:var(--warn)">HIGH</span>
+          </div>
+        </div>
+        
+        <div class="beh-tile high">
+          <div class="beh-ic">🔓</div>
+          <div class="beh-name">Weak Cryptographic Keys</div>
+          <div class="beh-mitre">T1600</div>
+          <div class="beh-desc">Uses weak algorithms (MD5/SHA1/ECB) that ransomware can exploit for key recovery</div>
+          <div class="beh-count">33 findings matched &nbsp;·&nbsp;
+            <span style="color:var(--warn)">HIGH</span>
+          </div>
+        </div>
+        
+        <div class="beh-tile high">
+          <div class="beh-ic">📤</div>
+          <div class="beh-name">Data Exfiltration</div>
+          <div class="beh-mitre">T1041</div>
+          <div class="beh-desc">Uploads sensitive data to remote C2 before encryption</div>
+          <div class="beh-count">24 findings matched &nbsp;·&nbsp;
+            <span style="color:var(--warn)">HIGH</span>
+          </div>
+        </div>
+        
+        <div class="beh-tile high">
+          <div class="beh-ic">🔄</div>
+          <div class="beh-name">SSRF (C2 Reachback)</div>
+          <div class="beh-mitre">T1090</div>
+          <div class="beh-desc">SSRF allows ransomware to communicate with C2 infrastructure</div>
+          <div class="beh-count">24 findings matched &nbsp;·&nbsp;
+            <span style="color:var(--warn)">HIGH</span>
+          </div>
+        </div>
+        
+        <div class="beh-tile high">
+          <div class="beh-ic">📂</div>
+          <div class="beh-name">File Enumeration</div>
+          <div class="beh-mitre">T1083</div>
+          <div class="beh-desc">Recursively traverses directories targeting specific file extensions</div>
+          <div class="beh-count">3 findings matched &nbsp;·&nbsp;
+            <span style="color:var(--warn)">HIGH</span>
+          </div>
+        </div>
+        
+      </div>
+      
+
+      
+      
+      <div class="sec-head" style="margin-top:28px"><div class="sec-title" style="font-size:14px">Matched Ransomware Families</div><span class="sec-count">9 matched</span></div>
+      <div class="fam-list">
+        
+        
+        <div class="fam-card primary">
+          <div class="fam-head">
+            <div class="fam-conf" style="border-color:rgba(242,87,87,.4)">
+              <div class="fam-conf-num" style="color:var(--danger)">93%</div>
+              <div class="fam-conf-lbl">match</div>
+            </div>
+            <div class="fam-info">
+              <div class="fam-name">Cl0p</div>
+              <div class="fam-alias">TA505 · FIN11</div>
+              <div class="fam-tags">
+                <span class="fam-tag fam-origin">🇷🇺 Russia / Ukraine</span>
+                <span class="fam-tag fam-status-active">ACTIVE</span>
+                
+                <span class="fam-tag" style="background:var(--ink3);border:1px solid var(--rule2);color:var(--dim)">Since 2019</span>
+              </div>
+            </div>
+          </div>
+          <div class="fam-body">
+            <div class="fam-desc">Pioneered mass-exploitation of file-transfer platforms. MOVEit attack compromised 2000+ organisations globally. Focuses on data theft over encryption.</div>
+            <div class="fam-col">
+              <h4>Sectors Targeted</h4>
+              <span class="fam-sector">Finance</span><span class="fam-sector">Healthcare</span><span class="fam-sector">Education</span><span class="fam-sector">Government</span>
+            </div>
+            <div class="fam-col">
+              <h4>Known Victims</h4>
+              <div class="fam-victim">· MOVEit users (2000+ orgs)</div><div class="fam-victim">· GoAnywhere users</div><div class="fam-victim">· Accellion users</div>
+            </div>
+            
+            <div style="grid-column:1/-1">
+              <h4>Matched Behavior Patterns</h4>
+              <div class="fam-matched">
+                <span class="fam-mb">file encryption</span><span class="fam-mb">file enumeration</span><span class="fam-mb">data exfiltration</span><span class="fam-mb">ssrf</span><span class="fam-mb">sql injection</span>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+        
+        
+        <div class="fam-card ">
+          <div class="fam-head">
+            <div class="fam-conf" style="border-color:rgba(242,87,87,.4)">
+              <div class="fam-conf-num" style="color:var(--danger)">93%</div>
+              <div class="fam-conf-lbl">match</div>
+            </div>
+            <div class="fam-info">
+              <div class="fam-name">DarkSide</div>
+              <div class="fam-alias">Carbon Spider · Gold Dupont</div>
+              <div class="fam-tags">
+                <span class="fam-tag fam-origin">🇷🇺 Russia / Eastern Europe</span>
+                <span class="fam-tag fam-status-other">REBRANDED</span>
+                
+                <span class="fam-tag" style="background:var(--ink3);border:1px solid var(--rule2);color:var(--dim)">Since 2020</span>
+              </div>
+            </div>
+          </div>
+          <div class="fam-body">
+            <div class="fam-desc">Colonial Pipeline attack (2021) caused fuel shortages across US East Coast. Group claimed to &#39;only target companies that can pay&#39; — later rebranded as BlackMatter.</div>
+            <div class="fam-col">
+              <h4>Sectors Targeted</h4>
+              <span class="fam-sector">Energy</span><span class="fam-sector">Oil &amp; Gas</span><span class="fam-sector">Finance</span><span class="fam-sector">Manufacturing</span>
+            </div>
+            <div class="fam-col">
+              <h4>Known Victims</h4>
+              <div class="fam-victim">· Colonial Pipeline</div><div class="fam-victim">· Brenntag</div>
+            </div>
+            
+            <div style="grid-column:1/-1">
+              <h4>Matched Behavior Patterns</h4>
+              <div class="fam-matched">
+                <span class="fam-mb">file encryption</span><span class="fam-mb">data exfiltration</span><span class="fam-mb">credential theft</span><span class="fam-mb">lateral movement</span><span class="fam-mb">process termination</span>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+        
+        
+        <div class="fam-card ">
+          <div class="fam-head">
+            <div class="fam-conf" style="border-color:rgba(242,87,87,.4)">
+              <div class="fam-conf-num" style="color:var(--danger)">85%</div>
+              <div class="fam-conf-lbl">match</div>
+            </div>
+            <div class="fam-info">
+              <div class="fam-name">LockBit 3.0</div>
+              <div class="fam-alias">LockBit Black · LockBit 2.0</div>
+              <div class="fam-tags">
+                <span class="fam-tag fam-origin">🇷🇺 Russia / Eastern Europe</span>
+                <span class="fam-tag fam-status-active">ACTIVE</span>
+                
+                <span class="fam-tag" style="background:var(--ink3);border:1px solid var(--rule2);color:var(--dim)">Since 2019</span>
+              </div>
+            </div>
+          </div>
+          <div class="fam-body">
+            <div class="fam-desc">Most prolific ransomware group globally. Uses triple extortion — encryption, data leak, DDoS. Known for fastest encryption speed via multi-threading.</div>
+            <div class="fam-col">
+              <h4>Sectors Targeted</h4>
+              <span class="fam-sector">Healthcare</span><span class="fam-sector">Finance</span><span class="fam-sector">Government</span><span class="fam-sector">Manufacturing</span><span class="fam-sector">Legal</span>
+            </div>
+            <div class="fam-col">
+              <h4>Known Victims</h4>
+              <div class="fam-victim">· Boeing</div><div class="fam-victim">· ICBC</div><div class="fam-victim">· Royal Mail</div>
+            </div>
+            
+            <div style="grid-column:1/-1">
+              <h4>Matched Behavior Patterns</h4>
+              <div class="fam-matched">
+                <span class="fam-mb">file encryption</span><span class="fam-mb">file enumeration</span><span class="fam-mb">process termination</span><span class="fam-mb">lateral movement</span><span class="fam-mb">credential theft</span><span class="fam-mb">data exfiltration</span>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+        
+        
+        <div class="fam-card ">
+          <div class="fam-head">
+            <div class="fam-conf" style="border-color:rgba(242,87,87,.4)">
+              <div class="fam-conf-num" style="color:var(--danger)">85%</div>
+              <div class="fam-conf-lbl">match</div>
+            </div>
+            <div class="fam-info">
+              <div class="fam-name">Conti</div>
+              <div class="fam-alias">Wizard Spider · Gold Blackwood</div>
+              <div class="fam-tags">
+                <span class="fam-tag fam-origin">🇷🇺 Russia</span>
+                <span class="fam-tag fam-status-other">DEFUNCT</span>
+                
+                <span class="fam-tag" style="background:var(--ink3);border:1px solid var(--rule2);color:var(--dim)">Since 2020</span>
+              </div>
+            </div>
+          </div>
+          <div class="fam-body">
+            <div class="fam-desc">Responsible for crippling Ireland&#39;s national healthcare system (HSE). Leaked its own source code in 2022. Spawned multiple successor groups.</div>
+            <div class="fam-col">
+              <h4>Sectors Targeted</h4>
+              <span class="fam-sector">Healthcare</span><span class="fam-sector">Government</span><span class="fam-sector">Critical Infrastructure</span>
+            </div>
+            <div class="fam-col">
+              <h4>Known Victims</h4>
+              <div class="fam-victim">· Costa Rica Government</div><div class="fam-victim">· Ireland HSE</div><div class="fam-victim">· Shutterfly</div>
+            </div>
+            
+            <div style="grid-column:1/-1">
+              <h4>Matched Behavior Patterns</h4>
+              <div class="fam-matched">
+                <span class="fam-mb">file encryption</span><span class="fam-mb">file enumeration</span><span class="fam-mb">credential theft</span><span class="fam-mb">lateral movement</span><span class="fam-mb">data exfiltration</span><span class="fam-mb">process termination</span>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+        
+      </div>
+      
+
+      
+      
+      <div class="sec-head" style="margin-top:28px">
+        <div class="sec-title" style="font-size:14px">Global Impact Map — Cl0p</div>
+        <span class="sec-count">5 affected regions</span>
+      </div>
+      <div class="map-wrap">
+        <div class="map-canvas-wrap" style="padding:12px 16px">
+          <canvas id="rwMapCanvas" style="width:100%;max-height:320px"></canvas>
+        </div>
+        <div class="map-legend">
+          <div style="font-size:11px;color:var(--sub);margin-right:8px;font-weight:600">Affected countries:</div>
+          
+          <div class="map-leg-item">
+            <div class="map-leg-dot" style="background:#dc2626"></div>
+            <span>United States (612+)</span>
+          </div>
+          
+          <div class="map-leg-item">
+            <div class="map-leg-dot" style="background:#2563eb"></div>
+            <span>United Kingdom (198+)</span>
+          </div>
+          
+          <div class="map-leg-item">
+            <div class="map-leg-dot" style="background:#2563eb"></div>
+            <span>Germany (145+)</span>
+          </div>
+          
+          <div class="map-leg-item">
+            <div class="map-leg-dot" style="background:#2563eb"></div>
+            <span>Canada (134+)</span>
+          </div>
+          
+          <div class="map-leg-item">
+            <div class="map-leg-dot" style="background:#6b7280"></div>
+            <span>Netherlands (89+)</span>
+          </div>
+          
+        </div>
+      </div>
+      
+
+      
+      
+      <div class="sec-head" style="margin-top:28px">
+        <div class="sec-title" style="font-size:14px">Active CVE Variants Exploited by Matched Families</div>
+        <span class="sec-count">12 CVEs</span>
+      </div>
+      <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:20px">
+        <div style="display:grid;grid-template-columns:120px 1fr 80px 90px;gap:12px;padding:8px 14px;background:var(--ink3);border-bottom:2px solid var(--rule)">
+          <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">CVE ID</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Vulnerability / Description</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;text-align:center">CVSS</span>
+          <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Family</span>
+        </div>
+        
+        <div class="rw-cve-row">
+          <div><span class="rw-cve-id">CVE-2021-44228</span></div>
+          <div>
+            <div style="font-weight:700;color:var(--body);margin-bottom:2px">Log4Shell</div>
+            <div class="rw-cve-fam">Apache Log4j2 RCE, exploited by ransomware groups for initial access</div>
+          </div>
+          <div class="rw-cve-cvss" style="color:var(--danger)">10.0</div>
+          <div style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)">LockBit 3.0</div>
+        </div>
+        
+        <div class="rw-cve-row">
+          <div><span class="rw-cve-id">CVE-2020-1472</span></div>
+          <div>
+            <div style="font-weight:700;color:var(--body);margin-bottom:2px">Zerologon</div>
+            <div class="rw-cve-fam">Netlogon privilege escalation — instant domain compromise</div>
+          </div>
+          <div class="rw-cve-cvss" style="color:var(--danger)">10.0</div>
+          <div style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)">Conti</div>
+        </div>
+        
+        <div class="rw-cve-row">
+          <div><span class="rw-cve-id">CVE-2023-34362</span></div>
+          <div>
+            <div style="font-weight:700;color:var(--body);margin-bottom:2px">MOVEit SQLi</div>
+            <div class="rw-cve-fam">MOVEit Transfer SQL injection — Cl0p mass exploitation campaign</div>
+          </div>
+          <div class="rw-cve-cvss" style="color:var(--danger)">9.8</div>
+          <div style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)">Cl0p</div>
+        </div>
+        
+        <div class="rw-cve-row">
+          <div><span class="rw-cve-id">CVE-2021-20016</span></div>
+          <div>
+            <div style="font-weight:700;color:var(--body);margin-bottom:2px">SonicWall SSL-VPN</div>
+            <div class="rw-cve-fam">SonicWall SSL-VPN SQL injection used by DarkSide for initial access</div>
+          </div>
+          <div class="rw-cve-cvss" style="color:var(--danger)">9.8</div>
+          <div style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)">DarkSide</div>
+        </div>
+        
+        <div class="rw-cve-row">
+          <div><span class="rw-cve-id">CVE-2019-0708</span></div>
+          <div>
+            <div style="font-weight:700;color:var(--body);margin-bottom:2px">BlueKeep</div>
+            <div class="rw-cve-fam">RDP wormable RCE — unauthenticated remote code execution</div>
+          </div>
+          <div class="rw-cve-cvss" style="color:var(--danger)">9.8</div>
+          <div style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)">DarkSide</div>
+        </div>
+        
+        <div class="rw-cve-row">
+          <div><span class="rw-cve-id">CVE-2021-26855</span></div>
+          <div>
+            <div style="font-weight:700;color:var(--body);margin-bottom:2px">ProxyLogon</div>
+            <div class="rw-cve-fam">Microsoft Exchange pre-auth RCE — ransomware initial access vector</div>
+          </div>
+          <div class="rw-cve-cvss" style="color:var(--danger)">9.8</div>
+          <div style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)">Conti</div>
+        </div>
+        
+        <div class="rw-cve-row">
+          <div><span class="rw-cve-id">CVE-2022-47966</span></div>
+          <div>
+            <div style="font-weight:700;color:var(--body);margin-bottom:2px">ManageEngine RCE</div>
+            <div class="rw-cve-fam">Zoho ManageEngine pre-auth RCE used by North Korean APT</div>
+          </div>
+          <div class="rw-cve-cvss" style="color:var(--danger)">9.8</div>
+          <div style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)">Lazarus Group</div>
+        </div>
+        
+        <div class="rw-cve-row">
+          <div><span class="rw-cve-id">CVE-2021-30116</span></div>
+          <div>
+            <div style="font-weight:700;color:var(--body);margin-bottom:2px">Kaseya VSA</div>
+            <div class="rw-cve-fam">Kaseya VSA credential leak + RCE — REvil supply chain attack</div>
+          </div>
+          <div class="rw-cve-cvss" style="color:var(--danger)">9.8</div>
+          <div style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)">REvil / Sodinokibi</div>
+        </div>
+        
+        <div class="rw-cve-row">
+          <div><span class="rw-cve-id">CVE-2023-4966</span></div>
+          <div>
+            <div style="font-weight:700;color:var(--body);margin-bottom:2px">Citrix Bleed</div>
+            <div class="rw-cve-fam">Citrix NetScaler session token leak — unauthenticated session hijacking</div>
+          </div>
+          <div class="rw-cve-cvss" style="color:var(--danger)">9.4</div>
+          <div style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)">LockBit 3.0</div>
+        </div>
+        
+        <div class="rw-cve-row">
+          <div><span class="rw-cve-id">CVE-2017-0144</span></div>
+          <div>
+            <div style="font-weight:700;color:var(--body);margin-bottom:2px">EternalBlue</div>
+            <div class="rw-cve-fam">SMBv1 RCE exploited globally by WannaCry and NotPetya</div>
+          </div>
+          <div class="rw-cve-cvss" style="color:var(--danger)">9.3</div>
+          <div style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)">Lazarus Group</div>
+        </div>
+        
+        <div class="rw-cve-row">
+          <div><span class="rw-cve-id">CVE-2021-34527</span></div>
+          <div>
+            <div style="font-weight:700;color:var(--body);margin-bottom:2px">PrintNightmare</div>
+            <div class="rw-cve-fam">Windows Print Spooler RCE / LPE used for privilege escalation</div>
+          </div>
+          <div class="rw-cve-cvss" style="color:var(--warn)">8.8</div>
+          <div style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)">Conti</div>
+        </div>
+        
+        <div class="rw-cve-row">
+          <div><span class="rw-cve-id">CVE-2023-0669</span></div>
+          <div>
+            <div style="font-weight:700;color:var(--body);margin-bottom:2px">GoAnywhere RCE</div>
+            <div class="rw-cve-fam">GoAnywhere MFT pre-auth RCE used by Cl0p for initial access</div>
+          </div>
+          <div class="rw-cve-cvss" style="color:var(--warn)">7.2</div>
+          <div style="font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)">Cl0p</div>
+        </div>
+        
+      </div>
+      
+
+      
+      
+      <div class="sec-head" style="margin-top:28px">
+        <div class="sec-title" style="font-size:14px">Affected Code Sections</div>
+        <span class="sec-count">7 files</span>
+      </div>
+      <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:20px">
+        
+        <div class="aff-row">
+          <span class="aff-file" title="api\accounts.py">api\accounts.py</span>
+          <div class="aff-beh">
+            <span class="aff-b">Command Injection (...</span><span class="aff-b">Data Exfiltration</span><span class="aff-b">Lateral Movement</span>
+          </div>
+          <span class="aff-cnt">22</span>
+        </div>
+        
+        <div class="aff-row">
+          <span class="aff-file" title="api\auth.py">api\auth.py</span>
+          <div class="aff-beh">
+            <span class="aff-b">Credential Harvesting</span><span class="aff-b">Data Exfiltration</span><span class="aff-b">File Encryption</span>
+          </div>
+          <span class="aff-cnt">21</span>
+        </div>
+        
+        <div class="aff-row">
+          <span class="aff-file" title="api\loans.py">api\loans.py</span>
+          <div class="aff-beh">
+            <span class="aff-b">Data Exfiltration</span><span class="aff-b">SSRF (C2 Reachback)</span>
+          </div>
+          <span class="aff-cnt">4</span>
+        </div>
+        
+        <div class="aff-row">
+          <span class="aff-file" title="api\admin.py">api\admin.py</span>
+          <div class="aff-beh">
+            <span class="aff-b">File Encryption</span><span class="aff-b">File Enumeration</span>
+          </div>
+          <span class="aff-cnt">2</span>
+        </div>
+        
+        <div class="aff-row">
+          <span class="aff-file" title="api\payments.py">api\payments.py</span>
+          <div class="aff-beh">
+            <span class="aff-b">Data Exfiltration</span><span class="aff-b">SSRF (C2 Reachback)</span>
+          </div>
+          <span class="aff-cnt">2</span>
+        </div>
+        
+        <div class="aff-row">
+          <span class="aff-file" title="api\files.py">api\files.py</span>
+          <div class="aff-beh">
+            <span class="aff-b">File Enumeration</span>
+          </div>
+          <span class="aff-cnt">1</span>
+        </div>
+        
+        <div class="aff-row">
+          <span class="aff-file" title="app.py">app.py</span>
+          <div class="aff-beh">
+            <span class="aff-b">File Enumeration</span>
+          </div>
+          <span class="aff-cnt">1</span>
+        </div>
+        
+      </div>
+      
+
+      
+    </div>
+    <!-- /ransomware -->
+
   </div>
 </div>
 
@@ -10108,7 +10824,84 @@ new Chart(document.getElementById('cTactic'),{
   options:{cutout:'55%',plugins:{legend:{labels:{color:'#8b96a4',font:{family:'Geist Mono',size:10}}}}}
 });
 
-// Filter/search
+// ── Ransomware Global Impact Map ─────────────────────────────────────────────
+(function(){
+  const canvas = document.getElementById('rwMapCanvas');
+  if (!canvas) return;
+  const regions = [{"coords": [37.09, -95.71], "country": "United States", "incidents": 612}, {"coords": [55.37, -3.43], "country": "United Kingdom", "incidents": 198}, {"coords": [51.16, 10.45], "country": "Germany", "incidents": 145}, {"coords": [56.13, -106.34], "country": "Canada", "incidents": 134}, {"coords": [52.13, 5.29], "country": "Netherlands", "incidents": 89}];
+  if (!regions.length) return;
+
+  // Approximate Mercator projection for A4-ish viewport
+  function project(lat, lon, W, H) {
+    const x = (lon + 180) / 360 * W;
+    const latRad = lat * Math.PI / 180;
+    const mercN = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
+    const y = H / 2 - (mercN / Math.PI) * H * 0.5;
+    return [x, y];
+  }
+
+  const W = canvas.offsetWidth || 800;
+  const H = Math.round(W * 0.44);
+  canvas.width  = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  const isDark = !document.documentElement.classList.contains('light');
+  ctx.fillStyle = isDark ? '#111419' : '#f1f5f9';
+  ctx.fillRect(0, 0, W, H);
+
+  // Simple world outline using a minimal SVG-converted path would be too large;
+  // draw grid lines instead as context
+  ctx.strokeStyle = isDark ? '#252b35' : '#d1d5db';
+  ctx.lineWidth = 0.5;
+  for (let lon = -180; lon <= 180; lon += 30) {
+    const [x] = project(0, lon, W, H);
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let lat = -60; lat <= 75; lat += 30) {
+    const [, y] = project(lat, 0, W, H);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Lat/lon labels
+  ctx.fillStyle = isDark ? '#4a5568' : '#9ca3af';
+  ctx.font = '9px Geist Mono, monospace';
+  ctx.textAlign = 'center';
+  for (let lon = -150; lon <= 150; lon += 60) {
+    const [x] = project(0, lon, W, H);
+    ctx.fillText(lon + '°', x, H - 4);
+  }
+
+  // Draw impact circles
+  regions.forEach(r => {
+    const [x, y] = project(r.coords[0], r.coords[1], W, H);
+    const inc = r.incidents || 10;
+    const radius = Math.min(6 + Math.log(inc) * 2.5, 28);
+    const color = inc >= 500 ? '#dc2626' : inc >= 200 ? '#d97706' : inc >= 100 ? '#2563eb' : '#6b7280';
+
+    // Outer glow
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, radius * 1.8);
+    grad.addColorStop(0, color.replace('#', 'rgba(') + ',0.3)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(x, y, radius * 1.8, 0, Math.PI * 2);
+    ctx.fillStyle = grad; ctx.fill();
+
+    // Main dot
+    ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = color + 'cc'; ctx.fill();
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Country label
+    ctx.fillStyle = isDark ? '#e2e8f0' : '#1f2937';
+    ctx.font = 'bold 10px Geist, sans-serif';
+    ctx.textAlign = 'center';
+    const shortName = r.country.replace('United States','USA').replace('United Kingdom','UK').replace('Australia','AUS');
+    ctx.fillText(shortName, x, y - radius - 4);
+  });
+})();
+
+// ── Filter/search ─────────────────────────────────────────────────────────────
 function filt(sev,btn){
   document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
