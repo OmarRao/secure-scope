@@ -3,11 +3,13 @@ Generate a clean, professionally laid-out PDF sample report.
 Renders a print-optimised A4 HTML with Playwright and saves to docs/sample_report.pdf.
 """
 
-import asyncio, json, textwrap
+import asyncio, json, sys, textwrap
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
 from playwright.async_api import async_playwright
+from ransomware import detect as ransomware_detect
 
 # ── Load data ─────────────────────────────────────────────────────────────────
 REPORTS = Path(__file__).parent / "reports"
@@ -46,6 +48,9 @@ else:             grade, grade_color = "LOW",      "#16a34a"
 cwe_counts   = Counter(f.get("cwe","Unknown") for f in findings if f.get("cwe"))
 attack_techs = Counter(f.get("attack_technique") for f in findings if f.get("attack_technique"))
 attack_tactics = Counter(f.get("attack_tactic") for f in findings if f.get("attack_tactic"))
+
+# ── Ransomware Intelligence ───────────────────────────────────────────────────
+rw = ransomware_detect(findings)
 
 ATTACK_SURFACE = [
     ("SQL Injection",           "CWE-89",  "T1190", sum(1 for f in findings if f.get("cwe")=="CWE-89")),
@@ -184,6 +189,172 @@ def attack_rows():
           <td style="color:{status_color};font-weight:600;font-size:12px;text-align:center;">{status_text}</td>
         </tr>"""
     return rows
+
+
+# ── Ransomware section builder ────────────────────────────────────────────────
+
+def rw_color(score):
+    if score >= 70: return "#dc2626"
+    if score >= 40: return "#d97706"
+    return "#16a34a"
+
+def ransomware_section() -> str:
+    if not rw.behavior_count and not rw.family_matches:
+        return ""
+
+    # KPI row
+    bc = rw_color(rw.ransomware_score)
+    blast_c = rw.blast_color
+    apt_label = "APT DETECTED" if rw.is_apt else ("CRIMINAL GROUP" if rw.family_matches else "NONE")
+    apt_color = "#7c3aed" if rw.is_apt else ("#d97706" if rw.family_matches else "#16a34a")
+
+    kpi = f"""
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12pt;margin-bottom:16pt;">
+      <div style="border:1px solid #e5e7eb;border-radius:8pt;padding:14pt 16pt;background:#fafafa;">
+        <div style="font-size:8pt;color:#9ca3af;font-family:'Geist Mono',monospace;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4pt;">Ransomware Risk Score</div>
+        <div style="font-size:30pt;font-weight:900;font-family:'Geist Mono',monospace;color:{bc};letter-spacing:-1pt;line-height:1;">{rw.ransomware_score}<span style="font-size:12pt;color:#9ca3af;font-weight:400;">/100</span></div>
+        <div style="font-size:11pt;font-weight:800;color:{bc};font-family:'Geist Mono',monospace;margin-top:4pt;">{"HIGH RISK" if rw.ransomware_score >= 70 else "MODERATE" if rw.ransomware_score >= 40 else "LOW RISK"}</div>
+      </div>
+      <div style="border:1px solid #e5e7eb;border-radius:8pt;padding:14pt 16pt;background:#fafafa;">
+        <div style="font-size:8pt;color:#9ca3af;font-family:'Geist Mono',monospace;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4pt;">Blast Radius</div>
+        <div style="font-size:30pt;font-weight:900;font-family:'Geist Mono',monospace;color:{blast_c};letter-spacing:-1pt;line-height:1;">{rw.blast_radius_score}<span style="font-size:12pt;color:#9ca3af;font-weight:400;">/100</span></div>
+        <div style="font-size:11pt;font-weight:800;color:{blast_c};font-family:'Geist Mono',monospace;margin-top:4pt;">{rw.blast_label}</div>
+        <div style="font-size:9pt;color:#6b7280;margin-top:4pt;line-height:1.5;">{rw.blast_description[:90]}...</div>
+      </div>
+      <div style="border:1px solid #e5e7eb;border-radius:8pt;padding:14pt 16pt;background:#fafafa;">
+        <div style="font-size:8pt;color:#9ca3af;font-family:'Geist Mono',monospace;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4pt;">APT Attribution</div>
+        <div style="font-size:16pt;font-weight:900;font-family:'Geist Mono',monospace;color:{apt_color};line-height:1.2;margin-bottom:4pt;">{apt_label}</div>
+        {"<div style='font-size:9pt;color:#6b7280;line-height:1.5;'>Confidence: <strong>" + str(rw.apt_confidence) + "%</strong><br>" + (rw.primary_family.family.get('apt_group','') if rw.primary_family else '') + "<br>" + (rw.primary_family.family.get('origin_flag','') + ' ' + rw.primary_family.family.get('origin','') if rw.primary_family else '') + "</div>" if rw.is_apt or rw.family_matches else "<div style='font-size:9pt;color:#16a34a;'>No nation-state or criminal group TTPs matched in this scan.</div>"}
+      </div>
+    </div>"""
+
+    # Behaviors
+    beh_rows = ""
+    for b in rw.detected_behaviors[:9]:
+        c = "#dc2626" if b.severity == "CRITICAL" else "#d97706"
+        beh_rows += f"""
+        <tr style="page-break-inside:avoid;">
+          <td style="font-size:14pt;">{b.icon}</td>
+          <td style="font-weight:700;font-size:11pt;color:#111827;">{b.label}</td>
+          <td><span style="font-family:'Geist Mono',monospace;font-size:9pt;background:#eff6ff;color:#2563eb;padding:2pt 6pt;border-radius:3pt;">{b.mitre}</span></td>
+          <td style="font-size:10pt;color:#6b7280;">{b.description[:70]}</td>
+          <td style="text-align:center;font-weight:700;font-size:10pt;color:{c};">{b.severity}</td>
+          <td style="text-align:center;font-family:'Geist Mono',monospace;font-size:10pt;">{b.match_count}</td>
+        </tr>"""
+
+    behaviors = f"""
+    <div style="font-size:8pt;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#9ca3af;font-family:'Geist Mono',monospace;margin-bottom:8pt;display:flex;align-items:center;gap:8pt;">
+      Detected Ransomware Behaviors<span style="flex:1;height:1px;background:#e5e7eb;display:inline-block;margin-left:8pt;"></span>
+    </div>
+    <table class="data-table" style="margin-bottom:14pt;">
+      <thead><tr>
+        <th></th><th>Behavior</th><th>MITRE</th><th>Description</th><th style="text-align:center;">Severity</th><th style="text-align:center;">Hits</th>
+      </tr></thead>
+      <tbody>{beh_rows}</tbody>
+    </table>"""
+
+    # Families
+    fam_html = ""
+    for i, match in enumerate(rw.family_matches[:3]):
+        fam = match.family
+        border = "#dc2626" if i == 0 else "#e5e7eb"
+        victims = " · ".join(fam.get("known_victims", [])[:2])
+        sectors = ", ".join(fam.get("sectors_targeted", [])[:4])
+        matched_b = ", ".join(b.replace("_", " ") for b in match.matched_behaviors[:5])
+        cves_str  = ", ".join(match.matched_cves[:3]) if match.matched_cves else "N/A"
+        conf_c = "#dc2626" if match.confidence >= 70 else "#d97706" if match.confidence >= 40 else "#6b7280"
+        status_c = "#dc2626" if fam.get("status") == "ACTIVE" else "#d97706"
+        fam_html += f"""
+        <div style="border:1.5px solid {border};border-radius:8pt;padding:14pt 16pt;margin-bottom:10pt;page-break-inside:avoid;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8pt;">
+            <div>
+              <div style="font-size:13pt;font-weight:900;color:#111827;letter-spacing:-.2pt;">{esc(fam['name'])} <span style="font-size:9pt;color:#9ca3af;font-weight:400;">({esc(' · '.join(fam.get('alias',[][:2])))})</span></div>
+              <div style="margin-top:4pt;display:flex;gap:6pt;flex-wrap:wrap;">
+                <span style="font-size:9pt;font-family:'Geist Mono',monospace;padding:2pt 7pt;border-radius:3pt;background:#eff6ff;color:#2563eb;">{esc(fam.get('origin_flag',''))} {esc(fam.get('origin',''))}</span>
+                <span style="font-size:9pt;font-family:'Geist Mono',monospace;padding:2pt 7pt;border-radius:3pt;background:#fef2f2;color:{status_c};">{esc(fam.get('status',''))}</span>
+                <span style="font-size:9pt;font-family:'Geist Mono',monospace;padding:2pt 7pt;border-radius:3pt;background:#f5f3ff;color:#7c3aed;">{esc(fam.get('type',''))}</span>
+              </div>
+            </div>
+            <div style="text-align:center;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6pt;padding:8pt 14pt;flex-shrink:0;">
+              <div style="font-size:22pt;font-weight:900;font-family:'Geist Mono',monospace;color:{conf_c};line-height:1;">{match.confidence}%</div>
+              <div style="font-size:8pt;color:#9ca3af;font-family:'Geist Mono',monospace;">match confidence</div>
+            </div>
+          </div>
+          <div style="font-size:10pt;color:#374151;line-height:1.6;margin-bottom:8pt;">{esc(fam.get('description',''))}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10pt;font-size:9.5pt;">
+            <div><strong style="color:#6b7280;font-size:8pt;text-transform:uppercase;letter-spacing:.5px;">Sectors</strong><br><span style="color:#374151;">{esc(sectors)}</span></div>
+            <div><strong style="color:#6b7280;font-size:8pt;text-transform:uppercase;letter-spacing:.5px;">Known Victims</strong><br><span style="color:#374151;font-family:'Geist Mono',monospace;">{esc(victims)}</span></div>
+            <div><strong style="color:#6b7280;font-size:8pt;text-transform:uppercase;letter-spacing:.5px;">Matched CVEs</strong><br><span style="color:#dc2626;font-family:'Geist Mono',monospace;">{esc(cves_str)}</span></div>
+          </div>
+          {"<div style='margin-top:8pt;font-size:8.5pt;'><strong style='color:#6b7280;'>Matched Behaviors:</strong> <span style='color:#dc2626;font-family:Geist Mono,monospace;'>" + esc(matched_b) + "</span></div>" if matched_b else ""}
+        </div>"""
+
+    # CVE table
+    cve_rows_html = ""
+    for cve in rw.active_cves[:8]:
+        cvss_c = "#dc2626" if cve.get("cvss",0) >= 9 else "#d97706" if cve.get("cvss",0) >= 7 else "#16a34a"
+        cve_rows_html += f"""
+        <tr style="page-break-inside:avoid;">
+          <td><span style="font-family:'Geist Mono',monospace;font-size:9pt;font-weight:700;background:#fee2e2;color:#dc2626;padding:2pt 6pt;border-radius:3pt;">{esc(cve['id'])}</span></td>
+          <td style="font-weight:700;font-size:10pt;">{esc(cve.get('name',''))}</td>
+          <td style="font-size:10pt;color:#6b7280;">{esc((cve.get('desc',''))[:70])}</td>
+          <td style="text-align:center;font-weight:800;font-family:'Geist Mono',monospace;color:{cvss_c};">{cve.get('cvss','')}</td>
+          <td style="font-size:9.5pt;color:#6b7280;font-family:'Geist Mono',monospace;">{esc(cve.get('family_name',''))}</td>
+        </tr>"""
+
+    cve_section = f"""
+    <div style="font-size:8pt;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#9ca3af;font-family:'Geist Mono',monospace;margin:14pt 0 8pt;display:flex;align-items:center;gap:8pt;">
+      Active CVE Variants Exploited<span style="flex:1;height:1px;background:#e5e7eb;display:inline-block;margin-left:8pt;"></span>
+    </div>
+    <table class="data-table" style="margin-bottom:14pt;">
+      <thead><tr><th>CVE ID</th><th>Vulnerability</th><th>Description</th><th style="text-align:center;">CVSS</th><th>Family</th></tr></thead>
+      <tbody>{cve_rows_html}</tbody>
+    </table>""" if cve_rows_html else ""
+
+    # Affected sections
+    aff_rows = ""
+    for sec in rw.affected_sections[:10]:
+        behs = ", ".join(sec["behaviors"][:3])
+        aff_rows += f"""
+        <tr>
+          <td style="font-family:'Geist Mono',monospace;font-size:10pt;">{esc(sec['file'])}</td>
+          <td style="font-size:9.5pt;color:#d97706;">{esc(behs)}</td>
+          <td style="text-align:center;font-weight:700;font-family:'Geist Mono',monospace;">{sec['behavior_count']}</td>
+        </tr>"""
+
+    aff_section = f"""
+    <div style="font-size:8pt;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#9ca3af;font-family:'Geist Mono',monospace;margin:14pt 0 8pt;display:flex;align-items:center;gap:8pt;">
+      Affected Code Sections<span style="flex:1;height:1px;background:#e5e7eb;display:inline-block;margin-left:8pt;"></span>
+    </div>
+    <table class="data-table" style="margin-bottom:14pt;">
+      <thead><tr><th>File</th><th>Matched Behaviors</th><th style="text-align:center;">Count</th></tr></thead>
+      <tbody>{aff_rows}</tbody>
+    </table>""" if aff_rows else ""
+
+    return f"""
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<!-- RANSOMWARE INTELLIGENCE                                             -->
+<!-- ══════════════════════════════════════════════════════════════════ -->
+<div class="pb-before">
+  <div class="section-eye">Ransomware Intelligence</div>
+  <div class="section-title">Ransomware &amp; APT Threat Assessment</div>
+  <p style="font-size:10.5pt;color:#6b7280;margin-bottom:14pt;line-height:1.6;">
+    Static analysis findings analysed against {len(rw.detected_behaviors)} known ransomware behavioral patterns,
+    {len(rw.family_matches)} threat actor families, and {len(rw.active_cves)} active CVEs exploited in ransomware campaigns.
+    Blast radius estimates the maximum damage potential if an attacker exploited all detected vulnerabilities.
+  </p>
+
+  {kpi}
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:16pt 0;">
+  {behaviors}
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:16pt 0;">
+  <div style="font-size:8pt;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#9ca3af;font-family:'Geist Mono',monospace;margin-bottom:8pt;display:flex;align-items:center;gap:8pt;">
+    Matched Threat Actor Families<span style="flex:1;height:1px;background:#e5e7eb;display:inline-block;margin-left:8pt;"></span>
+  </div>
+  {fam_html}
+  {cve_section}
+  {aff_section}
+</div>"""
 
 
 # ── Full HTML ─────────────────────────────────────────────────────────────────
@@ -677,6 +848,8 @@ HTML = f"""<!DOCTYPE html>
   </table>
 </div>
 
+
+{ransomware_section()}
 
 <!-- ══════════════════════════════════════════════════════════════════ -->
 <!-- FINAL PAGE — METHODOLOGY & DISCLOSURE                              -->

@@ -107,7 +107,13 @@ def handle_scan(data):
                     from advisor import enrich_findings
                     enriched = enrich_findings(result, obs, provider=llm_provider, api_key=llm_api_key, max_findings=20)
 
-                _emit(sid, "progress", {"step": "report", "message": "📊 Building report...", "pct": 90})
+                _emit(sid, "progress", {"step": "report", "message": "Analysing ransomware indicators...", "pct": 85})
+
+                from ransomware import detect as ransomware_detect
+                findings_dicts = enriched or [f.to_dict() for f in result.findings]
+                rw_report = ransomware_detect(findings_dicts, workdir)
+
+                _emit(sid, "progress", {"step": "report", "message": "Building report...", "pct": 90})
 
                 from report import to_json, to_html
                 from datetime import datetime
@@ -126,8 +132,9 @@ def handle_scan(data):
                     "ts": ts,
                     "gh_info": gh_info,
                     "summary": result.summary(),
-                    "findings": enriched or [f.to_dict() for f in result.findings],
+                    "findings": findings_dicts,
                     "dependency_vulns": result.dependency_vulns,
+                    "ransomware": rw_report,
                     "runtime": {
                         "exit_code": obs.exit_code if obs else None,
                         "suspicious_behaviors": obs.suspicious_behaviors if obs else [],
