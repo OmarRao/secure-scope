@@ -122,7 +122,6 @@ COPY ui/                  ./ui/
 COPY analyzer.py          .
 COPY advisor.py           .
 COPY github_agent.py      .
-COPY github_info.py       . 2>/dev/null || true
 COPY main.py              .
 COPY ransomware.py        .
 COPY report.py            .
@@ -143,12 +142,15 @@ USER securescope
 # Port the Flask + Socket.IO server listens on
 EXPOSE 5001
 
-# LLM API keys — passed at runtime via -e flags, never baked into the image
-ENV ANTHROPIC_API_KEY=""
-ENV OPENAI_API_KEY=""
-ENV GEMINI_API_KEY=""
-ENV GROQ_API_KEY=""
-ENV GITHUB_TOKEN=""
+# LLM API keys — passed at runtime via -e flags, never baked into the image.
+# Empty defaults are intentional: the container starts without keys; the user
+# supplies real values at `docker run -e ANTHROPIC_API_KEY=sk-ant-...`.
+# hadolint ignore=DL3044
+ENV ANTHROPIC_API_KEY="" \
+    OPENAI_API_KEY="" \
+    GEMINI_API_KEY="" \
+    GROQ_API_KEY="" \
+    GITHUB_TOKEN=""
 
 # Flask configuration
 ENV FLASK_ENV=production
