@@ -1,54 +1,96 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-# A sample workflow which checks out your Infrastructure as Code Configuration files,
-# such as Kubernetes, Helm & Terraform and scans them for any security issues.
-# The results are then uploaded to GitHub Security Code Scanning
+# ────────────────────────────────────────────────────────────────────────────
+# Snyk Security Scan — SecureScope
 #
-# For more examples, including how to limit scans to only high-severity issues
-# and fail PR checks, see https://github.com/snyk/actions/
+# Scans Python dependencies (requirements.txt) for known CVEs using Snyk,
+# then uploads the SARIF report to GitHub Code Scanning.
+#
+# Triggers: push/PR to main + weekly schedule (Thursday 17:24 UTC).
+#
+# Prerequisites — add these secrets in:
+#   GitHub → Settings → Secrets and variables → Actions → New repository secret
+#
+#   SNYK_TOKEN   Your Snyk API token (free at https://snyk.io/login)
+#
+# CodeQL upload action pinned to v4 (v3 is deprecated December 2026).
+# ────────────────────────────────────────────────────────────────────────────
 
-name: Snyk Infrastructure as Code
+name: Snyk Security Scan
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    # The branches below must be a subset of the branches above
-    branches: [ "main" ]
+    branches:
+      - main
   schedule:
-    - cron: '24 17 * * 4'
+    # Weekly scan — Thursday at 17:24 UTC (keep staggered from CodeQL Sunday run)
+    - cron: "24 17 * * 4"
 
 permissions:
   contents: read
 
 jobs:
   snyk:
-    permissions:
-      contents: read # for actions/checkout to fetch code
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
-      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+    name: Snyk Python Dependency Scan
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read         # checkout
+      security-events: write # upload SARIF to GitHub Security tab
+      actions: read          # required for private repos to read Action run status
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Run Snyk to check configuration files for security issues
-        # Snyk can be used to break the build when it detects security issues.
-        # In this case we want to upload the issues to GitHub Code Scanning
+      # ── 1. Checkout ────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Set up Python ───────────────────────────────────────────────
+      # Snyk's Python action requires a working Python + pip environment
+      # so it can resolve the full dependency graph from requirements.txt.
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # ── 3. Install dependencies ────────────────────────────────────────
+      # Install project dependencies so Snyk can resolve the full graph.
+      # Use --dry-run here if you only want graph resolution without side effects;
+      # for accurate results we install properly.
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      # ── 4. Run Snyk Python scan ────────────────────────────────────────
+      # Uses snyk/actions/python (not /iac — this project has no Terraform,
+      # Helm, or Kubernetes files).
+      #
+      # continue-on-error: true — allows the workflow to proceed to the SARIF
+      # upload step even when Snyk finds vulnerabilities (exit code 1) or
+      # encounters a non-fatal error. The SARIF file is still written in
+      # those cases and the findings will appear in GitHub Code Scanning.
+      #
+      # SNYK_TOKEN must be set as a repository secret:
+      #   Settings → Secrets and variables → Actions → SNYK_TOKEN
+      - name: Run Snyk to check dependencies for vulnerabilities
         continue-on-error: true
-        uses: snyk/actions/iac@14818c4695ecc4045f33c9cee9e795a788711ca4
+        uses: snyk/actions/python@master
         env:
-          # In order to use the Snyk Action you will need to have a Snyk API token.
-          # More details in https://github.com/snyk/actions#getting-your-snyk-token
-          # or you can signup for free at https://snyk.io/login
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          # Add the path to the configuration file that you would like to test.
-          # For example `deployment.yaml` for a Kubernetes deployment manifest
-          # or `main.tf` for a Terraform configuration file
-          file: your-file-to-test.yaml
-      - name: Upload result to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v3
+          # Output a SARIF file so results appear in GitHub Security tab.
+          # The file is named snyk.sarif by convention.
+          args: --sarif-file-output=snyk.sarif
+
+      # ── 5. Upload SARIF to GitHub Code Scanning ────────────────────────
+      # Runs unconditionally (if: always()) so the upload step executes
+      # even when the Snyk step above exits with a non-zero code.
+      # The file-existence check prevents a hard failure if Snyk failed
+      # to produce the SARIF file (e.g. missing SNYK_TOKEN secret).
+      #
+      # github/codeql-action/upload-sarif pinned to v4.
+      # (v3 is deprecated and will stop working December 2026.)
+      - name: Upload Snyk SARIF results to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('snyk.sarif') != ''
         with:
           sarif_file: snyk.sarif
