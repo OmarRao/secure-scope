@@ -1,6 +1,11 @@
 # SecureScope / GitHub Security Review Tool
 
+![Version](https://img.shields.io/badge/version-v2.0.0-blue)
+![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-v14-red)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 > AI-powered security analysis for any GitHub repository. Paste a URL, get a full threat report mapped to MITRE ATT&CK and CWE, with optional Docker sandbox execution and AI-generated fix diffs from your choice of LLM.
+> **v2.0.0** adds a live Threat Intelligence Dashboard, YARA rule engine for backup/infrastructure scanning, enterprise prevention guidance, and an interactive Data Protection resilience guide.
 
 ---
 
@@ -135,6 +140,39 @@ The report also works in light mode. The theme toggle persists across page reloa
 
 ---
 
+## Threat Intelligence Dashboard (v2.0.0)
+
+A live threat intelligence panel sits below the scan wizard on the main dashboard. No scan is required — it loads automatically on page visit and refreshes every 60 seconds.
+
+### Features
+
+| Panel | Description |
+|-------|-------------|
+| **Live Threat Feed** | Scrollable feed of 20+ tracked ransomware and APT groups, sorted by severity. Click any row to expand TTPs, CVEs, IOCs, and prevention steps. |
+| **Top 10 Active Variants** | Ranked list of most active threats in the last 90 days with detection counts, severity bars, and trend indicators. |
+| **Enterprise Prevention** | Tabbed cards (Ransomware / APT / Malware / Exploit) with actionable controls, difficulty ratings, and icons. |
+| **Data Protection & Resilience** | 3-2-1-1-0 backup rule visual guide plus an interactive DR testing checklist (state saved to localStorage). |
+| **YARA Scanner** | Scan any local path against 6 rule sets covering ransomware, LockBit, BlackCat, APT lateral movement, data exfiltration, and backup tampering. Streams live progress via Socket.IO. |
+
+### YARA Rule Sets
+
+| File | Coverage |
+|------|----------|
+| `ransomware_common.yar` | Generic ransomware: file extension change, ransom notes, VSS deletion, CryptoAPI |
+| `lockbit.yar` | LockBit 3.0: ransom note format, dropper anti-analysis, defence evasion |
+| `blackcat_alphv.yar` | BlackCat/ALPHV: Rust binary markers, config JSON, ESXi targeting |
+| `apt_lateral_movement.yar` | Mimikatz, LSASS dump, WMI lateral movement, AD recon, scheduled task persistence |
+| `data_exfiltration.yar` | Rclone cloud exfil, cURL upload, FTP staging, 7-Zip data archiving |
+| `backup_tampering.yar` | Veeam service stop, Windows Backup deletion, agent process kill, NAS share deletion |
+
+Install `yara-python` for full scanning capability:
+```bash
+pip install yara-python
+```
+Without it, the scanner gracefully degrades: files are counted but no rules are evaluated.
+
+---
+
 ## Architecture
 
 ```
@@ -142,13 +180,16 @@ main.py              CLI entry point
 analyzer.py          Semgrep static scan + CWE -> ATT&CK mapping + dep CVEs
 sandbox.py           Docker isolated runtime execution with strace observation
 advisor.py           Multi-LLM fix advisor (Anthropic, OpenAI, Gemini, Groq, Ollama)
+threat_intel.py      Threat intelligence engine: 30+ threat DB, feed, prevention guide
+yara_scanner.py      YARA rule engine for backup/infrastructure scanning
+yara_rules/          YARA .yar rule files (6 rule sets)
 github_agent.py      Auto-commit security fixes to GitHub branch
 report.py            HTML + JSON report generation
 ui/
-  server.py          Flask + Socket.IO web server with real-time scan progress
+  server.py          Flask + Socket.IO web server (scan pipeline + threat intel API)
   github_info.py     GitHub API fetcher (stars, commits, contributors, languages)
   templates/
-    index.html       Landing page with modal wizard, theme toggle, live progress
+    index.html       Dashboard: wizard, live pipeline, threat intel panels
     report.html      Visual report with Chart.js, threat scoring, attack surface
 ```
 
@@ -270,6 +311,15 @@ score = min(
 | 45-69 | HIGH |
 | 20-44 | MEDIUM |
 | 0-19 | LOW |
+
+---
+
+## Releases
+
+| Version | Date | Highlights |
+|---------|------|------------|
+| [v2.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v2.0.0) | 2026-06-12 | Threat Intelligence Dashboard, YARA scanner, enterprise prevention guide, DR checklist |
+| v1.0.0 | 2024-01-01 | Initial release: Semgrep scan, Docker sandbox, multi-LLM advisor, visual report |
 
 ---
 

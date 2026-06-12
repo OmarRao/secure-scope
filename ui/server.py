@@ -1,6 +1,13 @@
 """
 Flask web server for the Security Review UI.
 Accepts GitHub URLs, runs the scan pipeline, streams progress, returns rich report.
+
+v2.0.0 additions:
+  - /api/threat-feed        — full threat intelligence feed (threat_intel.py)
+  - /api/threat/<id>        — single threat detail
+  - /api/yara/rules         — list of available YARA rule files
+  - /api/prevention-guide   — categorised prevention best practices
+  - start_yara_scan (Socket.IO) — streams YARA scan progress and results
 """
 
 import os
@@ -12,10 +19,27 @@ from pathlib import Path
 from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_socketio import SocketIO, emit
 
-# Add parent dir so we can import analyzer, advisor, etc.
+# Add parent dir so we can import analyzer, advisor, threat_intel, yara_scanner, etc.
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from ui.github_info import fetch_repo_info, parse_repo_url
+
+# ── Import threat intelligence and YARA scanner modules ───────────────────────
+# These are imported at module level; if they fail the server still starts and
+# returns a 503 on the affected endpoints rather than crashing entirely.
+try:
+    from threat_intel import build_feed, get_threat_by_id, get_prevention_guide
+    _THREAT_INTEL_AVAILABLE = True
+except ImportError as _ti_err:
+    _THREAT_INTEL_AVAILABLE = False
+    _ti_err_msg = str(_ti_err)
+
+try:
+    from yara_scanner import list_rules, scan_path as yara_scan_path
+    _YARA_AVAILABLE = True
+except ImportError as _ya_err:
+    _YARA_AVAILABLE = False
+    _ya_err_msg = str(_ya_err)
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = "secreview-ui-key"
@@ -32,7 +56,100 @@ _jobs: dict[str, dict] = {}
 
 @app.route("/")
 def index():
+    """Render the main dashboard page."""
     return render_template("index.html")
+
+
+# ── Threat Intelligence REST endpoints ───────────────────────────────────────
+
+@app.route("/api/threat-feed")
+def api_threat_feed():
+    """
+    GET /api/threat-feed
+
+    Returns the full threat intelligence feed as JSON, including:
+      - recent_threats: threats active in last 90 days sorted by severity
+      - top_variants:   top 10 most active variants with detection counts
+      - prevention_guide: categorised prevention best practices
+      - resilience:     data protection and resilience recommendations
+      - total_tracked:  total threat count in the database
+
+    Returns HTTP 503 if threat_intel module failed to import.
+    """
+    if not _THREAT_INTEL_AVAILABLE:
+        # Return a graceful error so the UI can display a fallback message
+        return jsonify({"error": f"Threat intelligence module unavailable: {_ti_err_msg}"}), 503
+
+    try:
+        # Build the full feed — this is fast (in-memory computation only)
+        feed = build_feed(days=90, top_n=10)
+        return jsonify(feed.to_dict())
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/threat/<threat_id>")
+def api_threat_detail(threat_id: str):
+    """
+    GET /api/threat/<threat_id>
+
+    Returns full detail for a single threat by its ID (e.g. 'lockbit-3').
+
+    Returns HTTP 404 if the threat ID is not found.
+    Returns HTTP 503 if threat_intel module failed to import.
+    """
+    if not _THREAT_INTEL_AVAILABLE:
+        return jsonify({"error": f"Threat intelligence module unavailable: {_ti_err_msg}"}), 503
+
+    try:
+        threat = get_threat_by_id(threat_id)
+        if threat is None:
+            return jsonify({"error": f"Threat '{threat_id}' not found"}), 404
+        return jsonify(threat)
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/prevention-guide")
+def api_prevention_guide():
+    """
+    GET /api/prevention-guide
+
+    Returns the full categorised prevention guide as JSON.
+    Optionally accepts ?category=Ransomware|APT|Malware|Exploit to filter.
+
+    Returns HTTP 503 if threat_intel module failed to import.
+    """
+    if not _THREAT_INTEL_AVAILABLE:
+        return jsonify({"error": f"Threat intelligence module unavailable: {_ti_err_msg}"}), 503
+
+    try:
+        # Optional category filter from query string
+        category = request.args.get("category")
+        guide = get_prevention_guide(category=category)
+        return jsonify(guide)
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
+@app.route("/api/yara/rules")
+def api_yara_rules():
+    """
+    GET /api/yara/rules
+
+    Returns metadata for all available YARA rule files, including
+    display name, filename, and rule count.
+
+    Returns HTTP 503 if yara_scanner module failed to import.
+    """
+    if not _YARA_AVAILABLE:
+        return jsonify({"error": f"YARA scanner module unavailable: {_ya_err_msg}"}), 503
+
+    try:
+        rules = list_rules()
+        return jsonify(rules)
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
 
 
 @app.route("/report/<filename>")
@@ -171,7 +288,89 @@ def handle_scan(data):
     t.start()
 
 
+# ── Socket.IO YARA scan flow ──────────────────────────────────────────────────
+
+@socketio.on("start_yara_scan")
+def handle_yara_scan(data):
+    """
+    Socket.IO event: start_yara_scan
+
+    Accepts payload: { target_path: str, rule_names: list[str] (optional) }
+
+    Streams progress via 'yara_progress' events:
+        { pct: float, current_file: str, matches_so_far: int }
+
+    Emits 'yara_complete' with the full YaraScanResult dict when done.
+    Emits 'yara_error' if the module is unavailable or an exception occurs.
+    """
+    # Capture the Socket.IO session ID so we can emit back to this client
+    sid = request.sid
+    target_path = data.get("target_path", "").strip()
+    rule_names = data.get("rule_names") or None  # None = use all rules
+
+    # Validate that the target path was provided
+    if not target_path:
+        _emit(sid, "yara_error", {"message": "target_path is required"})
+        return
+
+    # Check YARA scanner module availability
+    if not _YARA_AVAILABLE:
+        _emit(sid, "yara_error", {"message": f"YARA scanner module unavailable: {_ya_err_msg}"})
+        return
+
+    def run_yara():
+        """Worker thread: performs the YARA scan and streams progress events."""
+        try:
+            # Mutable counter shared between the progress callback and the outer scope
+            match_counter = [0]
+
+            def progress_cb(pct: float, current_file: str):
+                """
+                Called by yara_scanner.scan_path as each file is processed.
+                Emits a progress event to the connected client.
+                """
+                # Emit progress: percentage, current file, and running match count
+                _emit(sid, "yara_progress", {
+                    "pct": round(pct, 1),
+                    "current_file": current_file,
+                    "matches_so_far": match_counter[0],
+                })
+
+            # Perform the scan — this may take seconds to minutes depending on path size
+            result = yara_scan_path(
+                target_path=target_path,
+                rule_names=rule_names,
+                progress_cb=progress_cb,
+            )
+
+            # Update match count from result before emitting completion
+            match_counter[0] = len(result.matches)
+
+            # Emit the complete scan result
+            _emit(sid, "yara_complete", result.to_dict())
+
+        except Exception as exc:
+            import traceback
+            # Emit structured error so the UI can display it
+            _emit(sid, "yara_error", {
+                "message": str(exc),
+                "trace": traceback.format_exc(),
+            })
+
+    # Run the scan in a background thread so Socket.IO remains responsive
+    t = threading.Thread(target=run_yara, daemon=True)
+    t.start()
+
+
 def _emit(sid, event, data):
+    """
+    Helper: emit a Socket.IO event to a specific session ID.
+
+    Args:
+        sid:   Target Socket.IO session ID.
+        event: Event name string.
+        data:  JSON-serialisable payload dict.
+    """
     socketio.emit(event, data, to=sid)
 
 
