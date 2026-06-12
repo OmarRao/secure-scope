@@ -420,6 +420,307 @@
       font-size: 11px; color: var(--muted);
     }
 
+    /* ── Threat Intelligence Section ────────────────────────────────── */
+    .ti-section { margin-bottom: 72px; }
+    .ti-section-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+    }
+    .ti-section-title {
+      font-size: 22px; font-weight: 800; color: var(--head);
+      letter-spacing: -.4px;
+    }
+    .ti-section-sub { font-size: 13px; color: var(--sub); margin-top: 4px; }
+
+    /* Panel grid: 2-column layout at wide screens */
+    .ti-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .ti-grid-full { grid-column: 1 / -1; }
+
+    /* Base panel card */
+    .ti-panel {
+      background: var(--ink2);
+      border: 1px solid var(--rule2); border-radius: 12px;
+      overflow: hidden;
+    }
+    .ti-panel-hdr {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--rule2);
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .ti-panel-title {
+      font-size: 12px; font-weight: 700; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--muted);
+      font-family: 'Geist Mono', monospace;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .ti-panel-body { padding: 0; }
+
+    /* ── Threat Feed (Panel A) ───────────────────────────────────────── */
+    .threat-list { max-height: 340px; overflow-y: auto; }
+    .threat-list::-webkit-scrollbar { width: 4px; }
+    .threat-list::-webkit-scrollbar-thumb { background: var(--rule2); border-radius: 2px; }
+    .threat-row {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 14px 20px; border-bottom: 1px solid var(--rule);
+      cursor: pointer; transition: background .15s;
+    }
+    .threat-row:last-child { border-bottom: none; }
+    .threat-row:hover { background: var(--ink3); }
+    .threat-main { flex: 1; min-width: 0; }
+    .threat-name {
+      font-size: 13px; font-weight: 600; color: var(--head);
+      margin-bottom: 4px; display: flex; align-items: center; gap: 8px;
+    }
+    .threat-meta { font-size: 11px; color: var(--sub); margin-bottom: 4px; }
+    .threat-sectors { font-size: 11px; color: var(--muted); }
+
+    /* Category badges */
+    .cat-badge {
+      display: inline-block; padding: 2px 7px; border-radius: 4px;
+      font-size: 10px; font-weight: 700; letter-spacing: .5px;
+      text-transform: uppercase; font-family: 'Geist Mono', monospace;
+    }
+    .cat-ransomware { background: rgba(242,87,87,.15); color: var(--danger); }
+    .cat-apt        { background: rgba(167,139,250,.15); color: var(--tag); }
+    .cat-malware    { background: rgba(230,168,23,.15); color: var(--warn); }
+    .cat-exploit    { background: rgba(79,142,247,.15); color: var(--accent); }
+
+    /* Severity badges */
+    .sev-badge {
+      display: inline-block; padding: 2px 7px; border-radius: 4px;
+      font-size: 10px; font-weight: 700; letter-spacing: .4px;
+      font-family: 'Geist Mono', monospace;
+    }
+    .sev-critical { background: rgba(242,87,87,.18); color: var(--danger); }
+    .sev-high     { background: rgba(230,168,23,.18); color: var(--warn); }
+    .sev-medium   { background: rgba(62,207,121,.18); color: var(--ok); }
+
+    /* Threat detail drawer */
+    .threat-drawer {
+      display: none; padding: 20px;
+      background: var(--ink3); border-top: 1px solid var(--rule2);
+      animation: fadeIn .2s ease;
+    }
+    .threat-drawer.open { display: block; }
+    .drawer-desc { font-size: 13px; color: var(--sub); line-height: 1.7; margin-bottom: 16px; }
+    .drawer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .drawer-block h5 {
+      font-size: 10px; font-weight: 700; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--muted);
+      font-family: 'Geist Mono', monospace; margin-bottom: 8px;
+    }
+    .drawer-block ul { list-style: none; padding: 0; }
+    .drawer-block li {
+      font-size: 12px; color: var(--sub); padding: 3px 0;
+      border-bottom: 1px solid var(--rule); font-family: 'Geist Mono', monospace;
+    }
+    .drawer-block li:last-child { border-bottom: none; }
+    .prevention-list li { font-family: 'Geist', sans-serif; }
+    .btn-sm {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+      border: 1px solid var(--rule2); background: var(--ink4);
+      color: var(--sub); cursor: pointer; transition: background .15s, color .15s;
+    }
+    .btn-sm:hover { background: var(--rule2); color: var(--head); }
+    .ti-refresh-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 20px; border-top: 1px solid var(--rule2);
+      background: var(--ink3);
+    }
+    .ti-updated { font-size: 11px; color: var(--muted); font-family: 'Geist Mono', monospace; }
+
+    /* ── Top 10 Variants (Panel B) ──────────────────────────────────── */
+    .variant-row {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 20px; border-bottom: 1px solid var(--rule);
+    }
+    .variant-row:last-child { border-bottom: none; }
+    .variant-rank {
+      font-size: 18px; font-weight: 900; color: var(--muted);
+      font-family: 'Geist Mono', monospace; width: 28px; flex-shrink: 0;
+      text-align: center;
+    }
+    .variant-rank.top3 { color: var(--accent); }
+    .variant-main { flex: 1; min-width: 0; }
+    .variant-name { font-size: 13px; font-weight: 600; color: var(--head); margin-bottom: 3px; }
+    .variant-family { font-size: 11px; color: var(--sub); }
+    .variant-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+    .variant-count {
+      font-size: 13px; font-weight: 700; color: var(--head);
+      font-family: 'Geist Mono', monospace;
+    }
+    .trend-up   { color: var(--danger); font-size: 12px; }
+    .trend-stable { color: var(--muted); font-size: 12px; }
+    /* CSS-only severity bar sparkline */
+    .sev-bar {
+      width: 80px; height: 4px; background: var(--rule2);
+      border-radius: 2px; overflow: hidden; margin-top: 2px;
+    }
+    .sev-bar-fill { height: 100%; border-radius: 2px; }
+    .sev-bar-crit { background: var(--danger); width: 100%; }
+    .sev-bar-high { background: var(--warn); width: 70%; }
+    .sev-bar-med  { background: var(--ok); width: 40%; }
+
+    /* ── Prevention Guide (Panel C) ─────────────────────────────────── */
+    .prev-tabs {
+      display: flex; border-bottom: 1px solid var(--rule2);
+    }
+    .prev-tab {
+      flex: 1; padding: 12px 8px; text-align: center;
+      font-size: 12px; font-weight: 600; color: var(--muted);
+      cursor: pointer; transition: color .15s, background .15s;
+      border-right: 1px solid var(--rule2); font-family: 'Geist Mono', monospace;
+      letter-spacing: .3px;
+    }
+    .prev-tab:last-child { border-right: none; }
+    .prev-tab:hover { color: var(--head); background: var(--ink3); }
+    .prev-tab.active { color: var(--accent); background: rgba(79,142,247,.07); }
+    .prev-tab-content { display: none; padding: 16px; max-height: 320px; overflow-y: auto; }
+    .prev-tab-content.active { display: block; }
+    .prev-card {
+      background: var(--ink3); border: 1px solid var(--rule);
+      border-radius: 8px; padding: 14px 16px; margin-bottom: 10px;
+      display: flex; align-items: flex-start; gap: 14px;
+    }
+    .prev-card:last-child { margin-bottom: 0; }
+    .prev-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .prev-content { flex: 1; }
+    .prev-title {
+      font-size: 13px; font-weight: 600; color: var(--head);
+      margin-bottom: 5px; display: flex; align-items: center; gap: 8px;
+    }
+    .prev-desc { font-size: 12px; color: var(--sub); line-height: 1.6; }
+    .diff-badge {
+      display: inline-block; padding: 2px 7px; border-radius: 4px;
+      font-size: 10px; font-weight: 600; font-family: 'Geist Mono', monospace;
+    }
+    .diff-easy   { background: rgba(62,207,121,.15); color: var(--ok); }
+    .diff-medium { background: rgba(230,168,23,.15); color: var(--warn); }
+    .diff-hard   { background: rgba(242,87,87,.15); color: var(--danger); }
+
+    /* ── Resilience (Panel D) ────────────────────────────────────────── */
+    .res-body { padding: 20px; }
+    /* 3-2-1-1-0 visual */
+    .backup-rule {
+      display: flex; gap: 0; margin-bottom: 20px;
+      border: 1px solid var(--rule2); border-radius: 10px; overflow: hidden;
+    }
+    .backup-rule-cell {
+      flex: 1; padding: 16px 12px; text-align: center;
+      border-right: 1px solid var(--rule2);
+      background: var(--ink3);
+    }
+    .backup-rule-cell:last-child { border-right: none; }
+    .backup-num {
+      font-size: 32px; font-weight: 900; color: var(--accent);
+      font-family: 'Geist Mono', monospace; line-height: 1;
+      margin-bottom: 4px;
+    }
+    .backup-num.r { color: var(--danger); }
+    .backup-num.g { color: var(--ok); }
+    .backup-label { font-size: 11px; color: var(--sub); line-height: 1.4; }
+    /* Resilience checklist */
+    .dr-checklist { list-style: none; padding: 0; }
+    .dr-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid var(--rule);
+      cursor: pointer;
+    }
+    .dr-item:last-child { border-bottom: none; }
+    .dr-checkbox {
+      width: 18px; height: 18px; border-radius: 4px;
+      border: 1px solid var(--rule2); background: var(--ink4);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 11px; color: var(--ok); transition: background .15s;
+    }
+    .dr-item.checked .dr-checkbox { background: rgba(62,207,121,.2); border-color: var(--ok); }
+    .dr-item.checked .dr-item-text { text-decoration: line-through; color: var(--muted); }
+    .dr-item-text { font-size: 13px; color: var(--sub); }
+
+    /* ── YARA Scanner (Panel E) ──────────────────────────────────────── */
+    .yara-body { padding: 20px; }
+    .yara-warning {
+      background: rgba(242,87,87,.1); border: 1px solid rgba(242,87,87,.3);
+      border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
+      font-size: 12px; color: var(--danger); display: none;
+    }
+    .yara-warning.show { display: block; }
+    .yara-form { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 16px; }
+    .yara-input-wrap { flex: 1; }
+    .yara-input-label {
+      font-size: 10px; font-weight: 600; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--muted);
+      font-family: 'Geist Mono', monospace; margin-bottom: 6px;
+    }
+    .yara-input {
+      width: 100%; background: var(--ink);
+      border: 1px solid var(--rule2); border-radius: 8px;
+      padding: 10px 14px; color: var(--head);
+      font-family: 'Geist Mono', monospace; font-size: 13px;
+      outline: none; transition: border-color .2s;
+    }
+    .yara-input:focus { border-color: var(--accent); }
+    .yara-rules-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+      margin-bottom: 16px;
+    }
+    .yara-rule-chk {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--ink3); border: 1px solid var(--rule);
+      border-radius: 6px; padding: 8px 10px; cursor: pointer;
+      font-size: 12px; color: var(--sub); transition: border-color .15s;
+      user-select: none;
+    }
+    .yara-rule-chk input { width: 14px; height: 14px; cursor: pointer; }
+    .yara-rule-chk:hover { border-color: var(--accent); color: var(--head); }
+    .yara-progress-wrap {
+      display: none; margin-bottom: 16px;
+    }
+    .yara-progress-wrap.show { display: block; }
+    .yara-prog-bar-track {
+      height: 4px; background: var(--rule2); border-radius: 2px;
+      overflow: hidden; margin-bottom: 6px;
+    }
+    .yara-prog-bar-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--tag));
+      border-radius: 2px; transition: width .3s;
+    }
+    .yara-prog-file {
+      font-size: 11px; color: var(--muted); font-family: 'Geist Mono', monospace;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .yara-results { display: none; }
+    .yara-results.show { display: block; }
+    .yara-results-hdr {
+      font-size: 11px; font-weight: 700; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--muted);
+      font-family: 'Geist Mono', monospace; margin-bottom: 10px;
+    }
+    .yara-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .yara-table th {
+      text-align: left; padding: 8px 12px;
+      font-size: 10px; font-weight: 600; letter-spacing: .6px;
+      text-transform: uppercase; color: var(--muted);
+      border-bottom: 1px solid var(--rule); font-family: 'Geist Mono', monospace;
+    }
+    .yara-table td { padding: 9px 12px; border-bottom: 1px solid var(--rule); }
+    .yara-table tr:last-child td { border-bottom: none; }
+    .yara-empty {
+      text-align: center; padding: 24px;
+      font-size: 13px; color: var(--muted);
+    }
+    .btn-run-scan {
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 8px; padding: 10px 18px;
+      font-family: 'Geist', sans-serif; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: opacity .15s, transform .1s; white-space: nowrap;
+    }
+    .btn-run-scan:hover { opacity: .88; }
+    .btn-run-scan:active { transform: scale(.98); }
+    .btn-run-scan:disabled { opacity: .4; cursor: not-allowed; }
+
     /* ── Toast ───────────────────────────────────────────────────────── */
     .toast {
       position: fixed; bottom: 24px; right: 24px;
@@ -737,6 +1038,220 @@
       </table>
     </div>
 
+  </div><!-- /wrap -->
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- ── Threat Intelligence Dashboard ────────────────────────────── -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div class="wrap">
+    <div class="ti-section" id="threatIntelSection">
+
+      <!-- Section header -->
+      <div class="ti-section-head">
+        <div>
+          <div class="eye" style="margin-bottom:8px">Threat Intelligence</div>
+          <div class="ti-section-title">Live Threat Feed &amp; Enterprise Resilience</div>
+          <div class="ti-section-sub">
+            Real-time tracking of 20+ ransomware groups and APT actors — ranked by activity, enriched with TTPs, IOCs, and prevention guidance.
+          </div>
+        </div>
+      </div>
+
+      <div class="ti-grid">
+
+        <!-- ──────────────────────────────────────────────────────────
+             Panel A: Live Threat Feed
+             Auto-refreshes every 60s via loadThreatFeed()
+        ─────────────────────────────────────────────────────────── -->
+        <div class="ti-panel">
+          <div class="ti-panel-hdr">
+            <div class="ti-panel-title">
+              <div class="pulse-dot" id="feedPulse"></div>
+              Live Threat Feed
+            </div>
+            <button class="btn-sm" onclick="loadThreatFeed()">&#x21BB; Refresh</button>
+          </div>
+          <div class="ti-panel-body">
+            <!-- Scrollable list populated by JS -->
+            <div class="threat-list" id="threatList">
+              <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">
+                Loading threat feed...
+              </div>
+            </div>
+          </div>
+          <div class="ti-refresh-row">
+            <span class="ti-updated" id="feedUpdated">Not yet loaded</span>
+            <span class="ti-updated" id="feedCount"></span>
+          </div>
+        </div>
+
+        <!-- ──────────────────────────────────────────────────────────
+             Panel B: Top 10 Active Variants (Last 90 Days)
+        ─────────────────────────────────────────────────────────── -->
+        <div class="ti-panel">
+          <div class="ti-panel-hdr">
+            <div class="ti-panel-title">&#x1F4CA; Top 10 Active Variants</div>
+            <span class="ti-updated">Last 90 days</span>
+          </div>
+          <div class="ti-panel-body">
+            <div id="variantList" style="max-height:400px;overflow-y:auto">
+              <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">
+                Loading variant rankings...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ──────────────────────────────────────────────────────────
+             Panel C: Enterprise Prevention & Best Practices (full width)
+        ─────────────────────────────────────────────────────────── -->
+        <div class="ti-panel ti-grid-full">
+          <div class="ti-panel-hdr">
+            <div class="ti-panel-title">&#x1F6E1;&#xFE0F; Enterprise Prevention &amp; Best Practices</div>
+          </div>
+          <div class="ti-panel-body">
+            <!-- Tabs -->
+            <div class="prev-tabs">
+              <div class="prev-tab active" onclick="switchPrevTab('Ransomware',this)">Ransomware</div>
+              <div class="prev-tab" onclick="switchPrevTab('APT',this)">APT</div>
+              <div class="prev-tab" onclick="switchPrevTab('Malware',this)">Malware</div>
+              <div class="prev-tab" onclick="switchPrevTab('Exploit',this)">Exploit</div>
+            </div>
+            <!-- Tab content panels — populated by JS -->
+            <div class="prev-tab-content active" id="prevTab-Ransomware"></div>
+            <div class="prev-tab-content" id="prevTab-APT"></div>
+            <div class="prev-tab-content" id="prevTab-Malware"></div>
+            <div class="prev-tab-content" id="prevTab-Exploit"></div>
+          </div>
+        </div>
+
+        <!-- ──────────────────────────────────────────────────────────
+             Panel D: Data Protection & Resilience
+        ─────────────────────────────────────────────────────────── -->
+        <div class="ti-panel">
+          <div class="ti-panel-hdr">
+            <div class="ti-panel-title">&#x1F4BE; Data Protection &amp; Resilience</div>
+          </div>
+          <div class="ti-panel-body">
+            <div class="res-body">
+              <!-- 3-2-1-1-0 visual -->
+              <div class="eye" style="margin-bottom:12px">The 3-2-1-1-0 Backup Rule</div>
+              <div class="backup-rule">
+                <div class="backup-rule-cell">
+                  <div class="backup-num">3</div>
+                  <div class="backup-label">Total copies of data</div>
+                </div>
+                <div class="backup-rule-cell">
+                  <div class="backup-num">2</div>
+                  <div class="backup-label">Different storage media types</div>
+                </div>
+                <div class="backup-rule-cell">
+                  <div class="backup-num">1</div>
+                  <div class="backup-label">Copy stored offsite</div>
+                </div>
+                <div class="backup-rule-cell">
+                  <div class="backup-num">1</div>
+                  <div class="backup-label">Copy air-gapped / offline</div>
+                </div>
+                <div class="backup-rule-cell">
+                  <div class="backup-num g">0</div>
+                  <div class="backup-label">Errors — verified by restore test</div>
+                </div>
+              </div>
+
+              <!-- DR Testing Checklist (state saved to localStorage) -->
+              <div class="eye" style="margin-bottom:12px">DR Testing Checklist</div>
+              <ul class="dr-checklist" id="drChecklist">
+                <li class="dr-item" data-key="dr1" onclick="toggleDrItem(this)">
+                  <div class="dr-checkbox">&#x2713;</div>
+                  <div class="dr-item-text">Automated daily backup integrity checks are configured and alerting on failure</div>
+                </li>
+                <li class="dr-item" data-key="dr2" onclick="toggleDrItem(this)">
+                  <div class="dr-checkbox">&#x2713;</div>
+                  <div class="dr-item-text">Backup restoration tested end-to-end within last 30 days</div>
+                </li>
+                <li class="dr-item" data-key="dr3" onclick="toggleDrItem(this)">
+                  <div class="dr-checkbox">&#x2713;</div>
+                  <div class="dr-item-text">Immutable backup copy confirmed (Object Lock / hardened repo)</div>
+                </li>
+                <li class="dr-item" data-key="dr4" onclick="toggleDrItem(this)">
+                  <div class="dr-checkbox">&#x2713;</div>
+                  <div class="dr-item-text">Air-gapped / offline copy exists with last backup &lt;24 hours old</div>
+                </li>
+                <li class="dr-item" data-key="dr5" onclick="toggleDrItem(this)">
+                  <div class="dr-checkbox">&#x2713;</div>
+                  <div class="dr-item-text">RTO/RPO defined and documented for all Tier-1 systems</div>
+                </li>
+                <li class="dr-item" data-key="dr6" onclick="toggleDrItem(this)">
+                  <div class="dr-checkbox">&#x2713;</div>
+                  <div class="dr-item-text">Partial DR failover test completed within last 90 days</div>
+                </li>
+                <li class="dr-item" data-key="dr7" onclick="toggleDrItem(this)">
+                  <div class="dr-checkbox">&#x2713;</div>
+                  <div class="dr-item-text">Full DR tabletop exercise completed within last 12 months</div>
+                </li>
+                <li class="dr-item" data-key="dr8" onclick="toggleDrItem(this)">
+                  <div class="dr-checkbox">&#x2713;</div>
+                  <div class="dr-item-text">Backup admin credentials are separate from domain admin accounts</div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- ──────────────────────────────────────────────────────────
+             Panel E: YARA Scanner
+        ─────────────────────────────────────────────────────────── -->
+        <div class="ti-panel">
+          <div class="ti-panel-hdr">
+            <div class="ti-panel-title">&#x1F50D; YARA Rule Scanner</div>
+          </div>
+          <div class="ti-panel-body">
+            <div class="yara-body">
+              <!-- Warning banner shown when yara-python is not installed -->
+              <div class="yara-warning" id="yaraWarning">
+                &#x26A0; yara-python is not installed. File scanning is simulated.
+                Install with: <code style="font-family:'Geist Mono',monospace">pip install yara-python</code>
+              </div>
+
+              <!-- Target path input + run button -->
+              <div class="yara-form">
+                <div class="yara-input-wrap">
+                  <div class="yara-input-label">Target Path</div>
+                  <input class="yara-input" id="yaraPath" type="text"
+                    placeholder="C:\Backups or /srv/backups"
+                    autocomplete="off" spellcheck="false">
+                </div>
+                <button class="btn-run-scan" id="yaraRunBtn" onclick="startYaraScan()">
+                  Run Scan
+                </button>
+              </div>
+
+              <!-- Rule set checkboxes — populated from /api/yara/rules -->
+              <div class="yara-input-label" style="margin-bottom:8px">Rule Sets</div>
+              <div class="yara-rules-grid" id="yaraRulesGrid">
+                <div style="font-size:12px;color:var(--muted)">Loading rules...</div>
+              </div>
+
+              <!-- Progress bar (shown during scan) -->
+              <div class="yara-progress-wrap" id="yaraProgressWrap">
+                <div class="yara-prog-bar-track">
+                  <div class="yara-prog-bar-fill" id="yaraProgFill"></div>
+                </div>
+                <div class="yara-prog-file" id="yaraProgFile">Scanning...</div>
+              </div>
+
+              <!-- Results table (shown after scan) -->
+              <div class="yara-results" id="yaraResults">
+                <div class="yara-results-hdr" id="yaraResultsHdr">Scan Results</div>
+                <div id="yaraResultsBody"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /ti-grid -->
+    </div><!-- /ti-section -->
   </div><!-- /wrap -->
 
   <!-- ── Footer ────────────────────────────────────────────────────── -->
@@ -1187,6 +1702,357 @@ async function loadRecent() {
       </tr>`).join('');
   } catch(e) {}
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Threat Intelligence Dashboard ─────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+
+// ── Category and severity badge helpers ──────────────────────────────────────
+
+/**
+ * Returns an HTML badge span for the given threat category.
+ * @param {string} cat - 'Ransomware' | 'APT' | 'Malware' | 'Exploit'
+ */
+function catBadge(cat) {
+  const cls = { Ransomware: 'cat-ransomware', APT: 'cat-apt', Malware: 'cat-malware', Exploit: 'cat-exploit' }[cat] || 'cat-exploit';
+  return `<span class="cat-badge ${cls}">${cat}</span>`;
+}
+
+/**
+ * Returns an HTML badge span for the given severity level.
+ * @param {string} sev - 'CRITICAL' | 'HIGH' | 'MEDIUM'
+ */
+function sevBadge(sev) {
+  const cls = { CRITICAL: 'sev-critical', HIGH: 'sev-high', MEDIUM: 'sev-medium' }[sev] || 'sev-medium';
+  return `<span class="sev-badge ${cls}">${sev}</span>`;
+}
+
+/**
+ * Returns CSS classes for the severity bar fill element.
+ * @param {string} sev - Severity level string
+ */
+function sevBarClass(sev) {
+  return { CRITICAL: 'sev-bar-crit', HIGH: 'sev-bar-high', MEDIUM: 'sev-bar-med' }[sev] || 'sev-bar-med';
+}
+
+// ── Panel A: Live Threat Feed ─────────────────────────────────────────────────
+
+let _feedData = null;  // cache of last fetched feed
+
+/**
+ * Fetch the threat feed from /api/threat-feed and render Panel A and Panel B.
+ * Auto-called on page load and every 60 seconds.
+ */
+async function loadThreatFeed() {
+  try {
+    // Update pulse dot to indicate loading
+    document.getElementById('feedPulse').classList.remove('done');
+
+    const resp = await fetch('/api/threat-feed');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    _feedData = data;
+
+    renderThreatList(data.recent_threats || []);
+    renderVariantList(data.top_variants || []);
+    renderPreventionGuide(data.prevention_guide || {});
+
+    // Update footer metadata
+    document.getElementById('feedUpdated').textContent = 'Updated: ' + (data.generated_at || new Date().toLocaleTimeString());
+    document.getElementById('feedCount').textContent = (data.total_tracked || 0) + ' threats tracked';
+    document.getElementById('feedPulse').classList.add('done');
+  } catch (e) {
+    document.getElementById('threatList').innerHTML =
+      `<div style="padding:16px;color:var(--danger);font-size:12px">Error loading feed: ${e.message}</div>`;
+  }
+}
+
+/**
+ * Render the scrollable threat row list in Panel A.
+ * Each row is clickable and expands an inline detail drawer.
+ * @param {Array} threats - Array of threat objects from the API
+ */
+function renderThreatList(threats) {
+  const container = document.getElementById('threatList');
+  if (!threats.length) {
+    container.innerHTML = '<div class="yara-empty">No recent threats found</div>';
+    return;
+  }
+
+  container.innerHTML = threats.map((t, i) => `
+    <div class="threat-row" onclick="toggleThreatDrawer('drawer-${i}', this)">
+      <div class="threat-main">
+        <div class="threat-name">
+          ${t.name}
+          ${catBadge(t.category)}
+          ${sevBadge(t.severity)}
+        </div>
+        <div class="threat-meta">Last active: ${t.last_active} &nbsp;&middot;&nbsp; Origin: ${t.origin}</div>
+        <div class="threat-sectors">${(t.affected_sectors || []).slice(0,4).join(' &middot; ')}</div>
+      </div>
+      <div style="font-size:18px;color:var(--muted)">&#x203A;</div>
+    </div>
+    <div class="threat-drawer" id="drawer-${i}">
+      <p class="drawer-desc">${t.description || ''}</p>
+      <div class="drawer-grid">
+        <div class="drawer-block">
+          <h5>MITRE ATT&amp;CK TTPs</h5>
+          <ul>${(t.ttps||[]).map(ttp => `<li>${ttp}</li>`).join('')}</ul>
+        </div>
+        <div class="drawer-block">
+          <h5>CVEs</h5>
+          <ul>${(t.cves||[]).length ? (t.cves||[]).map(c => `<li>${c}</li>`).join('') : '<li style="color:var(--muted)">None tracked</li>'}</ul>
+        </div>
+        <div class="drawer-block">
+          <h5>Example IOCs</h5>
+          <ul>${(t.iocs||[]).slice(0,4).map(ioc => `<li style="word-break:break-all">${ioc}</li>`).join('')}</ul>
+        </div>
+        <div class="drawer-block prevention-list">
+          <h5>Prevention Steps</h5>
+          <ul>${(t.prevention||[]).map(p => `<li style="font-family:'Geist',sans-serif;padding:4px 0">${p}</li>`).join('')}</ul>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/**
+ * Toggle open/close state of a threat detail drawer.
+ * @param {string} drawerId - ID of the drawer element
+ * @param {Element} row - The clicked threat-row element (for arrow rotation)
+ */
+function toggleThreatDrawer(drawerId, row) {
+  const drawer = document.getElementById(drawerId);
+  if (!drawer) return;
+  const isOpen = drawer.classList.contains('open');
+  // Close all other open drawers first
+  document.querySelectorAll('.threat-drawer.open').forEach(d => d.classList.remove('open'));
+  if (!isOpen) drawer.classList.add('open');
+}
+
+// ── Panel B: Top 10 Variants ──────────────────────────────────────────────────
+
+/**
+ * Render the Top 10 variant list with rank, detection count, severity bar, trend.
+ * @param {Array} variants - Array of enriched threat objects with rank/detection_count
+ */
+function renderVariantList(variants) {
+  const container = document.getElementById('variantList');
+  if (!variants.length) {
+    container.innerHTML = '<div class="yara-empty">No variant data</div>';
+    return;
+  }
+
+  container.innerHTML = variants.map(v => `
+    <div class="variant-row">
+      <div class="variant-rank ${v.rank <= 3 ? 'top3' : ''}">${v.rank}</div>
+      <div class="variant-main">
+        <div class="variant-name">${v.name}</div>
+        <div class="variant-family">${v.category} &middot; ${v.family}</div>
+        <div class="sev-bar"><div class="sev-bar-fill ${sevBarClass(v.severity)}"></div></div>
+      </div>
+      <div class="variant-right">
+        <div class="variant-count">${(v.detection_count||0).toLocaleString()}</div>
+        ${sevBadge(v.severity)}
+        <span class="${v.trend === 'UP' ? 'trend-up' : 'trend-stable'}">${v.trend === 'UP' ? '&#x2191; Rising' : '&#x2192; Stable'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Panel C: Prevention Guide ─────────────────────────────────────────────────
+
+/**
+ * Render prevention guide cards for all categories.
+ * Each category gets its own tab content div.
+ * @param {Object} guide - Dict of category -> list of practice objects
+ */
+function renderPreventionGuide(guide) {
+  const cats = ['Ransomware', 'APT', 'Malware', 'Exploit'];
+  cats.forEach(cat => {
+    const container = document.getElementById(`prevTab-${cat}`);
+    if (!container) return;
+    const practices = guide[cat] || [];
+    container.innerHTML = practices.map(p => `
+      <div class="prev-card">
+        <div class="prev-icon">${p.icon || '🔒'}</div>
+        <div class="prev-content">
+          <div class="prev-title">
+            ${p.title}
+            <span class="diff-badge diff-${(p.difficulty||'').toLowerCase()}">${p.difficulty || 'Medium'}</span>
+          </div>
+          <div class="prev-desc">${p.description}</div>
+        </div>
+      </div>
+    `).join('') || '<div class="yara-empty">No practices found</div>';
+  });
+}
+
+/**
+ * Switch the active prevention guide tab.
+ * @param {string} cat - Category name matching the tab content ID
+ * @param {Element} el - The clicked tab element
+ */
+function switchPrevTab(cat, el) {
+  // Deactivate all tabs and content panels
+  document.querySelectorAll('.prev-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.prev-tab-content').forEach(c => c.classList.remove('active'));
+  // Activate selected
+  el.classList.add('active');
+  const content = document.getElementById(`prevTab-${cat}`);
+  if (content) content.classList.add('active');
+}
+
+// ── Panel D: DR Checklist (localStorage persistence) ─────────────────────────
+
+/**
+ * Toggle a DR checklist item's checked state and persist to localStorage.
+ * @param {Element} item - The .dr-item element
+ */
+function toggleDrItem(item) {
+  const key = item.dataset.key;
+  const isChecked = item.classList.toggle('checked');
+  // Persist state to localStorage so it survives page reloads
+  const state = JSON.parse(localStorage.getItem('dr_checklist') || '{}');
+  state[key] = isChecked;
+  localStorage.setItem('dr_checklist', JSON.stringify(state));
+}
+
+/** Restore DR checklist state from localStorage on page load. */
+function restoreDrChecklist() {
+  const state = JSON.parse(localStorage.getItem('dr_checklist') || '{}');
+  Object.entries(state).forEach(([key, checked]) => {
+    const item = document.querySelector(`.dr-item[data-key="${key}"]`);
+    if (item && checked) item.classList.add('checked');
+  });
+}
+
+// ── Panel E: YARA Scanner ─────────────────────────────────────────────────────
+
+let _yaraRules = [];  // cached rule list from /api/yara/rules
+
+/**
+ * Load available YARA rule sets from the API and populate the checkbox grid.
+ */
+async function loadYaraRules() {
+  const grid = document.getElementById('yaraRulesGrid');
+  try {
+    const resp = await fetch('/api/yara/rules');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    _yaraRules = await resp.json();
+
+    if (!_yaraRules.length) {
+      grid.innerHTML = '<div style="font-size:12px;color:var(--muted)">No rule files found</div>';
+      return;
+    }
+
+    // Render a checkbox for each rule file
+    grid.innerHTML = _yaraRules.map(r => `
+      <label class="yara-rule-chk">
+        <input type="checkbox" value="${r.filename}" checked>
+        <span>${r.display_name}</span>
+      </label>
+    `).join('');
+  } catch (e) {
+    grid.innerHTML = `<div style="font-size:12px;color:var(--muted)">Could not load rules: ${e.message}</div>`;
+  }
+}
+
+/**
+ * Start a YARA scan via Socket.IO.
+ * Collects the target path and selected rules, emits start_yara_scan,
+ * then streams progress and renders the results table on completion.
+ */
+function startYaraScan() {
+  const path = document.getElementById('yaraPath').value.trim();
+  if (!path) { toast('Enter a target path to scan'); return; }
+
+  // Collect selected rule filenames
+  const selectedRules = [...document.querySelectorAll('#yaraRulesGrid input:checked')]
+    .map(cb => cb.value);
+
+  // Show progress bar, hide results
+  document.getElementById('yaraProgressWrap').classList.add('show');
+  document.getElementById('yaraResults').classList.remove('show');
+  document.getElementById('yaraProgFill').style.width = '0%';
+  document.getElementById('yaraProgFile').textContent = 'Starting scan...';
+  document.getElementById('yaraRunBtn').disabled = true;
+
+  // Emit the scan request via the existing socket connection
+  socket.emit('start_yara_scan', {
+    target_path: path,
+    rule_names: selectedRules.length ? selectedRules : null,
+  });
+}
+
+/** Handle streaming YARA progress events from the server. */
+socket.on('yara_progress', d => {
+  document.getElementById('yaraProgFill').style.width = (d.pct || 0) + '%';
+  document.getElementById('yaraProgFile').textContent = d.current_file || 'Scanning...';
+});
+
+/** Handle YARA scan completion — render results table. */
+socket.on('yara_complete', result => {
+  document.getElementById('yaraRunBtn').disabled = false;
+  document.getElementById('yaraProgFill').style.width = '100%';
+
+  // Show warning if yara-python is not installed
+  if (!result.yara_available) {
+    document.getElementById('yaraWarning').classList.add('show');
+  }
+
+  // Show the results section
+  const resultsDiv = document.getElementById('yaraResults');
+  const hdr = document.getElementById('yaraResultsHdr');
+  const body = document.getElementById('yaraResultsBody');
+  resultsDiv.classList.add('show');
+
+  const matches = result.matches || [];
+  hdr.textContent = `Scan Results — ${result.files_scanned} files scanned, ${matches.length} matches, ${result.duration_sec}s`;
+
+  if (!matches.length) {
+    body.innerHTML = '<div class="yara-empty">&#x2705; No matches found — the scanned path looks clean.</div>';
+    return;
+  }
+
+  // Build results table
+  body.innerHTML = `
+    <table class="yara-table">
+      <thead><tr>
+        <th>File</th><th>Rule</th><th>Family</th><th>Severity</th><th>Offset</th>
+      </tr></thead>
+      <tbody>
+        ${matches.map(m => `
+          <tr>
+            <td style="font-family:'Geist Mono',monospace;font-size:11px;word-break:break-all;max-width:200px">${m.file_path}</td>
+            <td style="font-family:'Geist Mono',monospace;font-size:11px">${m.rule_name}</td>
+            <td>${m.threat_family}</td>
+            <td>${sevBadge(m.severity)}</td>
+            <td style="font-family:'Geist Mono',monospace;font-size:11px">${m.offset}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+});
+
+/** Handle YARA scan errors. */
+socket.on('yara_error', d => {
+  document.getElementById('yaraRunBtn').disabled = false;
+  document.getElementById('yaraProgressWrap').classList.remove('show');
+  toast('YARA scan error: ' + d.message);
+});
+
+// ── Initialise the Threat Intelligence dashboard ──────────────────────────────
+
+// Load threat feed immediately on page load
+loadThreatFeed();
+// Auto-refresh threat feed every 60 seconds
+setInterval(loadThreatFeed, 60000);
+// Load YARA rule list
+loadYaraRules();
+// Restore DR checklist state from localStorage
+restoreDrChecklist();
 
 loadRecent();
 </script>
