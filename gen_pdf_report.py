@@ -665,8 +665,10 @@ HTML = f"""<!DOCTYPE html>
     </div>
     <div class="founder-line">
       <strong>Omar Rao</strong><br>
-      Engineer by trait · Data Resilience, Privacy &amp; Cybersecurity Expert<br>
-      Founder, SecureScope
+      Engineer — Data Resilience, Cybersecurity and Privacy<br>
+      <a href="https://www.linkedin.com/in/omarrao/" style="color:inherit;">LinkedIn</a>
+      &nbsp;·&nbsp;
+      <a href="https://omarrao.substack.com/" style="color:inherit;">Substack</a>
     </div>
   </div>
 
@@ -900,9 +902,10 @@ HTML = f"""<!DOCTYPE html>
     <div style="text-align:right;">
       <div style="font-size:11pt;font-weight:700;color:#111827;">Omar Rao</div>
       <div style="font-size:9pt;color:#6b7280;line-height:1.6;">
-        Engineer by trait<br>
-        Data Resilience, Privacy &amp; Cybersecurity Expert<br>
-        Founder, SecureScope
+        Engineer — Data Resilience, Cybersecurity and Privacy<br>
+        <a href="https://www.linkedin.com/in/omarrao/" style="color:#6b7280;">LinkedIn</a>
+        &nbsp;·&nbsp;
+        <a href="https://omarrao.substack.com/" style="color:#6b7280;">Substack</a>
       </div>
     </div>
   </div>

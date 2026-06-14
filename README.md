@@ -316,4 +316,8 @@ score = min(
 
 ---
 
-*Built by [Omar Rao](https://github.com/OmarRao) — Engineer by trait, Data Resilience, Privacy & Cybersecurity Expert.*
+---
+
+**Built by [Omar Rao](https://github.com/OmarRao)**  
+Engineer — Data Resilience, Cybersecurity and Privacy  
+[LinkedIn](https://www.linkedin.com/in/omarrao/) &nbsp;·&nbsp; [Substack](https://omarrao.substack.com/)
