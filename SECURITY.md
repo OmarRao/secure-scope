@@ -1,6 +1,6 @@
 # Security Policy — SecureScope
 
-**Maintainer:** Omar Rao — Engineer, Data Resilience, Privacy & Cybersecurity Expert  
+**Maintainer:** [Omar Rao](https://github.com/OmarRao) — Engineer, Data Resilience, Cybersecurity and Privacy · [LinkedIn](https://www.linkedin.com/in/omarrao/) · [Substack](https://omarrao.substack.com/)  
 **Repository:** [OmarRao/secure-scope](https://github.com/OmarRao/secure-scope)  
 **Effective date:** 2026-06-12  
 **Policy version:** 2.0.0
@@ -418,7 +418,7 @@ For P1/P2 incidents requiring immediate attention, report via [GitHub Security A
 
 | Role | Contact |
 |------|---------|
-| **Primary maintainer** | Omar Rao — via [GitHub](https://github.com/OmarRao) |
+| **Primary maintainer** | [Omar Rao](https://github.com/OmarRao) — Engineer, Data Resilience, Cybersecurity and Privacy · [LinkedIn](https://www.linkedin.com/in/omarrao/) · [Substack](https://omarrao.substack.com/) |
 | **Security reports** | [GitHub Security Advisories](https://github.com/OmarRao/secure-scope/security/advisories/new) |
 | **Public vulnerabilities** | [GitHub Issues](https://github.com/OmarRao/secure-scope/issues) — for non-sensitive bugs only |
 
@@ -440,5 +440,5 @@ This security policy is reviewed and updated with each major SecureScope release
 
 ---
 
-*SecureScope Security Policy — maintained by Omar Rao.*  
-*Data Resilience, Privacy & Cybersecurity Expert.*
+*SecureScope Security Policy — maintained by [Omar Rao](https://github.com/OmarRao), Engineer — Data Resilience, Cybersecurity and Privacy.*  
+*[LinkedIn](https://www.linkedin.com/in/omarrao/) · [Substack](https://omarrao.substack.com/)*

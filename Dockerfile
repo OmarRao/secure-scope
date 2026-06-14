@@ -71,7 +71,7 @@ LABEL org.opencontainers.image.url="https://github.com/OmarRao/secure-scope"
 LABEL org.opencontainers.image.source="https://github.com/OmarRao/secure-scope"
 LABEL org.opencontainers.image.licenses="MIT"
 LABEL org.opencontainers.image.vendor="Omar Rao"
-LABEL org.opencontainers.image.authors="Omar Rao <github.com/OmarRao>"
+LABEL org.opencontainers.image.authors="Omar Rao — Engineer, Data Resilience, Cybersecurity and Privacy <https://www.linkedin.com/in/omarrao/>"
 
 # Install only the OS runtime libraries needed (no build tools)
 RUN apt-get update && apt-get install -y --no-install-recommends \
