@@ -420,6 +420,15 @@
       font-size: 11px; color: var(--muted);
     }
 
+    /* ── Secrets Detection filter buttons ──────────────────────────── */
+    .sec-filter-btn {
+      background: transparent; border: 1px solid #2e3540; border-radius: 6px;
+      color: #6b7785; font-size: 11px; font-weight: 600; padding: 4px 10px;
+      cursor: pointer; transition: all .15s;
+    }
+    .sec-filter-btn:hover { border-color: #4f8ef7; color: #4f8ef7; }
+    .sec-filter-btn.active { background: #4f8ef722; border-color: #4f8ef7; color: #4f8ef7; }
+
     /* ── Threat Intelligence Section ────────────────────────────────── */
     .ti-section { margin-bottom: 72px; }
     .ti-section-head {
@@ -1252,6 +1261,214 @@
 
       </div><!-- /ti-grid -->
     </div><!-- /ti-section -->
+
+    <!-- ═══════════════════════════════════════════════════════════════════
+         SECRETS DETECTION SECTION (v3.0.0)
+         Standalone scanner — accepts any local path or GitHub URL.
+         Streams progress via Socket.IO, renders categorised findings table.
+    ════════════════════════════════════════════════════════════════════ -->
+    <div class="ti-section" id="secrets-section">
+      <div class="ti-section-head">
+        <div>
+          <div class="ti-section-title">🔑 Secrets Detection</div>
+          <div class="ti-section-sub">
+            Scan any repository for hardcoded API keys, tokens, credentials, and
+            high-entropy strings — including deleted secrets still present in git history.
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);text-align:right;">
+          60+ patterns &nbsp;·&nbsp; 10 provider categories<br>
+          Git history scan &nbsp;·&nbsp; Entropy analysis
+        </div>
+      </div>
+
+      <!-- Secrets summary KPI strip (shown after scan) -->
+      <div class="rw-strip" id="secretsStrip" style="display:none;margin-bottom:20px;">
+        <div class="rw-cell">
+          <div class="rw-val" id="secTotalVal">—</div>
+          <div class="rw-lbl">Total Secrets</div>
+        </div>
+        <div class="rw-cell">
+          <div class="rw-val" style="color:#ef4444;" id="secCriticalVal">—</div>
+          <div class="rw-lbl">Critical</div>
+        </div>
+        <div class="rw-cell">
+          <div class="rw-val" style="color:#f97316;" id="secHighVal">—</div>
+          <div class="rw-lbl">High</div>
+        </div>
+        <div class="rw-cell">
+          <div class="rw-val" style="color:#6366f1;" id="secHistoryVal">—</div>
+          <div class="rw-lbl">In Git History</div>
+        </div>
+        <div class="rw-cell">
+          <div class="rw-val" id="secFilesVal">—</div>
+          <div class="rw-lbl">Files Scanned</div>
+        </div>
+        <div class="rw-cell">
+          <div class="rw-val" id="secCommitsVal">—</div>
+          <div class="rw-lbl">Commits Scanned</div>
+        </div>
+      </div>
+
+      <div class="ti-grid">
+
+        <!-- Panel: Scanner Controls -->
+        <div class="ti-panel ti-grid-full">
+          <div class="ti-panel-head">
+            <span class="ti-panel-title">Scanner Configuration</span>
+          </div>
+          <div class="ti-panel-body" style="padding:20px;">
+
+            <!-- Input row -->
+            <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+              <input
+                id="secretsRepoInput"
+                type="text"
+                placeholder="GitHub URL (https://github.com/owner/repo) or local path"
+                style="flex:1;min-width:260px;background:#0f1117;border:1px solid #2e3540;
+                       border-radius:8px;padding:10px 14px;color:#e2e8f0;font-size:13px;
+                       outline:none;"
+                value="https://github.com/OmarRao/analyzer"
+              />
+              <button id="secretsScanBtn" onclick="startSecretsScan()"
+                style="background:#4f8ef7;color:#fff;border:none;border-radius:8px;
+                       padding:10px 22px;font-size:13px;font-weight:600;cursor:pointer;
+                       white-space:nowrap;">
+                🔍 Scan for Secrets
+              </button>
+            </div>
+
+            <!-- Options row -->
+            <div style="display:flex;gap:24px;flex-wrap:wrap;">
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;
+                            color:#94a3b8;cursor:pointer;">
+                <input type="checkbox" id="secOptHistory" checked
+                  style="accent-color:#4f8ef7;width:15px;height:15px;">
+                Scan git history <span style="color:var(--muted);font-size:11px;">
+                  (catches deleted secrets)</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:13px;
+                            color:#94a3b8;cursor:pointer;">
+                <input type="checkbox" id="secOptEntropy" checked
+                  style="accent-color:#4f8ef7;width:15px;height:15px;">
+                Entropy analysis <span style="color:var(--muted);font-size:11px;">
+                  (generic high-entropy strings)</span>
+              </label>
+            </div>
+
+            <!-- Progress bar -->
+            <div id="secretsProgress" style="display:none;margin-top:18px;">
+              <div style="display:flex;justify-content:space-between;
+                          margin-bottom:6px;font-size:12px;color:#94a3b8;">
+                <span id="secretsProgMsg">Scanning...</span>
+                <span id="secretsProgPct">0%</span>
+              </div>
+              <div style="background:#1a1f2b;border-radius:6px;height:6px;overflow:hidden;">
+                <div id="secretsProgBar"
+                  style="height:100%;width:0%;background:linear-gradient(90deg,#ef4444,#f97316);
+                         border-radius:6px;transition:width .3s;"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Panel: Findings Table -->
+        <div class="ti-panel ti-grid-full" id="secretsResultsPanel" style="display:none;">
+          <div class="ti-panel-head" style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="ti-panel-title">Findings</span>
+            <div style="display:flex;gap:8px;" id="secretsFilterRow">
+              <button onclick="filterSecrets('all')" class="sec-filter-btn active" data-filter="all">All</button>
+              <button onclick="filterSecrets('critical')" class="sec-filter-btn" data-filter="critical"
+                style="color:#ef4444;">Critical</button>
+              <button onclick="filterSecrets('high')" class="sec-filter-btn" data-filter="high"
+                style="color:#f97316;">High</button>
+              <button onclick="filterSecrets('medium')" class="sec-filter-btn" data-filter="medium"
+                style="color:#eab308;">Medium</button>
+              <button onclick="filterSecrets('history')" class="sec-filter-btn" data-filter="history"
+                style="color:#6366f1;">History Only</button>
+            </div>
+          </div>
+          <div class="ti-panel-body" style="padding:0;overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <thead>
+                <tr style="border-bottom:1px solid #1f2937;">
+                  <th style="padding:10px 16px;text-align:left;color:#6b7785;font-weight:600;
+                             white-space:nowrap;">Severity</th>
+                  <th style="padding:10px 16px;text-align:left;color:#6b7785;font-weight:600;">Provider</th>
+                  <th style="padding:10px 16px;text-align:left;color:#6b7785;font-weight:600;">Type</th>
+                  <th style="padding:10px 16px;text-align:left;color:#6b7785;font-weight:600;">File</th>
+                  <th style="padding:10px 16px;text-align:left;color:#6b7785;font-weight:600;">Secret (redacted)</th>
+                  <th style="padding:10px 16px;text-align:left;color:#6b7785;font-weight:600;">Source</th>
+                  <th style="padding:10px 16px;text-align:left;color:#6b7785;font-weight:600;">Blast Radius</th>
+                </tr>
+              </thead>
+              <tbody id="secretsTableBody"></tbody>
+            </table>
+            <div id="secretsNoFindings" style="display:none;padding:32px;text-align:center;
+                 color:#6b7785;font-size:13px;">
+              ✅ No secrets detected. Ensure git history scan is enabled for complete coverage.
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel: Category Breakdown -->
+        <div class="ti-panel" id="secretsCategoryPanel" style="display:none;">
+          <div class="ti-panel-head">
+            <span class="ti-panel-title">By Category</span>
+          </div>
+          <div class="ti-panel-body" style="padding:16px;" id="secretsCategoryBody"></div>
+        </div>
+
+        <!-- Panel: Remediation Guide -->
+        <div class="ti-panel" id="secretsRemPanel" style="display:none;">
+          <div class="ti-panel-head">
+            <span class="ti-panel-title">Remediation Steps</span>
+          </div>
+          <div class="ti-panel-body" style="padding:20px;font-size:13px;line-height:1.7;color:#94a3b8;">
+            <div style="margin-bottom:16px;">
+              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">
+                ① Rotate immediately
+              </div>
+              Revoke and regenerate every exposed secret from the provider's dashboard
+              before doing anything else. Assume the secret was already found.
+            </div>
+            <div style="margin-bottom:16px;">
+              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">
+                ② Purge git history
+              </div>
+              Use <code style="background:#1a1f2b;padding:1px 5px;border-radius:3px;">
+              git filter-repo</code> to remove the secret from all commits,
+              then force-push. Every team member must re-clone.
+            </div>
+            <div style="margin-bottom:16px;">
+              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">
+                ③ Use environment variables
+              </div>
+              Store secrets in <code style="background:#1a1f2b;padding:1px 5px;border-radius:3px;">
+              .env</code> files (gitignored), CI/CD secret stores, or a vault
+              (HashiCorp Vault, AWS Secrets Manager, Azure Key Vault).
+            </div>
+            <div style="margin-bottom:16px;">
+              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">
+                ④ Enable push protection
+              </div>
+              Turn on GitHub Secret Scanning + Push Protection in
+              Settings → Code Security → Secret Scanning to block future leaks at push time.
+            </div>
+            <div>
+              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">
+                ⑤ Audit access logs
+              </div>
+              Check provider audit logs for any unauthorised API calls made with
+              the exposed credential. Document findings for your incident record.
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /ti-grid -->
+    </div><!-- /secrets-section -->
+
   </div><!-- /wrap -->
 
   <!-- ── Footer ────────────────────────────────────────────────────── -->
@@ -2063,6 +2280,195 @@ loadYaraRules();
 restoreDrChecklist();
 
 loadRecent();
+
+// ════════════════════════════════════════════════════════════════════════════
+// SECRETS DETECTION (v3.0.0)
+// ════════════════════════════════════════════════════════════════════════════
+
+/** All findings from the last secrets scan — kept for client-side filtering. */
+let _secretsFindings = [];
+
+/** Severity → badge colour mapping */
+const SEV_COLOURS = {
+  critical: '#ef4444',
+  high:     '#f97316',
+  medium:   '#eab308',
+};
+
+/** Start a secrets scan via Socket.IO. */
+function startSecretsScan() {
+  const repoPath = document.getElementById('secretsRepoInput').value.trim();
+  if (!repoPath) { toast('Enter a GitHub URL or local path'); return; }
+
+  const includeHistory = document.getElementById('secOptHistory').checked;
+  const entropyCheck   = document.getElementById('secOptEntropy').checked;
+
+  // Reset UI
+  document.getElementById('secretsScanBtn').disabled = true;
+  document.getElementById('secretsProgress').style.display = 'block';
+  document.getElementById('secretsResultsPanel').style.display  = 'none';
+  document.getElementById('secretsCategoryPanel').style.display = 'none';
+  document.getElementById('secretsRemPanel').style.display      = 'none';
+  document.getElementById('secretsStrip').style.display         = 'none';
+  document.getElementById('secretsProgBar').style.width = '2%';
+  document.getElementById('secretsProgMsg').textContent = 'Initialising...';
+  document.getElementById('secretsProgPct').textContent = '0%';
+  _secretsFindings = [];
+
+  socket.emit('start_secrets_scan', {
+    repo_path: repoPath,
+    include_history: includeHistory,
+    entropy_check: entropyCheck,
+  });
+}
+
+/** Update progress bar as scan events arrive. */
+socket.on('secrets_progress', d => {
+  const pct = Math.min(d.pct || 0, 99);
+  document.getElementById('secretsProgBar').style.width = pct + '%';
+  document.getElementById('secretsProgPct').textContent = Math.round(pct) + '%';
+  document.getElementById('secretsProgMsg').textContent = d.message || 'Scanning...';
+});
+
+/** Render findings when the scan completes. */
+socket.on('secrets_complete', result => {
+  document.getElementById('secretsScanBtn').disabled = false;
+  document.getElementById('secretsProgBar').style.width = '100%';
+  document.getElementById('secretsProgPct').textContent = '100%';
+  document.getElementById('secretsProgMsg').textContent =
+    `✅ Done — ${result.total_findings} secret(s) found in ` +
+    `${result.files_scanned} files, ${result.commits_scanned} commits ` +
+    `(${result.duration_sec}s)`;
+
+  _secretsFindings = result.findings || [];
+
+  // ── KPI strip ─────────────────────────────────────────────────────────────
+  const strip = document.getElementById('secretsStrip');
+  strip.style.display = 'grid';
+  document.getElementById('secTotalVal').textContent    = result.total_findings;
+  document.getElementById('secCriticalVal').textContent = result.critical;
+  document.getElementById('secHighVal').textContent     = result.high;
+  document.getElementById('secHistoryVal').textContent  = result.history_findings;
+  document.getElementById('secFilesVal').textContent    = result.files_scanned;
+  document.getElementById('secCommitsVal').textContent  = result.commits_scanned;
+
+  // ── Category breakdown ─────────────────────────────────────────────────────
+  const catBody = document.getElementById('secretsCategoryBody');
+  const cats = result.categories || {};
+  if (Object.keys(cats).length > 0) {
+    const maxVal = Math.max(...Object.values(cats));
+    catBody.innerHTML = Object.entries(cats).map(([cat, cnt]) => `
+      <div style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;
+                    font-size:12px;margin-bottom:4px;">
+          <span style="color:#e2e8f0;">${cat}</span>
+          <span style="color:#6b7785;">${cnt}</span>
+        </div>
+        <div style="background:#1a1f2b;border-radius:4px;height:5px;">
+          <div style="height:100%;border-radius:4px;
+                      background:linear-gradient(90deg,#ef4444,#f97316);
+                      width:${Math.round((cnt/maxVal)*100)}%;"></div>
+        </div>
+      </div>`).join('');
+    document.getElementById('secretsCategoryPanel').style.display = 'block';
+  }
+
+  // ── Render findings table ──────────────────────────────────────────────────
+  renderSecretsTable(_secretsFindings);
+  document.getElementById('secretsResultsPanel').style.display = 'block';
+  document.getElementById('secretsRemPanel').style.display = 'block';
+
+  if (result.total_findings > 0) {
+    toast(`⚠️ ${result.critical} critical, ${result.high} high secrets detected`);
+  }
+});
+
+/** Handle scan errors. */
+socket.on('secrets_error', d => {
+  document.getElementById('secretsScanBtn').disabled = false;
+  document.getElementById('secretsProgress').style.display = 'none';
+  toast('Secrets scan error: ' + d.message);
+});
+
+/**
+ * Render (or re-render) the secrets findings table.
+ * Called on initial load and when the user clicks a filter button.
+ */
+function renderSecretsTable(findings) {
+  const tbody = document.getElementById('secretsTableBody');
+  const noMsg = document.getElementById('secretsNoFindings');
+
+  if (!findings.length) {
+    tbody.innerHTML = '';
+    noMsg.style.display = 'block';
+    return;
+  }
+  noMsg.style.display = 'none';
+
+  tbody.innerHTML = findings.map(f => {
+    const sevColour = SEV_COLOURS[f.severity] || '#94a3b8';
+    const histBadge = f.commit_hash
+      ? `<span style="background:rgba(99,102,241,.15);color:#818cf8;
+                      font-size:10px;padding:2px 6px;border-radius:4px;
+                      margin-left:6px;" title="Found in commit ${f.commit_hash}">
+           HISTORY
+         </span>`
+      : '';
+    const commitInfo = f.commit_hash
+      ? `<div style="font-size:10px;color:#6b7785;margin-top:2px;"
+              title="${f.commit_message || ''}">
+           ${f.commit_hash.substring(0,8)} — ${(f.commit_message||'').substring(0,40)}
+         </div>`
+      : '';
+
+    return `<tr style="border-bottom:1px solid #1a1f2b;"
+               class="sec-row" data-sev="${f.severity}"
+               data-history="${f.commit_hash ? '1' : '0'}">
+      <td style="padding:10px 16px;">
+        <span style="display:inline-block;padding:3px 8px;border-radius:5px;
+                     font-size:10px;font-weight:700;letter-spacing:.5px;
+                     background:${sevColour}22;color:${sevColour};">
+          ${f.severity.toUpperCase()}
+        </span>
+      </td>
+      <td style="padding:10px 16px;color:#e2e8f0;font-weight:500;">${f.provider}</td>
+      <td style="padding:10px 16px;color:#94a3b8;">${f.description}</td>
+      <td style="padding:10px 16px;font-family:'Geist Mono',monospace;
+                 font-size:11px;color:#4f8ef7;max-width:200px;overflow:hidden;
+                 text-overflow:ellipsis;white-space:nowrap;" title="${f.file_path}">
+        ${f.file_path}${histBadge}${commitInfo}
+      </td>
+      <td style="padding:10px 16px;font-family:'Geist Mono',monospace;
+                 font-size:11px;color:#fbbf24;">${f.secret_redacted}</td>
+      <td style="padding:10px 16px;font-size:11px;color:#6b7785;">
+        ${f.commit_hash ? 'Git history' : 'Working tree'}
+      </td>
+      <td style="padding:10px 16px;font-size:11px;color:#6b7785;
+                 max-width:240px;">${f.blast_radius}</td>
+    </tr>`;
+  }).join('');
+}
+
+/**
+ * Filter the findings table by severity or source.
+ * Called from the filter button row above the table.
+ */
+function filterSecrets(filter) {
+  // Update active button style
+  document.querySelectorAll('.sec-filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === filter);
+  });
+
+  let filtered;
+  if (filter === 'all') {
+    filtered = _secretsFindings;
+  } else if (filter === 'history') {
+    filtered = _secretsFindings.filter(f => f.commit_hash);
+  } else {
+    filtered = _secretsFindings.filter(f => f.severity === filter);
+  }
+  renderSecretsTable(filtered);
+}
 </script>
 </body>
 </html>

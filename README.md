@@ -1,11 +1,11 @@
 # SecureScope / GitHub Security Review Tool
 
-![Version](https://img.shields.io/badge/version-v2.0.0-blue)
+![Version](https://img.shields.io/badge/version-v3.0.0-blue)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-v14-red)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 > AI-powered security analysis for any GitHub repository. Paste a URL, get a full threat report mapped to MITRE ATT&CK and CWE, with optional Docker sandbox execution and AI-generated fix diffs from your choice of LLM.
-> **v2.0.0** adds a live Threat Intelligence Dashboard, YARA rule engine for backup/infrastructure scanning, enterprise prevention guidance, and an interactive Data Protection resilience guide.
+> **v3.0.0** adds a Secrets Detection Engine — 60+ patterns across 10 provider categories, full git history scanning, Shannon entropy analysis for generic secrets, and blast-radius assessment for every finding.
 
 **[View Sample Report (PDF)](https://github.com/OmarRao/secure-scope/blob/main/docs/sample_report.pdf)**
 
@@ -297,10 +297,49 @@ score = min(
 
 ---
 
+## Secrets Detection Engine (v3.0.0)
+
+The most critical capability for any organisation — a hardcoded secret **is** the breach.
+
+### How it works
+
+SecureScope scans both the **working tree** (current files) and the **full git commit history** (including secrets that were "deleted" but still exist in past commits). Every finding is assessed for blast radius — what an attacker can actually do with the credential.
+
+![Secrets Detection Panel](docs/screenshots/07_secrets_scanner.png)
+
+### Pattern coverage — 60+ patterns across 10 categories
+
+| Category | Providers Covered |
+|----------|------------------|
+| **Cloud** | AWS (Access Key, Secret, Session Token), Azure (Connection String, Client Secret, SAS), GCP (API Key, Service Account, OAuth), DigitalOcean |
+| **AI / ML** | Anthropic, OpenAI, Groq, HuggingFace, Cohere |
+| **Version Control** | GitHub (Classic PAT, Fine-Grained, OAuth, Actions, Refresh), GitLab |
+| **Payment** | Stripe (Secret + Restricted), Square, Braintree |
+| **Communications** | Slack (Bot, User, App, Webhook), Twilio, SendGrid, Mailgun |
+| **Cryptographic Keys** | RSA, EC, OpenSSH, PGP, PKCS#8 private keys, JWT tokens |
+| **Database** | MongoDB, PostgreSQL, MySQL, Redis connection strings |
+| **Generic Credentials** | Hardcoded passwords, Bearer tokens, Basic Auth in URLs |
+| **High-Entropy Strings** | Shannon entropy ≥ 4.6 bpc — catches secrets with no known pattern |
+
+### Git history scanning
+
+Secrets committed to a repo and later deleted **remain accessible in git history forever** — in every clone, every CI runner that ever pulled the branch. SecureScope scans every commit's diff, not just the current HEAD, and clearly labels each finding with its commit hash and message.
+
+### Blast radius assessment
+
+Every finding includes a plain-English description of what an attacker gains — not just "AWS key found" but "Full AWS account access — IAM, S3, EC2, Lambda, RDS". This gives security teams the context to prioritise rotation by actual impact, not just severity label.
+
+### Remediation built in
+
+The panel includes a 5-step remediation guide: rotate immediately, purge git history with `git filter-repo`, move to environment variables/vaults, enable GitHub Push Protection, and audit provider access logs.
+
+---
+
 ## Releases
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| [v3.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v3.0.0) | 2026-06-16 | Secrets Detection Engine — 60+ patterns, git history scan, entropy analysis, blast radius, integrated into main scan pipeline |
 | [v2.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v2.0.0) | 2026-06-12 | Threat Intelligence Dashboard, YARA scanner, enterprise prevention guide, DR checklist, collapsible report sections |
 | v1.0.0 | 2026-06-09 | Initial release: Semgrep scan, Docker sandbox, multi-LLM advisor, ransomware engine, visual report |
 

@@ -8,6 +8,14 @@ v2.0.0 additions:
   - /api/yara/rules         — list of available YARA rule files
   - /api/prevention-guide   — categorised prevention best practices
   - start_yara_scan (Socket.IO) — streams YARA scan progress and results
+
+v3.0.0 additions:
+  - /api/secrets/patterns   — list all secret pattern categories
+  - start_secrets_scan (Socket.IO) — streams secrets scan progress and results
+    Accepts: { repo_path, include_history, entropy_check }
+    Emits:   secrets_progress { pct, message }
+             secrets_complete { SecretScanResult dict }
+             secrets_error    { message }
 """
 
 import os
@@ -40,6 +48,14 @@ try:
 except ImportError as _ya_err:
     _YARA_AVAILABLE = False
     _ya_err_msg = str(_ya_err)
+
+# ── Import secrets scanner (v3.0.0) ──────────────────────────────────────────
+try:
+    from secrets_scanner import scan_repo as secrets_scan_repo, list_pattern_categories
+    _SECRETS_AVAILABLE = True
+except ImportError as _sec_err:
+    _SECRETS_AVAILABLE = False
+    _sec_err_msg = str(_sec_err)
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = "secreview-ui-key"
@@ -152,6 +168,24 @@ def api_yara_rules():
         return jsonify({"error": str(exc)}), 500
 
 
+@app.route("/api/secrets/patterns")
+def api_secrets_patterns():
+    """
+    GET /api/secrets/patterns
+
+    Returns all available secret detection pattern categories with provider
+    names and pattern counts. Used to populate the Secrets Scanner panel UI.
+
+    Returns HTTP 503 if secrets_scanner module failed to import.
+    """
+    if not _SECRETS_AVAILABLE:
+        return jsonify({"error": f"Secrets scanner unavailable: {_sec_err_msg}"}), 503
+    try:
+        return jsonify(list_pattern_categories())
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 500
+
+
 @app.route("/report/<filename>")
 def serve_report(filename):
     return send_from_directory(REPORTS_DIR, filename)
@@ -224,6 +258,20 @@ def handle_scan(data):
                     from advisor import enrich_findings
                     enriched = enrich_findings(result, obs, provider=llm_provider, api_key=llm_api_key, max_findings=20)
 
+                # ── Secrets Detection (v3.0.0) ────────────────────────────────
+                _emit(sid, "progress", {"step": "secrets", "message": "🔑 Scanning for hardcoded secrets and credentials...", "pct": 80})
+                secrets_result = None
+                if _SECRETS_AVAILABLE:
+                    try:
+                        secrets_result = secrets_scan_repo(
+                            repo_path=workdir,
+                            include_history=True,
+                            entropy_check=True,
+                            progress_cb=None,   # inline — no per-file progress here
+                        )
+                    except Exception as _sec_exc:
+                        pass  # non-fatal: secrets scan failure doesn't abort the report
+
                 _emit(sid, "progress", {"step": "report", "message": "Analysing ransomware indicators...", "pct": 85})
 
                 from ransomware import detect as ransomware_detect
@@ -252,6 +300,7 @@ def handle_scan(data):
                     "findings": findings_dicts,
                     "dependency_vulns": result.dependency_vulns,
                     "ransomware": rw_report,
+                    "secrets": secrets_result.to_dict() if secrets_result else None,
                     "runtime": {
                         "exit_code": obs.exit_code if obs else None,
                         "suspicious_behaviors": obs.suspicious_behaviors if obs else [],
@@ -359,6 +408,86 @@ def handle_yara_scan(data):
 
     # Run the scan in a background thread so Socket.IO remains responsive
     t = threading.Thread(target=run_yara, daemon=True)
+    t.start()
+
+
+# ── Socket.IO Secrets Scan flow (v3.0.0) ─────────────────────────────────────
+
+@socketio.on("start_secrets_scan")
+def handle_secrets_scan(data):
+    """
+    Socket.IO event: start_secrets_scan
+
+    Accepts payload:
+        {
+          repo_path:       str   — absolute path to a locally cloned repo,
+                                   OR a GitHub URL (will be cloned to a temp dir)
+          include_history: bool  — scan git commit history (default True)
+          entropy_check:   bool  — enable high-entropy detection (default True)
+        }
+
+    Streams:
+        secrets_progress { pct: float, message: str }
+
+    Emits on completion:
+        secrets_complete { SecretScanResult dict }
+
+    Emits on error:
+        secrets_error { message: str }
+    """
+    sid = request.sid
+    repo_path = data.get("repo_path", "").strip()
+    include_history = bool(data.get("include_history", True))
+    entropy_check = bool(data.get("entropy_check", True))
+
+    if not repo_path:
+        _emit(sid, "secrets_error", {"message": "repo_path is required"})
+        return
+
+    if not _SECRETS_AVAILABLE:
+        _emit(sid, "secrets_error", {"message": f"Secrets scanner unavailable: {_sec_err_msg}"})
+        return
+
+    def run_secrets():
+        """Worker thread: runs secrets scan with progress streaming."""
+        import tempfile, shutil
+
+        cloned_dir = None
+        scan_target = repo_path
+
+        try:
+            # If the user supplied a GitHub URL, clone it to a temp directory
+            is_url = repo_path.startswith("http://") or repo_path.startswith("https://")
+            if is_url:
+                _emit(sid, "secrets_progress", {"pct": 2, "message": "📥 Cloning repository..."})
+                from analyzer import clone_repo
+                cloned_dir = tempfile.mkdtemp(prefix="secreview_secrets_")
+                clone_repo(repo_path, cloned_dir)
+                scan_target = cloned_dir
+
+            def progress_cb(pct: float, message: str):
+                _emit(sid, "secrets_progress", {"pct": round(pct, 1), "message": message})
+
+            result = secrets_scan_repo(
+                repo_path=scan_target,
+                include_history=include_history,
+                entropy_check=entropy_check,
+                progress_cb=progress_cb,
+            )
+
+            _emit(sid, "secrets_complete", result.to_dict())
+
+        except Exception as exc:
+            import traceback
+            _emit(sid, "secrets_error", {
+                "message": str(exc),
+                "trace": traceback.format_exc(),
+            })
+        finally:
+            if cloned_dir:
+                shutil.rmtree(cloned_dir, ignore_errors=True)
+
+    t = threading.Thread(target=run_secrets, daemon=True)
     t.start()
 
 
