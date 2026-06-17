@@ -76,7 +76,7 @@ The 3-2-1-1-0 backup rule visualised with an interactive DR testing checklist (s
 | **Top 10 Active Variants** | Ranked list of most active threats in the last 90 days with detection counts, severity bars, and trend indicators. |
 | **Enterprise Prevention** | Tabbed cards (Ransomware / APT / Malware / Exploit) with actionable controls, difficulty ratings, and icons. |
 | **Data Protection & Resilience** | 3-2-1-1-0 backup rule visual guide plus an interactive DR testing checklist (state saved to localStorage). |
-| **YARA Scanner** | Scan any local path against 6 rule sets covering ransomware, LockBit, BlackCat, APT lateral movement, data exfiltration, and backup tampering. Streams live progress via Socket.IO. |
+| **YARA Scanner** | Scan any local path against 11 rule sets covering ransomware, APT lateral movement, data exfiltration, credential harvesting, living-off-the-land, and supply chain attacks. Streams live progress via Socket.IO. |
 
 ### YARA Rule Sets
 
@@ -88,6 +88,11 @@ The 3-2-1-1-0 backup rule visualised with an interactive DR testing checklist (s
 | `apt_lateral_movement.yar` | Mimikatz, LSASS dump, WMI lateral movement, AD recon, scheduled task persistence |
 | `data_exfiltration.yar` | Rclone cloud exfil, cURL upload, FTP staging, 7-Zip data archiving |
 | `backup_tampering.yar` | Veeam service stop, Windows Backup deletion, agent process kill, NAS share deletion |
+| `clop.yar` | Cl0p ransomware: ransom notes, MOVEit/GoAnywhere exploitation (CVE-2023-34362, CVE-2023-0669), defence evasion |
+| `emerging_ransomware.yar` | Play, Akira, RansomHub, Black Basta, Hunters International: latest 2024–2025 ransomware families |
+| `lotl_techniques.yar` | Living-off-the-Land: certutil, mshta, regsvr32 Squiblydoo, wscript/cscript, bitsadmin, PowerShell download cradles, rundll32 |
+| `credential_harvesting.yar` | Browser credential theft (Chrome/Edge/Firefox), DPAPI abuse, SAM/NTDS dump, Kerberoasting, LSA secrets, cloud credential theft |
+| `supply_chain_attacks.yar` | Dependency confusion, CI/CD pipeline tampering (GitHub Actions/GitLab/Jenkins), malicious npm/PyPI packages, Docker image poisoning |
 
 Install `yara-python` for full scanning capability:
 ```bash
@@ -162,7 +167,7 @@ advisor.py           Multi-LLM fix advisor (Anthropic, OpenAI, Gemini, Groq, Oll
 ransomware.py        Ransomware detection engine (9 families, 14 behaviors, blast radius)
 threat_intel.py      Threat intelligence engine: 26 threat DB, feed, prevention guide
 yara_scanner.py      YARA rule engine for backup/infrastructure scanning
-yara_rules/          YARA .yar rule files (6 rule sets, 23 rules total)
+yara_rules/          YARA .yar rule files (11 rule sets, 50+ rules total)
 github_agent.py      Auto-commit security fixes to GitHub branch
 report.py            HTML + JSON report generation
 ui/
