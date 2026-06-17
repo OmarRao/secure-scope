@@ -373,6 +373,7 @@ Dependency results are automatically included in every repo scan report alongsid
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| [v5.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v5.0.0) | 2026-06-17 | Expanded YARA Threat Library — 5 new rule sets: Cl0p, emerging ransomware (Play/Akira/RansomHub/Black Basta), LotL techniques, credential harvesting, supply chain attacks. 11 rule sets / 50+ rules total |
 | [v4.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v4.0.0) | 2026-06-17 | Dependency Vulnerability Scanner — OSV.dev integration, 7 ecosystems, CVE lookup, CVSS scoring, integrated into main pipeline |
 | [v3.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v3.0.0) | 2026-06-16 | Secrets Detection Engine — 60+ patterns, git history scan, entropy analysis, blast radius, integrated into main scan pipeline |
 | [v2.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v2.0.0) | 2026-06-12 | Threat Intelligence Dashboard, YARA scanner, enterprise prevention guide, DR checklist, collapsible report sections |
