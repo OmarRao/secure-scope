@@ -26,6 +26,7 @@ v4.0.0 additions:
              deps_error     { message }
 """
 
+import logging
 import os
 import sys
 import json
@@ -73,6 +74,8 @@ except ImportError as _dep_err:
     _DEPS_AVAILABLE = False
     _dep_err_msg = str(_dep_err)
 
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = "secreview-ui-key"
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
@@ -109,15 +112,16 @@ def api_threat_feed():
     Returns HTTP 503 if threat_intel module failed to import.
     """
     if not _THREAT_INTEL_AVAILABLE:
-        # Return a graceful error so the UI can display a fallback message
-        return jsonify({"error": f"Threat intelligence module unavailable: {_ti_err_msg}"}), 503
+        logger.error("Threat intelligence module unavailable: %s", _ti_err_msg)
+        return jsonify({"error": "Threat intelligence module unavailable"}), 503
 
     try:
         # Build the full feed — this is fast (in-memory computation only)
         feed = build_feed(days=90, top_n=10)
         return jsonify(feed.to_dict())
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        logger.exception("Error building threat feed")
+        return jsonify({"error": "Failed to build threat feed"}), 500
 
 
 @app.route("/api/threat/<threat_id>")
@@ -131,7 +135,8 @@ def api_threat_detail(threat_id: str):
     Returns HTTP 503 if threat_intel module failed to import.
     """
     if not _THREAT_INTEL_AVAILABLE:
-        return jsonify({"error": f"Threat intelligence module unavailable: {_ti_err_msg}"}), 503
+        logger.error("Threat intelligence module unavailable: %s", _ti_err_msg)
+        return jsonify({"error": "Threat intelligence module unavailable"}), 503
 
     try:
         threat = get_threat_by_id(threat_id)
@@ -139,7 +144,8 @@ def api_threat_detail(threat_id: str):
             return jsonify({"error": f"Threat '{threat_id}' not found"}), 404
         return jsonify(threat)
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        logger.exception("Error fetching threat detail for %s", threat_id)
+        return jsonify({"error": "Failed to fetch threat detail"}), 500
 
 
 @app.route("/api/prevention-guide")
@@ -153,7 +159,8 @@ def api_prevention_guide():
     Returns HTTP 503 if threat_intel module failed to import.
     """
     if not _THREAT_INTEL_AVAILABLE:
-        return jsonify({"error": f"Threat intelligence module unavailable: {_ti_err_msg}"}), 503
+        logger.error("Threat intelligence module unavailable: %s", _ti_err_msg)
+        return jsonify({"error": "Threat intelligence module unavailable"}), 503
 
     try:
         # Optional category filter from query string
@@ -161,7 +168,8 @@ def api_prevention_guide():
         guide = get_prevention_guide(category=category)
         return jsonify(guide)
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        logger.exception("Error fetching prevention guide")
+        return jsonify({"error": "Failed to fetch prevention guide"}), 500
 
 
 @app.route("/api/yara/rules")
@@ -175,13 +183,15 @@ def api_yara_rules():
     Returns HTTP 503 if yara_scanner module failed to import.
     """
     if not _YARA_AVAILABLE:
-        return jsonify({"error": f"YARA scanner module unavailable: {_ya_err_msg}"}), 503
+        logger.error("YARA scanner module unavailable: %s", _ya_err_msg)
+        return jsonify({"error": "YARA scanner module unavailable"}), 503
 
     try:
         rules = list_rules()
         return jsonify(rules)
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        logger.exception("Error listing YARA rules")
+        return jsonify({"error": "Failed to list YARA rules"}), 500
 
 
 @app.route("/api/secrets/patterns")
@@ -195,11 +205,13 @@ def api_secrets_patterns():
     Returns HTTP 503 if secrets_scanner module failed to import.
     """
     if not _SECRETS_AVAILABLE:
-        return jsonify({"error": f"Secrets scanner unavailable: {_sec_err_msg}"}), 503
+        logger.error("Secrets scanner module unavailable: %s", _sec_err_msg)
+        return jsonify({"error": "Secrets scanner module unavailable"}), 503
     try:
         return jsonify(list_pattern_categories())
     except Exception as exc:
-        return jsonify({"error": str(exc)}), 500
+        logger.exception("Error listing secret pattern categories")
+        return jsonify({"error": "Failed to list secret pattern categories"}), 500
 
 
 @app.route("/report/<filename>")
@@ -359,8 +371,8 @@ def handle_scan(data):
                 shutil.rmtree(workdir, ignore_errors=True)
 
         except Exception as e:
-            import traceback
-            _emit(sid, "error", {"message": str(e), "trace": traceback.format_exc()})
+            logger.exception("Scan pipeline error for sid %s", sid)
+            _emit(sid, "error", {"message": "Scan failed. Check server logs for details."})
 
     t = threading.Thread(target=run, daemon=True)
     t.start()
@@ -393,7 +405,8 @@ def handle_yara_scan(data):
 
     # Check YARA scanner module availability
     if not _YARA_AVAILABLE:
-        _emit(sid, "yara_error", {"message": f"YARA scanner module unavailable: {_ya_err_msg}"})
+        logger.error("YARA scanner module unavailable: %s", _ya_err_msg)
+        _emit(sid, "yara_error", {"message": "YARA scanner module unavailable"})
         return
 
     def run_yara():
@@ -428,12 +441,8 @@ def handle_yara_scan(data):
             _emit(sid, "yara_complete", result.to_dict())
 
         except Exception as exc:
-            import traceback
-            # Emit structured error so the UI can display it
-            _emit(sid, "yara_error", {
-                "message": str(exc),
-                "trace": traceback.format_exc(),
-            })
+            logger.exception("YARA scan error for sid %s", sid)
+            _emit(sid, "yara_error", {"message": "YARA scan failed. Check server logs for details."})
 
     # Run the scan in a background thread so Socket.IO remains responsive
     t = threading.Thread(target=run_yara, daemon=True)
@@ -474,7 +483,8 @@ def handle_secrets_scan(data):
         return
 
     if not _SECRETS_AVAILABLE:
-        _emit(sid, "secrets_error", {"message": f"Secrets scanner unavailable: {_sec_err_msg}"})
+        logger.error("Secrets scanner module unavailable: %s", _sec_err_msg)
+        _emit(sid, "secrets_error", {"message": "Secrets scanner module unavailable"})
         return
 
     def run_secrets():
@@ -507,11 +517,8 @@ def handle_secrets_scan(data):
             _emit(sid, "secrets_complete", result.to_dict())
 
         except Exception as exc:
-            import traceback
-            _emit(sid, "secrets_error", {
-                "message": str(exc),
-                "trace": traceback.format_exc(),
-            })
+            logger.exception("Secrets scan error for sid %s", sid)
+            _emit(sid, "secrets_error", {"message": "Secrets scan failed. Check server logs for details."})
         finally:
             if cloned_dir:
                 shutil.rmtree(cloned_dir, ignore_errors=True)
@@ -531,7 +538,8 @@ def api_deps_ecosystems():
 def handle_deps_scan(data):
     sid = request.sid
     if not _DEPS_AVAILABLE:
-        _emit(sid, "deps_error", {"message": f"Dependency scanner unavailable: {_dep_err_msg}"})
+        logger.error("Dependency scanner module unavailable: %s", _dep_err_msg)
+        _emit(sid, "deps_error", {"message": "Dependency scanner module unavailable"})
         return
 
     repo_path = (data or {}).get("repo_path", "").strip()
@@ -563,11 +571,8 @@ def handle_deps_scan(data):
             _emit(sid, "deps_complete", result.to_dict())
 
         except Exception as exc:
-            import traceback
-            _emit(sid, "deps_error", {
-                "message": str(exc),
-                "trace": traceback.format_exc(),
-            })
+            logger.exception("Dependency scan error for sid %s", sid)
+            _emit(sid, "deps_error", {"message": "Dependency scan failed. Check server logs for details."})
         finally:
             if cloned_dir:
                 shutil.rmtree(cloned_dir, ignore_errors=True)
