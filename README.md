@@ -1,11 +1,11 @@
 # SecureScope / GitHub Security Review Tool
 
-![Version](https://img.shields.io/badge/version-v3.0.0-blue)
+![Version](https://img.shields.io/badge/version-v4.0.0-blue)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-v14-red)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 > AI-powered security analysis for any GitHub repository. Paste a URL, get a full threat report mapped to MITRE ATT&CK and CWE, with optional Docker sandbox execution and AI-generated fix diffs from your choice of LLM.
-> **v3.0.0** adds a Secrets Detection Engine — 60+ patterns across 10 provider categories, full git history scanning, Shannon entropy analysis for generic secrets, and blast-radius assessment for every finding.
+> **v4.0.0** adds a Dependency Vulnerability Scanner — queries OSV.dev for known CVEs across PyPI, npm, Go, Maven, RubyGems, Cargo, and Composer ecosystems, integrated into every repo scan. **v3.0.0** added a Secrets Detection Engine — 60+ patterns, full git history scanning, Shannon entropy analysis, and blast-radius assessment.
 
 **[View Sample Report (PDF)](https://github.com/OmarRao/secure-scope/blob/main/docs/sample_report.pdf)**
 
@@ -335,10 +335,40 @@ The panel includes a 5-step remediation guide: rotate immediately, purge git his
 
 ---
 
+## Dependency Vulnerability Scanner (v4.0.0)
+
+Every third-party package is a potential supply chain risk. SecureScope now queries **[OSV.dev](https://osv.dev)** — Google's open vulnerability database — for every dependency found in your repository.
+
+### How it works
+
+1. Auto-discovers all package manifests in the repo (no configuration needed)
+2. Parses pinned versions from each file
+3. Batch-queries OSV.dev for known CVEs against every package + version combination
+4. Returns severity, CVSS score, CVE ID, summary, and the fixed version to upgrade to
+
+### Supported ecosystems
+
+| Ecosystem | Manifest Files |
+|-----------|---------------|
+| **PyPI** (Python) | `requirements.txt`, `requirements-dev.txt`, `requirements-test.txt` |
+| **npm** (Node.js) | `package.json`, `package-lock.json` |
+| **Go** | `go.mod` |
+| **Maven** (Java) | `pom.xml` |
+| **RubyGems** | `Gemfile.lock` |
+| **Cargo** (Rust) | `Cargo.lock` |
+| **Packagist** (PHP) | `composer.json` |
+
+### Integrated into every scan
+
+Dependency results are automatically included in every repo scan report alongside SAST findings, secrets, and ransomware analysis — no extra steps required. The standalone panel also lets you scan any repo or local path independently.
+
+---
+
 ## Releases
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| [v4.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v4.0.0) | 2026-06-17 | Dependency Vulnerability Scanner — OSV.dev integration, 7 ecosystems, CVE lookup, CVSS scoring, integrated into main pipeline |
 | [v3.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v3.0.0) | 2026-06-16 | Secrets Detection Engine — 60+ patterns, git history scan, entropy analysis, blast radius, integrated into main scan pipeline |
 | [v2.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v2.0.0) | 2026-06-12 | Threat Intelligence Dashboard, YARA scanner, enterprise prevention guide, DR checklist, collapsible report sections |
 | v1.0.0 | 2026-06-09 | Initial release: Semgrep scan, Docker sandbox, multi-LLM advisor, ransomware engine, visual report |

@@ -1469,6 +1469,135 @@
       </div><!-- /ti-grid -->
     </div><!-- /secrets-section -->
 
+    <!-- ── Dependency Vulnerability Scanner (v4.0.0) ──────────────── -->
+    <div class="ti-section" id="deps-section">
+      <div class="ti-section-header">
+        <span class="ti-section-icon">📦</span>
+        <div>
+          <div class="ti-section-title">Dependency Vulnerability Scanner</div>
+          <div class="ti-section-sub">OSV.dev — PyPI · npm · Go · Maven · RubyGems · Cargo · Composer</div>
+        </div>
+        <span class="badge-new" style="margin-left:auto;">v4.0.0</span>
+      </div>
+
+      <!-- KPI Strip -->
+      <div class="rw-strip" id="depsStrip" style="display:none;margin-bottom:20px;">
+        <div class="rw-cell">
+          <div class="rw-val" id="depsTotalVal">—</div>
+          <div class="rw-lbl">Total Packages</div>
+        </div>
+        <div class="rw-cell">
+          <div class="rw-val" id="depsVulnVal" style="color:#f56565;">—</div>
+          <div class="rw-lbl">Vulnerable</div>
+        </div>
+        <div class="rw-cell">
+          <div class="rw-val" id="depsCritVal" style="color:#fc8181;">—</div>
+          <div class="rw-lbl">Critical CVEs</div>
+        </div>
+        <div class="rw-cell">
+          <div class="rw-val" id="depsHighVal" style="color:#f6ad55;">—</div>
+          <div class="rw-lbl">High CVEs</div>
+        </div>
+        <div class="rw-cell">
+          <div class="rw-val" id="depsMedVal" style="color:#fbd38d;">—</div>
+          <div class="rw-lbl">Medium CVEs</div>
+        </div>
+        <div class="rw-cell">
+          <div class="rw-val" id="depsEcoVal">—</div>
+          <div class="rw-lbl">Ecosystems</div>
+        </div>
+      </div>
+
+      <div class="ti-grid" style="grid-template-columns:1fr;">
+
+        <!-- Scanner Controls -->
+        <div class="ti-panel" style="margin-bottom:16px;">
+          <div class="ti-panel-title">Scan Repository</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+            <input id="depsRepoInput" type="text" placeholder="GitHub URL or local path (e.g. https://github.com/owner/repo)"
+              style="flex:1;min-width:280px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;" />
+            <button id="depsScanBtn" onclick="startDepsScan()"
+              style="padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">
+              Scan Dependencies
+            </button>
+          </div>
+          <div style="display:none;" id="depsProgWrap">
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;" id="depsProgMsg">Initialising...</div>
+            <div style="background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;">
+              <div id="depsProgBar" style="height:100%;background:var(--accent);width:0%;transition:width 0.3s;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="ti-panel" id="depsResultsPanel" style="display:none;margin-bottom:16px;">
+          <div class="ti-panel-title" style="display:flex;justify-content:space-between;align-items:center;">
+            <span>Vulnerability Findings</span>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button onclick="filterDeps('all')" class="sec-filter-btn active" data-depfilter="all">All</button>
+              <button onclick="filterDeps('critical')" class="sec-filter-btn" data-depfilter="critical">Critical</button>
+              <button onclick="filterDeps('high')" class="sec-filter-btn" data-depfilter="high">High</button>
+              <button onclick="filterDeps('medium')" class="sec-filter-btn" data-depfilter="medium">Medium</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+              <thead>
+                <tr style="background:var(--surface2);color:var(--text-muted);text-align:left;">
+                  <th style="padding:8px 10px;">Severity</th>
+                  <th style="padding:8px 10px;">Package</th>
+                  <th style="padding:8px 10px;">Version</th>
+                  <th style="padding:8px 10px;">CVE / ID</th>
+                  <th style="padding:8px 10px;">Summary</th>
+                  <th style="padding:8px 10px;">Fix Available</th>
+                  <th style="padding:8px 10px;">Manifest</th>
+                </tr>
+              </thead>
+              <tbody id="depsTableBody"></tbody>
+            </table>
+          </div>
+          <div id="depsNoFindings" style="display:none;text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">
+            No vulnerabilities found for this filter.
+          </div>
+        </div>
+
+        <!-- Ecosystem Breakdown -->
+        <div class="ti-panel" id="depsEcoPanel" style="display:none;margin-bottom:16px;">
+          <div class="ti-panel-title">Ecosystem Breakdown</div>
+          <div id="depsEcoBreakdown" style="display:flex;flex-wrap:wrap;gap:12px;padding:8px 0;"></div>
+        </div>
+
+        <!-- Remediation Guide -->
+        <div class="ti-panel" id="depsRemPanel" style="display:none;">
+          <div class="ti-panel-title">Remediation Guide</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
+            <div style="background:var(--surface2);border-radius:8px;padding:14px;">
+              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">① Upgrade immediately</div>
+              Pin vulnerable packages to the fixed version shown in the findings table.
+              Run <code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">pip install -U package==fixed_ver</code> or equivalent for your ecosystem.
+            </div>
+            <div style="background:var(--surface2);border-radius:8px;padding:14px;">
+              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">② Pin all transitive deps</div>
+              Use lock files (<code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">pip freeze</code>, <code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">package-lock.json</code>, <code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">go.sum</code>) and commit them to source control.
+            </div>
+            <div style="background:var(--surface2);border-radius:8px;padding:14px;">
+              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">③ Enable Dependabot</div>
+              GitHub Dependabot automatically opens PRs for new CVEs. Enable it in your repo's Security settings — zero configuration required for public repos.
+            </div>
+            <div style="background:var(--surface2);border-radius:8px;padding:14px;">
+              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">④ Add to CI pipeline</div>
+              Run <code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">pip-audit</code>, <code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">npm audit</code>, or <code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">govulncheck</code> as a CI step so new CVEs block merges automatically.
+            </div>
+            <div style="background:var(--surface2);border-radius:8px;padding:14px;">
+              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">⑤ Review SBOM regularly</div>
+              Generate a Software Bill of Materials (<code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">syft</code>, <code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">cyclonedx</code>) quarterly and cross-reference against OSV.dev and NVD for newly disclosed CVEs.
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /ti-grid -->
+    </div><!-- /deps-section -->
+
   </div><!-- /wrap -->
 
   <!-- ── Footer ────────────────────────────────────────────────────── -->
@@ -2468,6 +2597,127 @@ function filterSecrets(filter) {
     filtered = _secretsFindings.filter(f => f.severity === filter);
   }
   renderSecretsTable(filtered);
+}
+
+// ── Dependency Vulnerability Scanner (v4.0.0) ──────────────────────────────
+
+let _depsFindings = [];
+
+function startDepsScan() {
+  const repoInput = document.getElementById('depsRepoInput');
+  const repoPath = repoInput.value.trim();
+  if (!repoPath) { showToast('Enter a GitHub URL or local path.', 'warn'); return; }
+
+  document.getElementById('depsScanBtn').disabled = true;
+  document.getElementById('depsProgWrap').style.display = 'block';
+  document.getElementById('depsProgBar').style.width = '0%';
+  document.getElementById('depsProgMsg').textContent = 'Starting scan...';
+  document.getElementById('depsResultsPanel').style.display = 'none';
+  document.getElementById('depsEcoPanel').style.display = 'none';
+  document.getElementById('depsRemPanel').style.display = 'none';
+  document.getElementById('depsStrip').style.display = 'none';
+
+  socket.emit('start_deps_scan', { repo_path: repoPath });
+}
+
+socket.on('deps_progress', d => {
+  document.getElementById('depsProgBar').style.width = d.pct + '%';
+  document.getElementById('depsProgMsg').textContent = d.message || '';
+});
+
+socket.on('deps_complete', result => {
+  document.getElementById('depsScanBtn').disabled = false;
+  document.getElementById('depsProgBar').style.width = '100%';
+  document.getElementById('depsProgMsg').textContent = 'Scan complete.';
+
+  _depsFindings = result.vulnerabilities || [];
+
+  // KPI strip
+  document.getElementById('depsTotalVal').textContent = result.total_packages ?? '—';
+  document.getElementById('depsVulnVal').textContent  = result.vulnerable_packages ?? '—';
+  document.getElementById('depsCritVal').textContent  = result.critical_count ?? '0';
+  document.getElementById('depsHighVal').textContent  = result.high_count ?? '0';
+  document.getElementById('depsMedVal').textContent   = result.medium_count ?? '0';
+  document.getElementById('depsEcoVal').textContent   = (result.ecosystems_scanned || []).length;
+  document.getElementById('depsStrip').style.display  = 'flex';
+
+  // Ecosystem breakdown
+  const ecoMap = {};
+  _depsFindings.forEach(v => { ecoMap[v.ecosystem] = (ecoMap[v.ecosystem] || 0) + 1; });
+  const ecoEl = document.getElementById('depsEcoBreakdown');
+  ecoEl.innerHTML = (result.ecosystems_scanned || []).map(eco => {
+    const count = ecoMap[eco] || 0;
+    return `<div style="background:var(--surface2);border-radius:8px;padding:10px 16px;min-width:110px;text-align:center;">
+      <div style="font-size:18px;font-weight:700;color:${count>0?'#f56565':'#68d391'};">${count}</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${eco}</div>
+      <div style="font-size:10px;color:var(--text-muted);">${count > 0 ? 'vulns' : 'clean'}</div>
+    </div>`;
+  }).join('');
+
+  renderDepsTable(_depsFindings);
+
+  if (_depsFindings.length || result.error) {
+    document.getElementById('depsResultsPanel').style.display = 'block';
+  }
+  if ((result.ecosystems_scanned || []).length) {
+    document.getElementById('depsEcoPanel').style.display = 'block';
+  }
+  document.getElementById('depsRemPanel').style.display = 'block';
+
+  if (result.error) {
+    showToast('Deps scan: ' + result.error, 'warn');
+  } else {
+    const total = _depsFindings.length;
+    showToast(total ? `Found ${total} vulnerabilit${total===1?'y':'ies'} across ${result.vulnerable_packages} package(s).` : 'No known CVEs found — all packages clean.', total ? 'warn' : 'ok');
+  }
+});
+
+socket.on('deps_error', d => {
+  document.getElementById('depsScanBtn').disabled = false;
+  document.getElementById('depsProgMsg').textContent = 'Scan failed.';
+  showToast('Dependency scan error: ' + d.message, 'error');
+});
+
+function renderDepsTable(findings) {
+  const tbody = document.getElementById('depsTableBody');
+  const noMsg = document.getElementById('depsNoFindings');
+  if (!findings.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);">No vulnerabilities found — all packages clean.</td></tr>`;
+    noMsg.style.display = 'none';
+    return;
+  }
+  noMsg.style.display = 'none';
+  const sevColours = { CRITICAL:'#fc8181', HIGH:'#f6ad55', MEDIUM:'#fbd38d', LOW:'#68d391', UNKNOWN:'#94a3b8' };
+  tbody.innerHTML = findings.map(v => {
+    const col = sevColours[v.severity] || '#94a3b8';
+    const cve = v.primary_cve || v.vuln_id || '—';
+    const cveLink = cve.startsWith('CVE-')
+      ? `<a href="https://osv.dev/vulnerability/${v.vuln_id}" target="_blank" rel="noopener"
+            style="color:#818cf8;text-decoration:none;">${cve}</a>`
+      : `<a href="https://osv.dev/vulnerability/${v.vuln_id}" target="_blank" rel="noopener"
+            style="color:#818cf8;text-decoration:none;">${v.vuln_id}</a>`;
+    const fixed = (v.fixed_versions || []).length
+      ? `<span style="color:#68d391;font-weight:600;">${v.fixed_versions[0]}</span>`
+      : `<span style="color:#94a3b8;">—</span>`;
+    return `<tr style="border-bottom:1px solid #1a1f2b;" class="dep-row" data-sev="${v.severity.toLowerCase()}">
+      <td style="padding:10px 10px;">
+        <span style="display:inline-block;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;
+                     background:${col}22;color:${col};">${v.severity}</span>
+      </td>
+      <td style="padding:10px 10px;font-weight:600;color:#e2e8f0;">${v.package_name}</td>
+      <td style="padding:10px 10px;color:#94a3b8;">${v.package_version}</td>
+      <td style="padding:10px 10px;">${cveLink}</td>
+      <td style="padding:10px 10px;color:#cbd5e0;max-width:260px;word-break:break-word;">${v.summary || '—'}</td>
+      <td style="padding:10px 10px;">${fixed}</td>
+      <td style="padding:10px 10px;color:#6b7785;font-size:11px;">${v.file_path}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterDeps(filter) {
+  document.querySelectorAll('[data-depfilter]').forEach(b => b.classList.toggle('active', b.dataset.depfilter === filter));
+  const filtered = filter === 'all' ? _depsFindings : _depsFindings.filter(v => v.severity.toLowerCase() === filter);
+  renderDepsTable(filtered);
 }
 </script>
 </body>

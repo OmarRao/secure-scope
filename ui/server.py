@@ -16,6 +16,14 @@ v3.0.0 additions:
     Emits:   secrets_progress { pct, message }
              secrets_complete { SecretScanResult dict }
              secrets_error    { message }
+
+v4.0.0 additions:
+  - /api/deps/ecosystems     — list supported package ecosystems
+  - start_deps_scan (Socket.IO) — streams dependency vulnerability scan via OSV.dev
+    Accepts: { repo_path }
+    Emits:   deps_progress { pct, message }
+             deps_complete  { DepScanResult dict }
+             deps_error     { message }
 """
 
 import os
@@ -56,6 +64,14 @@ try:
 except ImportError as _sec_err:
     _SECRETS_AVAILABLE = False
     _sec_err_msg = str(_sec_err)
+
+# ── Import dependency scanner (v4.0.0) ───────────────────────────────────────
+try:
+    from dependency_scanner import scan_repo as deps_scan_repo
+    _DEPS_AVAILABLE = True
+except ImportError as _dep_err:
+    _DEPS_AVAILABLE = False
+    _dep_err_msg = str(_dep_err)
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = "secreview-ui-key"
@@ -259,7 +275,7 @@ def handle_scan(data):
                     enriched = enrich_findings(result, obs, provider=llm_provider, api_key=llm_api_key, max_findings=20)
 
                 # ── Secrets Detection (v3.0.0) ────────────────────────────────
-                _emit(sid, "progress", {"step": "secrets", "message": "🔑 Scanning for hardcoded secrets and credentials...", "pct": 80})
+                _emit(sid, "progress", {"step": "secrets", "message": "🔑 Scanning for hardcoded secrets and credentials...", "pct": 78})
                 secrets_result = None
                 if _SECRETS_AVAILABLE:
                     try:
@@ -267,10 +283,22 @@ def handle_scan(data):
                             repo_path=workdir,
                             include_history=True,
                             entropy_check=True,
-                            progress_cb=None,   # inline — no per-file progress here
+                            progress_cb=None,
                         )
                     except Exception as _sec_exc:
-                        pass  # non-fatal: secrets scan failure doesn't abort the report
+                        pass
+
+                # ── Dependency Vulnerability Scan (v4.0.0) ───────────────────
+                _emit(sid, "progress", {"step": "deps", "message": "📦 Scanning dependencies for CVEs via OSV.dev...", "pct": 82})
+                deps_result = None
+                if _DEPS_AVAILABLE:
+                    try:
+                        deps_result = deps_scan_repo(
+                            repo_path=workdir,
+                            progress_cb=None,
+                        )
+                    except Exception as _dep_exc:
+                        pass  # non-fatal
 
                 _emit(sid, "progress", {"step": "report", "message": "Analysing ransomware indicators...", "pct": 85})
 
@@ -301,6 +329,7 @@ def handle_scan(data):
                     "dependency_vulns": result.dependency_vulns,
                     "ransomware": rw_report,
                     "secrets": secrets_result.to_dict() if secrets_result else None,
+                    "deps": deps_result.to_dict() if deps_result else None,
                     "runtime": {
                         "exit_code": obs.exit_code if obs else None,
                         "suspicious_behaviors": obs.suspicious_behaviors if obs else [],
@@ -488,6 +517,62 @@ def handle_secrets_scan(data):
                 shutil.rmtree(cloned_dir, ignore_errors=True)
 
     t = threading.Thread(target=run_secrets, daemon=True)
+    t.start()
+
+
+# ── Dependency Vulnerability Scan (v4.0.0) ────────────────────────────────────
+
+@app.route("/api/deps/ecosystems")
+def api_deps_ecosystems():
+    return jsonify(["PyPI", "npm", "Go", "Maven", "RubyGems", "crates.io", "Packagist"])
+
+
+@socketio.on("start_deps_scan")
+def handle_deps_scan(data):
+    sid = request.sid
+    if not _DEPS_AVAILABLE:
+        _emit(sid, "deps_error", {"message": f"Dependency scanner unavailable: {_dep_err_msg}"})
+        return
+
+    repo_path = (data or {}).get("repo_path", "").strip()
+    if not repo_path:
+        _emit(sid, "deps_error", {"message": "No repo_path provided."})
+        return
+
+    import shutil
+    import tempfile
+
+    cloned_dir = None
+
+    def run_deps():
+        nonlocal cloned_dir
+        scan_target = repo_path
+        is_url = repo_path.startswith("http://") or repo_path.startswith("https://")
+        try:
+            if is_url:
+                _emit(sid, "deps_progress", {"pct": 2, "message": "📥 Cloning repository..."})
+                from analyzer import clone_repo
+                cloned_dir = tempfile.mkdtemp(prefix="secreview_deps_")
+                clone_repo(repo_path, cloned_dir)
+                scan_target = cloned_dir
+
+            def progress_cb(pct: float, message: str):
+                _emit(sid, "deps_progress", {"pct": round(pct, 1), "message": message})
+
+            result = deps_scan_repo(repo_path=scan_target, progress_cb=progress_cb)
+            _emit(sid, "deps_complete", result.to_dict())
+
+        except Exception as exc:
+            import traceback
+            _emit(sid, "deps_error", {
+                "message": str(exc),
+                "trace": traceback.format_exc(),
+            })
+        finally:
+            if cloned_dir:
+                shutil.rmtree(cloned_dir, ignore_errors=True)
+
+    t = threading.Thread(target=run_deps, daemon=True)
     t.start()
 
 
