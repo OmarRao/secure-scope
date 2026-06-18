@@ -24,6 +24,14 @@ v4.0.0 additions:
     Emits:   deps_progress { pct, message }
              deps_complete  { DepScanResult dict }
              deps_error     { message }
+
+v6.0.0 additions:
+  - /api/iac/frameworks      — list supported IaC frameworks
+  - start_iac_scan (Socket.IO) — streams IaC misconfiguration scan
+    Accepts: { repo_path }
+    Emits:   iac_progress { pct, message }
+             iac_complete  { IaCScanResult dict }
+             iac_error     { message }
 """
 
 import logging
@@ -73,6 +81,14 @@ try:
 except ImportError as _dep_err:
     _DEPS_AVAILABLE = False
     _dep_err_msg = str(_dep_err)
+
+# ── Import IaC scanner (v6.0.0) ──────────────────────────────────────────────
+try:
+    from iac_scanner import scan_repo as iac_scan_repo, list_frameworks as iac_list_frameworks
+    _IAC_AVAILABLE = True
+except ImportError as _iac_err:
+    _IAC_AVAILABLE = False
+    _iac_err_msg = str(_iac_err)
 
 logger = logging.getLogger(__name__)
 
@@ -301,7 +317,7 @@ def handle_scan(data):
                         pass
 
                 # ── Dependency Vulnerability Scan (v4.0.0) ───────────────────
-                _emit(sid, "progress", {"step": "deps", "message": "📦 Scanning dependencies for CVEs via OSV.dev...", "pct": 82})
+                _emit(sid, "progress", {"step": "deps", "message": "📦 Scanning dependencies for CVEs via OSV.dev...", "pct": 80})
                 deps_result = None
                 if _DEPS_AVAILABLE:
                     try:
@@ -312,7 +328,16 @@ def handle_scan(data):
                     except Exception as _dep_exc:
                         pass  # non-fatal
 
-                _emit(sid, "progress", {"step": "report", "message": "Analysing ransomware indicators...", "pct": 85})
+                # ── IaC Misconfiguration Scan (v6.0.0) ───────────────────────
+                _emit(sid, "progress", {"step": "iac", "message": "🏗️ Scanning IaC for cloud misconfigurations...", "pct": 83})
+                iac_result = None
+                if _IAC_AVAILABLE:
+                    try:
+                        iac_result = iac_scan_repo(repo_path=workdir, progress_cb=None)
+                    except Exception as _iac_exc:
+                        pass  # non-fatal
+
+                _emit(sid, "progress", {"step": "report", "message": "Analysing ransomware indicators...", "pct": 87})
 
                 from ransomware import detect as ransomware_detect
                 findings_dicts = enriched or [f.to_dict() for f in result.findings]
@@ -342,6 +367,7 @@ def handle_scan(data):
                     "ransomware": rw_report,
                     "secrets": secrets_result.to_dict() if secrets_result else None,
                     "deps": deps_result.to_dict() if deps_result else None,
+                    "iac": iac_result.to_dict() if iac_result else None,
                     "runtime": {
                         "exit_code": obs.exit_code if obs else None,
                         "suspicious_behaviors": obs.suspicious_behaviors if obs else [],
@@ -578,6 +604,76 @@ def handle_deps_scan(data):
                 shutil.rmtree(cloned_dir, ignore_errors=True)
 
     t = threading.Thread(target=run_deps, daemon=True)
+    t.start()
+
+
+# ── IaC Misconfiguration Scan (v6.0.0) ───────────────────────────────────────
+
+@app.route("/api/iac/frameworks")
+def api_iac_frameworks():
+    """GET /api/iac/frameworks — list all supported IaC frameworks."""
+    if not _IAC_AVAILABLE:
+        logger.error("IaC scanner module unavailable: %s", _iac_err_msg)
+        return jsonify({"error": "IaC scanner module unavailable"}), 503
+    try:
+        return jsonify(iac_list_frameworks())
+    except Exception as exc:
+        logger.exception("Error listing IaC frameworks")
+        return jsonify({"error": "Failed to list IaC frameworks"}), 500
+
+
+@socketio.on("start_iac_scan")
+def handle_iac_scan(data):
+    """
+    Socket.IO event: start_iac_scan
+
+    Accepts payload: { repo_path: str }
+    Streams:  iac_progress { pct, message }
+    Emits:    iac_complete  { IaCScanResult dict }
+              iac_error     { message }
+    """
+    sid = request.sid
+    if not _IAC_AVAILABLE:
+        logger.error("IaC scanner module unavailable: %s", _iac_err_msg)
+        _emit(sid, "iac_error", {"message": "IaC scanner module unavailable"})
+        return
+
+    repo_path = (data or {}).get("repo_path", "").strip()
+    if not repo_path:
+        _emit(sid, "iac_error", {"message": "No repo_path provided."})
+        return
+
+    import shutil
+    import tempfile
+
+    cloned_dir = None
+
+    def run_iac():
+        nonlocal cloned_dir
+        scan_target = repo_path
+        is_url = repo_path.startswith("http://") or repo_path.startswith("https://")
+        try:
+            if is_url:
+                _emit(sid, "iac_progress", {"pct": 2, "message": "📥 Cloning repository..."})
+                from analyzer import clone_repo
+                cloned_dir = tempfile.mkdtemp(prefix="secreview_iac_")
+                clone_repo(repo_path, cloned_dir)
+                scan_target = cloned_dir
+
+            def progress_cb(pct: float, message: str):
+                _emit(sid, "iac_progress", {"pct": round(pct, 1), "message": message})
+
+            result = iac_scan_repo(repo_path=scan_target, progress_cb=progress_cb)
+            _emit(sid, "iac_complete", result.to_dict())
+
+        except Exception as exc:
+            logger.exception("IaC scan error for sid %s", sid)
+            _emit(sid, "iac_error", {"message": "IaC scan failed. Check server logs for details."})
+        finally:
+            if cloned_dir:
+                shutil.rmtree(cloned_dir, ignore_errors=True)
+
+    t = threading.Thread(target=run_iac, daemon=True)
     t.start()
 
 

@@ -1,11 +1,11 @@
 # SecureScope / GitHub Security Review Tool
 
-![Version](https://img.shields.io/badge/version-v4.0.0-blue)
+![Version](https://img.shields.io/badge/version-v6.0.0-blue)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-v14-red)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 > AI-powered security analysis for any GitHub repository. Paste a URL, get a full threat report mapped to MITRE ATT&CK and CWE, with optional Docker sandbox execution and AI-generated fix diffs from your choice of LLM.
-> **v4.0.0** adds a Dependency Vulnerability Scanner — queries OSV.dev for known CVEs across PyPI, npm, Go, Maven, RubyGems, Cargo, and Composer ecosystems, integrated into every repo scan. **v3.0.0** added a Secrets Detection Engine — 60+ patterns, full git history scanning, Shannon entropy analysis, and blast-radius assessment.
+> **v6.0.0** adds an IaC Misconfiguration Scanner — detects cloud and container misconfigurations across Terraform, Kubernetes, Dockerfiles, GitHub Actions, CloudFormation, and Ansible. **v5.0.0** expanded the YARA library to 11 rule sets. **v4.0.0** added a Dependency Vulnerability Scanner (OSV.dev). **v3.0.0** added a Secrets Detection Engine with 60+ patterns and git history scanning.
 
 **[View Sample Report (PDF)](https://github.com/OmarRao/secure-scope/blob/main/docs/sample_report.pdf)**
 
@@ -77,6 +77,7 @@ The 3-2-1-1-0 backup rule visualised with an interactive DR testing checklist (s
 | **Enterprise Prevention** | Tabbed cards (Ransomware / APT / Malware / Exploit) with actionable controls, difficulty ratings, and icons. |
 | **Data Protection & Resilience** | 3-2-1-1-0 backup rule visual guide plus an interactive DR testing checklist (state saved to localStorage). |
 | **YARA Scanner** | Scan any local path against 11 rule sets covering ransomware, APT lateral movement, data exfiltration, credential harvesting, living-off-the-land, and supply chain attacks. Streams live progress via Socket.IO. |
+| **IaC Misconfiguration Scanner** | Scan any repo for cloud and container misconfigurations across 6 frameworks. Uses checkov when installed; falls back to 50+ built-in pattern checks with zero dependencies. |
 
 ### YARA Rule Sets
 
@@ -167,6 +168,7 @@ advisor.py           Multi-LLM fix advisor (Anthropic, OpenAI, Gemini, Groq, Oll
 ransomware.py        Ransomware detection engine (9 families, 14 behaviors, blast radius)
 threat_intel.py      Threat intelligence engine: 26 threat DB, feed, prevention guide
 yara_scanner.py      YARA rule engine for backup/infrastructure scanning
+iac_scanner.py       IaC misconfiguration scanner (Terraform, K8s, Dockerfile, GHA, CF, Ansible)
 yara_rules/          YARA .yar rule files (11 rule sets, 50+ rules total)
 github_agent.py      Auto-commit security fixes to GitHub branch
 report.py            HTML + JSON report generation
@@ -369,10 +371,43 @@ Dependency results are automatically included in every repo scan report alongsid
 
 ---
 
+## IaC Misconfiguration Scanner (v6.0.0)
+
+Every cloud misconfiguration is a potential breach waiting to happen. SecureScope now scans your infrastructure-as-code for dangerous misconfigurations before they reach production — integrated into every repo scan and available as a standalone panel.
+
+### How it works
+
+1. Auto-discovers all IaC files in the repository (no configuration needed)
+2. Detects the framework from file extension and content markers
+3. Runs checkov for deep analysis when installed, with a built-in pattern engine as fallback
+4. Returns severity-ranked findings with resource name, file, line, description, and fix guidance
+
+### Supported frameworks
+
+| Framework | Files Detected | What's Checked |
+|-----------|---------------|----------------|
+| **Terraform** | `*.tf` | Public S3 buckets, open security groups (0.0.0.0/0), publicly accessible RDS, wildcard IAM (`"Action": "*"`), disabled encryption, hardcoded credentials, no deletion protection |
+| **Kubernetes** | `*.yml`, `*.yaml` (with apiVersion/kind) | Privileged containers, hostNetwork/PID/IPC, allowPrivilegeEscalation, root UID, wildcard RBAC verbs, `:latest` image tags, missing resource limits, auto-mounted service account tokens |
+| **Dockerfile** | `Dockerfile*` | No USER (runs as root), `ADD` instead of `COPY`, `:latest` base image, hardcoded secrets in ENV/ARG, `curl \| bash` in RUN, `--privileged` flag, missing HEALTHCHECK |
+| **GitHub Actions** | `.github/workflows/*.yml` | `write-all` permissions, `pull_request_target` misuse, unpinned actions (`@main`/`@master`), `curl \| bash` in run steps, script injection via `${{ github.event.* }}`, hardcoded credentials |
+| **CloudFormation** | `*.yml`, `*.yaml`, `*.json` (with CF markers) | Publicly accessible RDS, public S3 ACLs, wildcard IAM actions, missing DeletionPolicy, disabled storage encryption |
+| **Ansible** | `*.yml` (with `hosts:` marker) | Privilege escalation (`become: yes`), `no_log: false` on secret tasks, hardcoded passwords, `curl \| bash` in shell tasks, disabled TLS validation |
+
+### Install checkov for deep scanning (optional)
+
+```bash
+pip install checkov
+```
+
+Without checkov, the scanner uses 50+ built-in pattern checks across all 6 frameworks — zero additional dependencies required.
+
+---
+
 ## Releases
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| [v6.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v6.0.0) | 2026-06-18 | IaC Misconfiguration Scanner — Terraform, Kubernetes, Dockerfile, GitHub Actions, CloudFormation, Ansible; checkov integration + 50+ built-in pattern checks; integrated into main scan pipeline |
 | [v5.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v5.0.0) | 2026-06-17 | Expanded YARA Threat Library — 5 new rule sets: Cl0p, emerging ransomware (Play/Akira/RansomHub/Black Basta), LotL techniques, credential harvesting, supply chain attacks. 11 rule sets / 50+ rules total |
 | [v4.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v4.0.0) | 2026-06-17 | Dependency Vulnerability Scanner — OSV.dev integration, 7 ecosystems, CVE lookup, CVSS scoring, integrated into main pipeline |
 | [v3.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v3.0.0) | 2026-06-16 | Secrets Detection Engine — 60+ patterns, git history scan, entropy analysis, blast radius, integrated into main scan pipeline |

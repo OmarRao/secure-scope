@@ -1598,6 +1598,123 @@
       </div><!-- /ti-grid -->
     </div><!-- /deps-section -->
 
+    <!-- ── IaC Misconfiguration Scanner (v6.0.0) ──────────────────── -->
+    <div class="ti-section" id="iac-section">
+      <div class="ti-section-header">
+        <span class="ti-section-icon">🏗️</span>
+        <div>
+          <div class="ti-section-title">IaC Misconfiguration Scanner</div>
+          <div class="ti-section-sub">Terraform · Kubernetes · Dockerfile · GitHub Actions · CloudFormation · Ansible</div>
+        </div>
+      </div>
+
+      <!-- KPI strip -->
+      <div class="secrets-kpi-strip" id="iac-kpi" style="display:none">
+        <div class="secrets-kpi-card">
+          <div class="secrets-kpi-val" id="iac-kpi-frameworks">—</div>
+          <div class="secrets-kpi-lbl">Frameworks</div>
+        </div>
+        <div class="secrets-kpi-card">
+          <div class="secrets-kpi-val" id="iac-kpi-files">—</div>
+          <div class="secrets-kpi-lbl">Files Scanned</div>
+        </div>
+        <div class="secrets-kpi-card" style="border-color:var(--sev-critical,#ff4d4d)">
+          <div class="secrets-kpi-val" id="iac-kpi-critical" style="color:var(--sev-critical,#ff4d4d)">—</div>
+          <div class="secrets-kpi-lbl">Critical</div>
+        </div>
+        <div class="secrets-kpi-card" style="border-color:var(--sev-high,#ff8c00)">
+          <div class="secrets-kpi-val" id="iac-kpi-high" style="color:var(--sev-high,#ff8c00)">—</div>
+          <div class="secrets-kpi-lbl">High</div>
+        </div>
+        <div class="secrets-kpi-card" style="border-color:var(--sev-medium,#ffd700)">
+          <div class="secrets-kpi-val" id="iac-kpi-medium" style="color:var(--sev-medium,#ffd700)">—</div>
+          <div class="secrets-kpi-lbl">Medium</div>
+        </div>
+        <div class="secrets-kpi-card">
+          <div class="secrets-kpi-val" id="iac-kpi-scanner">—</div>
+          <div class="secrets-kpi-lbl">Engine</div>
+        </div>
+      </div>
+
+      <!-- Scan controls -->
+      <div class="deps-scan-bar" style="margin-bottom:1rem">
+        <input id="iac-repo-input" class="deps-repo-input" type="text"
+               placeholder="GitHub URL or local path (e.g. https://github.com/owner/repo)">
+        <button class="btn-primary" onclick="startIacScan()">Scan for Misconfigs</button>
+      </div>
+
+      <!-- Progress -->
+      <div id="iac-progress-wrap" style="display:none;margin-bottom:1rem">
+        <div class="scan-progress-bar-wrap">
+          <div class="scan-progress-bar" id="iac-progress-bar" style="width:0%"></div>
+        </div>
+        <div class="scan-progress-msg" id="iac-progress-msg"></div>
+      </div>
+
+      <div id="iac-results" style="display:none">
+
+        <!-- Framework breakdown cards -->
+        <div id="iac-frameworks-wrap" style="margin-bottom:1rem"></div>
+
+        <!-- Filter bar -->
+        <div class="secrets-filter-bar" style="margin-bottom:0.75rem">
+          <button class="secrets-filter-btn active" onclick="filterIac('ALL')">All</button>
+          <button class="secrets-filter-btn" onclick="filterIac('CRITICAL')" style="color:var(--sev-critical,#ff4d4d)">Critical</button>
+          <button class="secrets-filter-btn" onclick="filterIac('HIGH')" style="color:var(--sev-high,#ff8c00)">High</button>
+          <button class="secrets-filter-btn" onclick="filterIac('MEDIUM')" style="color:var(--sev-medium,#ffd700)">Medium</button>
+          <button class="secrets-filter-btn" onclick="filterIac('LOW')">Low</button>
+        </div>
+
+        <!-- Findings table -->
+        <div class="secrets-table-wrap">
+          <table class="secrets-table" id="iac-table">
+            <thead>
+              <tr>
+                <th>Severity</th>
+                <th>Framework</th>
+                <th>Check ID</th>
+                <th>Resource</th>
+                <th>File</th>
+                <th>Line</th>
+                <th>Description</th>
+                <th>Fix</th>
+              </tr>
+            </thead>
+            <tbody id="iac-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Remediation steps -->
+        <div class="secrets-remediation" style="margin-top:1.5rem">
+          <div class="secrets-remediation-title">IaC Remediation Workflow</div>
+          <div class="secrets-remediation-steps">
+            <div class="secrets-remediation-step">
+              <div class="secrets-step-num">1</div>
+              <div><strong>Fix CRITICAL first</strong> — public S3 buckets, wildcard IAM, privileged containers, and hardcoded secrets are actively exploitable within minutes of discovery.</div>
+            </div>
+            <div class="secrets-remediation-step">
+              <div class="secrets-step-num">2</div>
+              <div><strong>Enable checkov in CI</strong> — <code>pip install checkov &amp;&amp; checkov -d .</code> blocks misconfigured IaC before it reaches production.</div>
+            </div>
+            <div class="secrets-remediation-step">
+              <div class="secrets-step-num">3</div>
+              <div><strong>Apply least-privilege IAM</strong> — remove all wildcard actions/resources. Use IAM Access Analyzer to identify overly-permissive policies in your AWS account.</div>
+            </div>
+            <div class="secrets-remediation-step">
+              <div class="secrets-step-num">4</div>
+              <div><strong>Enable encryption everywhere</strong> — RDS, S3, EBS, and Secrets Manager should all use KMS keys. Set encrypted = true and kms_key_id on every storage resource.</div>
+            </div>
+            <div class="secrets-remediation-step">
+              <div class="secrets-step-num">5</div>
+              <div><strong>Pin images and actions</strong> — use SHA digests for Docker images and commit SHAs for GitHub Actions. Floating tags (<code>:latest</code>, <code>@main</code>) are a live supply chain risk.</div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /iac-results -->
+
+    </div><!-- /iac-section -->
+
   </div><!-- /wrap -->
 
   <!-- ── Footer ────────────────────────────────────────────────────── -->
@@ -2718,6 +2835,135 @@ function filterDeps(filter) {
   document.querySelectorAll('[data-depfilter]').forEach(b => b.classList.toggle('active', b.dataset.depfilter === filter));
   const filtered = filter === 'all' ? _depsFindings : _depsFindings.filter(v => v.severity.toLowerCase() === filter);
   renderDepsTable(filtered);
+}
+
+// ── IaC Misconfiguration Scanner (v6.0.0) ──────────────────────────────────
+
+let _iacFindings = [];
+let _iacActiveSevFilter = 'ALL';
+
+const _sevColor = {
+  CRITICAL: 'var(--sev-critical, #ff4d4d)',
+  HIGH:     'var(--sev-high, #ff8c00)',
+  MEDIUM:   'var(--sev-medium, #ffd700)',
+  LOW:      '#88d8b0',
+  INFO:     '#aaa',
+};
+
+const _frameworkIcon = {
+  terraform:      '🏗️',
+  kubernetes:     '☸️',
+  dockerfile:     '🐳',
+  github_actions: '⚙️',
+  cloudformation: '☁️',
+  ansible:        '🤖',
+  helm:           '⛵',
+};
+
+function startIacScan() {
+  const repoPath = document.getElementById('iac-repo-input').value.trim();
+  if (!repoPath) { alert('Please enter a GitHub URL or local path.'); return; }
+
+  document.getElementById('iac-kpi').style.display = 'none';
+  document.getElementById('iac-results').style.display = 'none';
+  document.getElementById('iac-progress-wrap').style.display = 'block';
+  document.getElementById('iac-progress-bar').style.width = '0%';
+  document.getElementById('iac-progress-msg').textContent = 'Starting IaC scan…';
+
+  socket.emit('start_iac_scan', { repo_path: repoPath });
+}
+
+socket.on('iac_progress', function(data) {
+  const pct = data.pct || 0;
+  document.getElementById('iac-progress-bar').style.width = pct + '%';
+  document.getElementById('iac-progress-msg').textContent = data.message || '';
+});
+
+socket.on('iac_complete', function(result) {
+  document.getElementById('iac-progress-wrap').style.display = 'none';
+
+  _iacFindings = result.findings || [];
+  _iacActiveSevFilter = 'ALL';
+
+  // KPI strip
+  document.getElementById('iac-kpi-frameworks').textContent = (result.frameworks_detected || []).length;
+  document.getElementById('iac-kpi-files').textContent     = result.total_files_scanned || 0;
+  document.getElementById('iac-kpi-critical').textContent  = result.critical_count || 0;
+  document.getElementById('iac-kpi-high').textContent      = result.high_count || 0;
+  document.getElementById('iac-kpi-medium').textContent    = result.medium_count || 0;
+  document.getElementById('iac-kpi-scanner').textContent   = result.scanner_used === 'checkov' ? 'Checkov' : 'Pattern';
+  document.getElementById('iac-kpi').style.display = 'flex';
+
+  // Framework breakdown cards
+  const frameworks = result.frameworks_detected || [];
+  const fwCounts = {};
+  _iacFindings.forEach(f => { fwCounts[f.framework] = (fwCounts[f.framework] || 0) + 1; });
+  const fwWrap = document.getElementById('iac-frameworks-wrap');
+  if (frameworks.length) {
+    fwWrap.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.5rem">' +
+      frameworks.map(fw => {
+        const icon = _frameworkIcon[fw] || '📄';
+        const cnt  = fwCounts[fw] || 0;
+        const label = fw.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+        return `<div class="secrets-kpi-card" style="flex:0 0 auto;min-width:110px;text-align:center;cursor:pointer"
+                     onclick="filterIac('ALL','${fw}')">
+                  <div style="font-size:1.4rem">${icon}</div>
+                  <div class="secrets-kpi-val">${cnt}</div>
+                  <div class="secrets-kpi-lbl">${label}</div>
+                </div>`;
+      }).join('') + '</div>';
+  } else {
+    fwWrap.innerHTML = '';
+  }
+
+  document.getElementById('iac-results').style.display = 'block';
+  renderIacTable(_iacFindings);
+});
+
+socket.on('iac_error', function(data) {
+  document.getElementById('iac-progress-wrap').style.display = 'none';
+  alert('IaC scan error: ' + (data.message || 'Unknown error'));
+});
+
+function renderIacTable(findings) {
+  const tbody = document.getElementById('iac-tbody');
+  if (!findings.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:2rem;opacity:0.6">No findings for selected filter</td></tr>';
+    return;
+  }
+  tbody.innerHTML = findings.map(f => {
+    const color = _sevColor[f.severity] || '#aaa';
+    const icon  = _frameworkIcon[f.framework] || '📄';
+    const fwLabel = (f.framework || '').replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase());
+    return `<tr>
+      <td><span class="sev-badge" style="background:${color}20;color:${color};border:1px solid ${color}">${f.severity}</span></td>
+      <td><span style="white-space:nowrap">${icon} ${fwLabel}</span></td>
+      <td><code style="font-size:0.75rem">${f.check_id}</code></td>
+      <td><code style="font-size:0.75rem;word-break:break-all">${f.resource || '—'}</code></td>
+      <td style="font-size:0.75rem;word-break:break-all;max-width:180px">${f.file_path || '—'}</td>
+      <td style="text-align:center">${f.line || '—'}</td>
+      <td style="font-size:0.8rem;max-width:220px">${f.description || '—'}</td>
+      <td style="font-size:0.75rem;max-width:200px;color:var(--muted)">${f.fix || '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterIac(severity, framework) {
+  _iacActiveSevFilter = severity || 'ALL';
+
+  // Update filter button state
+  document.querySelectorAll('#iac-section .secrets-filter-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('onclick') === `filterIac('${severity}')`);
+  });
+
+  let filtered = _iacFindings;
+  if (_iacActiveSevFilter !== 'ALL') {
+    filtered = filtered.filter(f => f.severity === _iacActiveSevFilter);
+  }
+  if (framework) {
+    filtered = filtered.filter(f => f.framework === framework);
+  }
+  renderIacTable(filtered);
 }
 </script>
 </body>
