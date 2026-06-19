@@ -116,8 +116,8 @@ def _detect_framework(path: Path, content: str) -> Optional[str]:
     if suffix == ".tf":
         return "terraform"
 
-    # Helm — Chart.yaml or templates under a helm chart
-    if name == "chart.yaml":
+    # Helm — Chart.yaml or values.yaml alongside a helm chart
+    if name in ("chart.yaml", "values.yaml", "values-prod.yaml", "values-staging.yaml"):
         return "helm"
 
     # CloudFormation — YAML/JSON with CF markers
@@ -216,29 +216,58 @@ def _check_terraform(path: Path, content: str) -> List[IaCFinding]:
             "Set multi_az = true for production databases.",
         ),
         (
-            r'password\s*=\s*"[^$][^"]{3,}"',
-            "CRITICAL", "TF012", "Hardcoded password detected in Terraform resource",
-            "Use var.* references or AWS Secrets Manager. Never hardcode credentials.",
-        ),
-        (
-            r'access_key\s*=\s*"AKIA[A-Z0-9]{16}"',
-            "CRITICAL", "TF013", "AWS access key hardcoded in Terraform",
-            "Remove hardcoded credentials. Use IAM roles or environment variables.",
-        ),
-        (
             r'enabled\s*=\s*false\b.*(?:logging|log)',
             "MEDIUM", "TF014", "Logging is explicitly disabled on a resource",
             "Enable logging for audit trails and incident response.",
         ),
     ]
 
-    resource_block = "unknown"
-    for m in re.finditer(r'resource\s+"([^"]+)"\s+"([^"]+)"', content):
-        pass  # We annotate resource name per match below
+    # Hardcoded credential checks — exclude var.* and data.* references to avoid false positives
+    cred_checks = [
+        (
+            r'password\s*=\s*"(?!var\.|data\.|local\.|module\.)([^"$]{4,})"',
+            "CRITICAL", "TF012", "Hardcoded password in Terraform resource",
+            "Use var.* references or AWS Secrets Manager. Never hardcode credentials.",
+        ),
+        (
+            r'access_key\s*=\s*"(AKIA[A-Z0-9]{16})"',
+            "CRITICAL", "TF013", "AWS access key hardcoded in Terraform",
+            "Remove hardcoded credentials. Use IAM roles or environment variables.",
+        ),
+        (
+            r'secret_key\s*=\s*"(?!var\.|data\.)([^"$]{20,})"',
+            "CRITICAL", "TF015", "AWS secret key hardcoded in Terraform",
+            "Remove hardcoded credentials. Use IAM roles or AWS Secrets Manager.",
+        ),
+    ]
 
-    for pattern, severity, check_id, desc, fix in checks:
-        for m in re.finditer(pattern, content, re.IGNORECASE):
-            # Try to find nearest resource block
+    # Additional high-value checks
+    extra_checks = [
+        (
+            r'versioning\s*\{[^}]*enabled\s*=\s*false',
+            "MEDIUM", "TF016", "S3 bucket versioning is disabled",
+            "Enable versioning to protect against accidental deletion and ransomware encryption.",
+        ),
+        (
+            r'from_port\s*=\s*(?:22|3389)\b.*\n.*cidr_blocks\s*=\s*\[?\s*"0\.0\.0\.0/0"',
+            "CRITICAL", "TF017", "SSH (22) or RDP (3389) open to the entire internet",
+            "Restrict SSH/RDP to specific IP ranges or use a VPN/bastion host.",
+        ),
+        (
+            r'enable_cloudtrail\s*=\s*false|is_logging\s*=\s*false',
+            "HIGH", "TF018", "CloudTrail logging is disabled — no audit trail",
+            "Enable CloudTrail with multi-region logging and log file validation.",
+        ),
+        (
+            r'mfa_delete\s*=\s*"Disabled"',
+            "HIGH", "TF019", "MFA delete is disabled on S3 bucket — objects can be deleted without MFA",
+            "Enable MFA delete: set mfa_delete = \"Enabled\" on the versioning block.",
+        ),
+    ]
+
+    for pattern, severity, check_id, desc, fix in checks + cred_checks + extra_checks:
+        for m in re.finditer(pattern, content, re.IGNORECASE | re.DOTALL):
+            # Find nearest resource block for annotation
             preceding = content[:m.start()]
             resource_matches = list(re.finditer(r'resource\s+"([^"]+)"\s+"([^"]+)"', preceding))
             if resource_matches:
@@ -344,6 +373,33 @@ def _check_kubernetes(path: Path, content: str) -> List[IaCFinding]:
             resource=f"{kind}/{resource_name}",
             description="No resource limits defined — container can consume unlimited CPU/memory",
             fix="Add resources.limits.cpu and resources.limits.memory to each container spec.",
+        ))
+
+    # Missing NetworkPolicy — default allow-all pod traffic
+    if kind == "Namespace" or (kind in ("Deployment", "StatefulSet", "DaemonSet") and "NetworkPolicy" not in content):
+        if re.search(r'app\.kubernetes\.io/name|app:\s+\S+', content):
+            findings.append(IaCFinding(
+                check_id="K8S014",
+                severity="MEDIUM",
+                framework="kubernetes",
+                file_path=rel,
+                line=1,
+                resource=f"{kind}/{resource_name}",
+                description="No NetworkPolicy — all pod-to-pod traffic is allowed by default",
+                fix="Create a NetworkPolicy to restrict ingress/egress to only required sources and destinations.",
+            ))
+
+    # hostPath volume mount — can escape container to host filesystem
+    if re.search(r'hostPath\s*:', content):
+        findings.append(IaCFinding(
+            check_id="K8S015",
+            severity="HIGH",
+            framework="kubernetes",
+            file_path=rel,
+            line=_line_of(content, re.search(r'hostPath\s*:', content).start()),
+            resource=f"{kind}/{resource_name}",
+            description="hostPath volume mount exposes host filesystem to container",
+            fix="Use PersistentVolumeClaims instead of hostPath. If hostPath is required, restrict with readOnly: true.",
         ))
 
     for pattern, severity, check_id, desc, fix in checks:
@@ -645,6 +701,91 @@ def _check_cloudformation(path: Path, content: str) -> List[IaCFinding]:
     return findings
 
 
+def _check_helm(path: Path, content: str) -> List[IaCFinding]:
+    """Check Helm Chart.yaml and values.yaml for misconfigurations."""
+    findings: List[IaCFinding] = []
+    rel = str(path)
+
+    # For Chart.yaml — check for missing/pinned appVersion
+    if path.name.lower() == "chart.yaml":
+        if "appVersion" not in content:
+            findings.append(IaCFinding(
+                check_id="HELM001",
+                severity="LOW",
+                framework="helm",
+                file_path=rel,
+                line=1,
+                resource=path.stem,
+                description="Chart.yaml missing appVersion — image version is untracked",
+                fix="Add appVersion to Chart.yaml to track the deployed application version.",
+            ))
+        # Check for deprecated apiVersion
+        if re.search(r'apiVersion\s*:\s*v1\b', content):
+            findings.append(IaCFinding(
+                check_id="HELM002",
+                severity="LOW",
+                framework="helm",
+                file_path=rel,
+                line=_line_of(content, re.search(r'apiVersion\s*:\s*v1\b', content).start()),
+                resource=path.stem,
+                description="Chart uses deprecated Helm API version v1 — use v2",
+                fix="Update apiVersion: v1 to apiVersion: v2 in Chart.yaml.",
+            ))
+        return findings
+
+    # For values.yaml — check for hardcoded secrets
+    secret_patterns = [
+        (r'(?i)password\s*:\s*(?!\{\{)["\']?[a-zA-Z0-9!@#$%^&*]{6,}["\']?', "password"),
+        (r'(?i)secret\s*:\s*(?!\{\{)["\']?[a-zA-Z0-9!@#$%^&*]{6,}["\']?', "secret"),
+        (r'(?i)api[_-]?key\s*:\s*(?!\{\{)["\']?[a-zA-Z0-9]{16,}["\']?', "API key"),
+        (r'AKIA[A-Z0-9]{16}', "AWS access key"),
+    ]
+    for spat, sname in secret_patterns:
+        for m in re.finditer(spat, content):
+            # Skip templated values {{ }}
+            snippet = content[m.start():m.start() + 100]
+            if "{{" in snippet:
+                continue
+            findings.append(IaCFinding(
+                check_id="HELM003",
+                severity="CRITICAL",
+                framework="helm",
+                file_path=rel,
+                line=_line_of(content, m.start()),
+                resource="values.yaml",
+                description=f"Hardcoded {sname} in Helm values.yaml — committed to version control",
+                fix="Use Helm secrets plugin or external-secrets-operator. Reference as {{ .Values.secret | required }}.",
+            ))
+
+    # Check for privileged in values
+    if re.search(r'privileged\s*:\s*true', content):
+        findings.append(IaCFinding(
+            check_id="HELM004",
+            severity="CRITICAL",
+            framework="helm",
+            file_path=rel,
+            line=_line_of(content, re.search(r'privileged\s*:\s*true', content).start()),
+            resource="values.yaml",
+            description="Helm values enable privileged container mode",
+            fix="Set privileged: false in values.yaml and ensure chart templates respect this value.",
+        ))
+
+    # Check for image.tag: latest
+    if re.search(r'tag\s*:\s*["\']?latest["\']?', content):
+        findings.append(IaCFinding(
+            check_id="HELM005",
+            severity="MEDIUM",
+            framework="helm",
+            file_path=rel,
+            line=_line_of(content, re.search(r'tag\s*:\s*["\']?latest["\']?', content).start()),
+            resource="values.yaml",
+            description="Image tag set to :latest in Helm values — unpinned version",
+            fix="Pin image.tag to a specific semantic version or SHA digest.",
+        ))
+
+    return findings
+
+
 def _check_ansible(path: Path, content: str) -> List[IaCFinding]:
     findings: List[IaCFinding] = []
     rel = str(path)
@@ -718,14 +859,31 @@ def _try_checkov(repo_path: Path) -> Optional[List[IaCFinding]]:
         severity_map = {"critical": "CRITICAL", "high": "HIGH", "medium": "MEDIUM",
                         "low": "LOW", "none": "INFO"}
 
+        # Map checkov check_type strings to our framework names
+        fw_map = {
+            "terraform": "terraform", "terraform_plan": "terraform",
+            "kubernetes": "kubernetes", "helm": "helm",
+            "dockerfile": "dockerfile", "github_actions": "github_actions",
+            "cloudformation": "cloudformation", "ansible": "ansible",
+            "arm": "cloudformation",
+        }
+
         for block in blocks:
             for chk in block.get("results", {}).get("failed_checks", []):
                 sev_raw = chk.get("severity") or "medium"
+                fpath = chk.get("repo_file_path", "")
+                check_type = chk.get("check_type", "").lower()
+                # Infer framework from check_type first, then file extension
+                framework = fw_map.get(check_type)
+                if not framework:
+                    ext = fpath.rsplit(".", 1)[-1].lower() if "." in fpath else ""
+                    framework = {"tf": "terraform", "yml": "kubernetes",
+                                 "yaml": "kubernetes", "json": "cloudformation"}.get(ext, check_type or "unknown")
                 findings.append(IaCFinding(
                     check_id=chk.get("check_id", "CKV_UNKNOWN"),
                     severity=severity_map.get(sev_raw.lower(), "MEDIUM"),
-                    framework=chk.get("repo_file_path", "").split(".")[-1],
-                    file_path=chk.get("repo_file_path", ""),
+                    framework=framework,
+                    file_path=fpath,
                     line=chk.get("file_line_range", [1])[0],
                     resource=chk.get("resource", "unknown"),
                     description=chk.get("check", {}).get("name", "Misconfiguration"),
@@ -817,6 +975,7 @@ def scan_repo(
             "github_actions": _check_github_actions,
             "cloudformation": _check_cloudformation,
             "ansible": _check_ansible,
+            "helm": _check_helm,
         }
 
         for i, fpath in enumerate(all_files):
@@ -841,6 +1000,16 @@ def scan_repo(
     if result.scanner_used == "checkov" and not result.frameworks_detected:
         result.frameworks_detected = sorted({f.framework for f in result.findings})
 
+    # Deduplicate — same check_id + file_path + line
+    seen: set = set()
+    deduped: List[IaCFinding] = []
+    for f in result.findings:
+        key = (f.check_id, f.file_path, f.line)
+        if key not in seen:
+            seen.add(key)
+            deduped.append(f)
+    result.findings = deduped
+
     result._recount()
     result.scan_duration_s = time.time() - t0
 
@@ -851,10 +1020,11 @@ def scan_repo(
 def list_frameworks() -> List[dict]:
     """Return metadata for all supported IaC frameworks."""
     return [
-        {"id": "terraform",      "name": "Terraform",        "extensions": [".tf"],                "icon": "🏗️"},
-        {"id": "kubernetes",     "name": "Kubernetes",        "extensions": [".yml", ".yaml"],      "icon": "☸️"},
-        {"id": "dockerfile",     "name": "Dockerfile",        "extensions": ["Dockerfile"],         "icon": "🐳"},
-        {"id": "github_actions", "name": "GitHub Actions",    "extensions": [".yml", ".yaml"],      "icon": "⚙️"},
+        {"id": "terraform",      "name": "Terraform",        "extensions": [".tf"],                    "icon": "🏗️"},
+        {"id": "kubernetes",     "name": "Kubernetes",        "extensions": [".yml", ".yaml"],          "icon": "☸️"},
+        {"id": "dockerfile",     "name": "Dockerfile",        "extensions": ["Dockerfile"],             "icon": "🐳"},
+        {"id": "github_actions", "name": "GitHub Actions",    "extensions": [".yml", ".yaml"],          "icon": "⚙️"},
         {"id": "cloudformation", "name": "CloudFormation",    "extensions": [".yml", ".yaml", ".json"], "icon": "☁️"},
-        {"id": "ansible",        "name": "Ansible",           "extensions": [".yml", ".yaml"],      "icon": "🤖"},
+        {"id": "helm",           "name": "Helm",              "extensions": ["Chart.yaml", "values.yaml"], "icon": "⛵"},
+        {"id": "ansible",        "name": "Ansible",           "extensions": [".yml", ".yaml"],          "icon": "🤖"},
     ]

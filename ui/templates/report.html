@@ -1246,6 +1246,96 @@
     </div>
     <!-- /ransomware -->
 
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- IaC MISCONFIGURATION SCANNER                                    -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    {% set iac = iac %}
+    <div class="sec" id="iac">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">🏗️ IaC Misconfiguration Scanner</div>
+        {% if iac %}
+          <span class="sec-count" style="{% if iac.critical_count > 0 %}color:var(--danger){% elif iac.high_count > 0 %}color:var(--warn){% else %}color:var(--ok){% endif %}">
+            {{ iac.total_findings }} findings · {{ iac.frameworks_detected | join(', ') }}
+          </span>
+        {% endif %}
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+
+      {% if iac and iac.total_findings > 0 %}
+
+      {# KPI row #}
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:20px">
+        <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:800;color:var(--body)">{{ iac.total_files_scanned }}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Files Scanned</div>
+        </div>
+        <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:800;color:var(--body)">{{ iac.frameworks_detected | length }}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Frameworks</div>
+        </div>
+        <div style="background:rgba(242,87,87,0.08);border:1px solid rgba(242,87,87,0.3);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:800;color:var(--danger)">{{ iac.critical_count }}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Critical</div>
+        </div>
+        <div style="background:rgba(230,168,23,0.08);border:1px solid rgba(230,168,23,0.3);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:800;color:var(--warn)">{{ iac.high_count }}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">High</div>
+        </div>
+        <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:800;color:var(--body)">{{ iac.medium_count }}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Medium</div>
+        </div>
+        <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:800;color:var(--body)">{{ iac.scanner_used | capitalize }}</div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Engine</div>
+        </div>
+      </div>
+
+      {# Findings table #}
+      <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden">
+        <div style="display:grid;grid-template-columns:90px 110px 90px 1fr 140px 40px;gap:10px;padding:8px 14px;background:var(--ink3);border-bottom:2px solid var(--rule)">
+          {% for hdr in ['Severity','Framework','Check ID','Description','File','Line'] %}
+          <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">{{ hdr }}</span>
+          {% endfor %}
+        </div>
+        {% for f in iac.findings %}
+        {% set sev_color = {'CRITICAL':'var(--danger)','HIGH':'var(--warn)','MEDIUM':'#a78bfa','LOW':'var(--teal)'}.get(f.severity,'var(--sub)') %}
+        {% set fw_icon = {'terraform':'🏗️','kubernetes':'☸️','dockerfile':'🐳','github_actions':'⚙️','cloudformation':'☁️','helm':'⛵','ansible':'🤖'}.get(f.framework,'📄') %}
+        <div onclick="toggleIacRow(this)" style="display:grid;grid-template-columns:90px 110px 90px 1fr 140px 40px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .15s" onmouseenter="this.style.background='var(--ink3)'" onmouseleave="this.style.background=''">
+          <div><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;border:1px solid {{ sev_color }};color:{{ sev_color }};background:{{ sev_color }}18">{{ f.severity }}</span></div>
+          <div style="font-size:11px;color:var(--sub)">{{ fw_icon }} {{ f.framework | replace('_',' ') | title }}</div>
+          <div><code style="font-size:10px;color:var(--accent)">{{ f.check_id }}</code></div>
+          <div>
+            <div style="font-size:12px;color:var(--body);font-weight:500">{{ f.description }}</div>
+            <div class="iac-fix-row" style="display:none;margin-top:8px;padding:8px;background:var(--ink);border-radius:6px;border-left:3px solid {{ sev_color }}">
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Fix</div>
+              <div style="font-size:11px;color:var(--sub)">{{ f.fix }}</div>
+              {% if f.resource and f.resource != 'unknown' %}
+              <div style="font-size:10px;color:var(--muted);margin-top:4px">Resource: <code style="color:var(--teal)">{{ f.resource }}</code></div>
+              {% endif %}
+            </div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);word-break:break-all">{{ f.file_path }}</div>
+          <div style="font-size:11px;color:var(--muted);text-align:center">{{ f.line }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% elif iac %}
+      <div style="padding:28px;text-align:center;color:var(--ok);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px">
+        ✅ No IaC misconfigurations detected across {{ iac.total_files_scanned }} files.
+      </div>
+      {% else %}
+      <div style="padding:28px;text-align:center;color:var(--muted);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px">
+        IaC scan not included in this report.
+      </div>
+      {% endif %}
+
+      </div><!-- /sec-body iac -->
+    </div>
+    <!-- /iac -->
+
   </div>
 </div>
 
@@ -1492,6 +1582,10 @@ function go(id,el){
   document.getElementById(id)?.scrollIntoView({behavior:'smooth'});
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));
   el.classList.add('on');
+}
+function toggleIacRow(row){
+  const fix = row.querySelector('.iac-fix-row');
+  if(fix) fix.style.display = fix.style.display === 'none' ? 'block' : 'none';
 }
 </script>
 </body>
