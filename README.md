@@ -1,11 +1,11 @@
 # SecureScope / GitHub Security Review Tool
 
-![Version](https://img.shields.io/badge/version-v6.0.0-blue)
+![Version](https://img.shields.io/badge/version-v6.2.0-blue)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-v14-red)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 > AI-powered security analysis for any GitHub repository. Paste a URL, get a full threat report mapped to MITRE ATT&CK and CWE, with optional Docker sandbox execution and AI-generated fix diffs from your choice of LLM.
-> **v6.0.0** adds an IaC Misconfiguration Scanner — detects cloud and container misconfigurations across Terraform, Kubernetes, Dockerfiles, GitHub Actions, CloudFormation, and Ansible. **v5.0.0** expanded the YARA library to 11 rule sets. **v4.0.0** added a Dependency Vulnerability Scanner (OSV.dev). **v3.0.0** added a Secrets Detection Engine with 60+ patterns and git history scanning.
+> **v6.2.0** completes the security report — Secrets Detection and Dependency Vulnerability sections now fully rendered in report.html. **v6.0.0** adds an IaC Misconfiguration Scanner — detects cloud and container misconfigurations across Terraform, Kubernetes, Dockerfiles, GitHub Actions, CloudFormation, and Ansible. **v5.0.0** expanded the YARA library to 11 rule sets. **v4.0.0** added a Dependency Vulnerability Scanner (OSV.dev). **v3.0.0** added a Secrets Detection Engine with 60+ patterns and git history scanning.
 
 **[View Sample Report (PDF)](https://github.com/OmarRao/secure-scope/blob/main/docs/sample_report.pdf)**
 
@@ -312,7 +312,6 @@ The most critical capability for any organisation — a hardcoded secret **is** 
 
 SecureScope scans both the **working tree** (current files) and the **full git commit history** (including secrets that were "deleted" but still exist in past commits). Every finding is assessed for blast radius — what an attacker can actually do with the credential.
 
-![Secrets Detection Panel](docs/screenshots/07_secrets_scanner.png)
 
 ### Pattern coverage — 60+ patterns across 10 categories
 
@@ -407,6 +406,7 @@ Without checkov, the scanner uses 50+ built-in pattern checks across all 6 frame
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| [v6.2.0](https://github.com/OmarRao/secure-scope/releases/tag/v6.2.0) | 2026-06-22 | Report completeness — added Secrets Detection and Dependency Vulnerability sections to report.html; fixed nav sidebar; removed broken screenshot reference |
 | [v6.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v6.0.0) | 2026-06-18 | IaC Misconfiguration Scanner — Terraform, Kubernetes, Dockerfile, GitHub Actions, CloudFormation, Ansible; checkov integration + 50+ built-in pattern checks; integrated into main scan pipeline |
 | [v5.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v5.0.0) | 2026-06-17 | Expanded YARA Threat Library — 5 new rule sets: Cl0p, emerging ransomware (Play/Akira/RansomHub/Black Basta), LotL techniques, credential harvesting, supply chain attacks. 11 rule sets / 50+ rules total |
 | [v4.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v4.0.0) | 2026-06-17 | Dependency Vulnerability Scanner — OSV.dev integration, 7 ecosystems, CVE lookup, CVSS scoring, integrated into main pipeline |
