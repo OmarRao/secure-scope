@@ -36,7 +36,8 @@ def to_json(result: AnalysisResult, obs: Optional["RuntimeObservation"] = None,
 
 
 def to_html(result: AnalysisResult, obs: Optional["RuntimeObservation"] = None,
-            enriched: Optional[list] = None, path: str = "report.html") -> str:
+            enriched: Optional[list] = None, path: str = "report.html",
+            compliance_html: str = "", container_vulns: Optional[list] = None) -> str:
     findings = enriched or [f.to_dict() for f in result.findings]
     summary = result.summary()
 
@@ -80,6 +81,29 @@ def to_html(result: AnalysisResult, obs: Optional["RuntimeObservation"] = None,
         <h2>Runtime Analysis</h2>
         <h3>Suspicious Behaviors</h3><ul>{behaviors}</ul>
         <h3>Outbound Connections</h3><ul>{conns}</ul>"""
+
+    # Container vulnerabilities (Trivy)
+    container_section = ""
+    if container_vulns:
+        sev_color = {"CRITICAL": "#b71c1c", "HIGH": "#d32f2f", "MEDIUM": "#f57c00",
+                     "LOW": "#388e3c", "UNKNOWN": "#757575"}
+        trivy_rows = "".join(
+            f"<tr><td><span style='color:{sev_color.get(v.get(\"severity\",\"UNKNOWN\"),\"#555\")}"
+            f";font-weight:bold'>{v.get('severity','')}</span></td>"
+            f"<td>{v.get('target','')}</td><td>{v.get('package','')}</td>"
+            f"<td>{v.get('version','')}</td><td><code>{v.get('vuln_id','')}</code></td>"
+            f"<td>{v.get('title','')[:80]}</td>"
+            f"<td>{v.get('fixed_version','') or '—'}</td></tr>"
+            for v in (container_vulns if isinstance(container_vulns[0], dict)
+                      else [cv.to_dict() for cv in container_vulns])
+        )
+        container_section = f"""
+        <h2>Container / Trivy Scan</h2>
+        <table>
+          <thead><tr><th>Severity</th><th>Target</th><th>Package</th><th>Version</th>
+          <th>CVE/ID</th><th>Title</th><th>Fixed In</th></tr></thead>
+          <tbody>{trivy_rows}</tbody>
+        </table>"""
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -127,6 +151,8 @@ def to_html(result: AnalysisResult, obs: Optional["RuntimeObservation"] = None,
   </table>
 
   {runtime_section}
+  {container_section}
+  {compliance_html}
 </body>
 </html>"""
 

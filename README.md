@@ -1,11 +1,11 @@
 # SecureScope / GitHub Security Review Tool
 
-![Version](https://img.shields.io/badge/version-v6.2.0-blue)
+![Version](https://img.shields.io/badge/version-v7.0.0-blue)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-v14-red)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 > AI-powered security analysis for any GitHub repository. Paste a URL, get a full threat report mapped to MITRE ATT&CK and CWE, with optional Docker sandbox execution and AI-generated fix diffs from your choice of LLM.
-> **v6.2.0** completes the security report — Secrets Detection and Dependency Vulnerability sections now fully rendered in report.html. **v6.0.0** adds an IaC Misconfiguration Scanner — detects cloud and container misconfigurations across Terraform, Kubernetes, Dockerfiles, GitHub Actions, CloudFormation, and Ansible. **v5.0.0** expanded the YARA library to 11 rule sets. **v4.0.0** added a Dependency Vulnerability Scanner (OSV.dev). **v3.0.0** added a Secrets Detection Engine with 60+ patterns and git history scanning.
+> **v7.0.0** adds SARIF 2.1.0 export (GitHub Security tab integration), Trivy container image scanning, CycloneDX SBOM generation, compliance posture reports (PCI DSS / NIST / OWASP / SANS Top 25), multi-repo scanning, and a GitHub webhook trigger server. **v6.2.0** completed the security report — Secrets Detection and Dependency Vulnerability sections fully rendered in report.html. **v6.0.0** adds an IaC Misconfiguration Scanner — Terraform, Kubernetes, Dockerfiles, GitHub Actions, CloudFormation, and Ansible. **v5.0.0** expanded the YARA library to 11 rule sets. **v4.0.0** added a Dependency Vulnerability Scanner (OSV.dev). **v3.0.0** added a Secrets Detection Engine with 60+ patterns and git history scanning.
 
 **[View Sample Report (PDF)](https://github.com/OmarRao/secure-scope/blob/main/docs/sample_report.pdf)**
 
@@ -247,6 +247,21 @@ python main.py --repo https://github.com/owner/repo --no-sandbox
 
 # Full scan + commit fixes to GitHub
 python main.py --repo https://github.com/owner/repo --commit --branch main
+
+# Full scan with SARIF + SBOM + compliance posture report
+python main.py --repo https://github.com/owner/repo --sarif --sbom --compliance --no-advisor
+
+# Include Trivy container image scan alongside static analysis
+python main.py --repo https://github.com/owner/repo --image python:3.11-slim --no-advisor
+
+# Multi-repo scan (comma-separated)
+python main.py --repos https://github.com/org/repo1,https://github.com/org/repo2 --no-advisor
+
+# Multi-repo scan from a file (one URL per line)
+python main.py --repos-file repos.txt --sarif --sbom --no-advisor
+
+# Webhook server — auto-trigger scans on GitHub push/PR events
+python main.py --webhook --port 8080 --webhook-secret <secret>
 ```
 
 ---
@@ -402,10 +417,62 @@ Without checkov, the scanner uses 50+ built-in pattern checks across all 6 frame
 
 ---
 
+## v7.0.0 New Features
+
+### SARIF 2.1.0 Export
+Use `--sarif` to produce a SARIF file that can be uploaded to the GitHub Code Scanning API or committed to `.github/code-scanning/` — findings appear natively in the repository's **Security → Code Scanning** tab with ATT&CK and CWE tags.
+
+### Trivy Container Scanning
+Use `--image <docker-image>` to run Trivy against a container image alongside the static analysis scan. Also scans any Dockerfiles in the repo for IaC misconfigurations. Requires [Trivy](https://aquasecurity.github.io/trivy/) installed.
+
+```bash
+python main.py --repo https://github.com/org/app --image ghcr.io/org/app:latest --no-advisor
+```
+
+### CycloneDX SBOM
+Use `--sbom` to produce a CycloneDX 1.4 JSON Software Bill of Materials. Compatible with Dependency-Track, Grype, and the GitHub Dependency Submission API.
+
+### Compliance Posture Report
+Use `--compliance` to add a compliance section to the HTML report mapping each finding to:
+- **PCI DSS v4.0** requirements (Req 6.2.4, 8.6.1, 3.3.1, etc.)
+- **NIST SP 800-53 Rev 5** controls (SI-10, AC-3, SC-13, etc.)
+- **OWASP Top 10 / API Security Top 10** categories
+- **SANS / CWE Top 25 (2023)** ranked hits
+
+### Multi-Repo Scanning
+Scan multiple repositories in a single run:
+
+```bash
+# Comma-separated
+python main.py --repos https://github.com/org/a,https://github.com/org/b --sarif --sbom
+
+# From file (one URL per line, # comments supported)
+python main.py --repos-file targets.txt --compliance
+```
+
+### Webhook Trigger Server
+Run SecureScope as a persistent webhook server that automatically triggers scans when GitHub sends push or pull_request events:
+
+```bash
+python main.py --webhook --port 8080 --webhook-secret <secret> --out-dir /reports
+# or directly:
+python webhook.py --port 8080 --secret <secret>
+```
+
+Configure in GitHub: **Settings → Webhooks → Add webhook**
+- Payload URL: `http://your-host:8080/webhook`
+- Content type: `application/json`
+- Events: `push`, `pull_request`
+
+Each triggered scan produces JSON, HTML, SARIF, SBOM, and compliance reports automatically.
+
+---
+
 ## Releases
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| [v7.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v7.0.0) | 2026-06-23 | SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture report (PCI DSS/NIST/OWASP/SANS Top 25), multi-repo scanning, GitHub webhook trigger server |
 | [v6.2.0](https://github.com/OmarRao/secure-scope/releases/tag/v6.2.0) | 2026-06-22 | Report completeness — added Secrets Detection and Dependency Vulnerability sections to report.html; fixed nav sidebar; removed broken screenshot reference |
 | [v6.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v6.0.0) | 2026-06-18 | IaC Misconfiguration Scanner — Terraform, Kubernetes, Dockerfile, GitHub Actions, CloudFormation, Ansible; checkov integration + 50+ built-in pattern checks; integrated into main scan pipeline |
 | [v5.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v5.0.0) | 2026-06-17 | Expanded YARA Threat Library — 5 new rule sets: Cl0p, emerging ransomware (Play/Akira/RansomHub/Black Basta), LotL techniques, credential harvesting, supply chain attacks. 11 rule sets / 50+ rules total |
