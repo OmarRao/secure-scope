@@ -9,7 +9,11 @@ import subprocess
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Optional
-import docker  # pip install docker
+
+try:
+    import docker
+except ImportError:
+    docker = None  # type: ignore[assignment]
 
 
 SANDBOX_IMAGE = "python:3.12-slim"  # default; _detect_project_type overrides this
@@ -91,8 +95,13 @@ def run_in_sandbox(repo_path: str, timeout: int = MAX_RUN_SECONDS) -> RuntimeObs
     """
     Mount repo into a Docker container, run it, and return runtime observations.
     Uses strace inside container for syscall-level file/process tracking.
+    Requires: pip install docker
     """
     obs = RuntimeObservation()
+
+    if docker is None:
+        obs.stderr = "docker SDK not installed (pip install docker)"
+        return obs
 
     try:
         client = docker.from_env()
