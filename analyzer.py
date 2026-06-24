@@ -59,6 +59,8 @@ class AnalysisResult:
     findings: list[Finding] = field(default_factory=list)
     dependency_vulns: list[dict] = field(default_factory=list)
     scan_errors: list[str] = field(default_factory=list)
+    pr_diff_mode: bool = False
+    changed_files: list[str] = field(default_factory=list)
 
     def summary(self) -> dict:
         by_severity = {}
@@ -212,6 +214,105 @@ def check_dependency_vulns(repo_path: str) -> list[dict]:
             pass
 
     return vulns
+
+
+def get_pr_changed_files(repo_path: str, base_branch: str = "main") -> list[str]:
+    """Run git diff --name-only origin/{base_branch}...HEAD and return changed file paths."""
+    result = subprocess.run(
+        ["git", "diff", "--name-only", f"origin/{base_branch}...HEAD"],
+        capture_output=True, text=True, cwd=repo_path,
+    )
+    files = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    return files
+
+
+def run_semgrep_diff(repo_path: str, changed_files: list[str]) -> list[Finding]:
+    """Run semgrep only on the provided changed_files list."""
+    if not changed_files:
+        return []
+
+    # Resolve to absolute paths that exist
+    abs_files = []
+    for f in changed_files:
+        abs_path = str(Path(repo_path) / f)
+        if Path(abs_path).exists():
+            abs_files.append(abs_path)
+
+    if not abs_files:
+        return []
+
+    rulesets = ["p/owasp-top-ten", "p/cwe-top-25", "p/secrets", "p/supply-chain"]
+    cmd = ["semgrep", "scan", "--json", "--quiet"]
+    for rs in rulesets:
+        cmd += ["--config", rs]
+    cmd += abs_files
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+
+    findings: list[Finding] = []
+    try:
+        data = json.loads(result.stdout)
+    except json.JSONDecodeError:
+        try:
+            data = json.loads(result.stderr)
+        except json.JSONDecodeError:
+            return findings
+
+    # Reuse the same parsing logic as run_semgrep
+    for r in data.get("results", []):
+        meta = r.get("extra", {})
+        metadata = meta.get("metadata", {})
+        cwes = metadata.get("cwe", [])
+        if isinstance(cwes, str):
+            cwes = [cwes]
+        primary_cwe = cwes[0] if cwes else None
+        if primary_cwe:
+            primary_cwe = primary_cwe.split(":")[0].strip()
+        attack_info = CWE_TO_ATTACK.get(primary_cwe, {}) if primary_cwe else {}
+        rel_file = r.get("path", "")
+        try:
+            rel_file = str(Path(rel_file).relative_to(repo_path))
+        except ValueError:
+            pass
+        findings.append(Finding(
+            rule_id=r.get("check_id", "unknown"),
+            message=meta.get("message", ""),
+            severity=meta.get("severity", "INFO").upper(),
+            file=rel_file,
+            line_start=r.get("start", {}).get("line", 0),
+            line_end=r.get("end", {}).get("line", 0),
+            code_snippet=meta.get("lines", ""),
+            cwe=primary_cwe,
+            attack_technique=attack_info.get("technique"),
+            attack_tactic=attack_info.get("tactic"),
+            attack_name=attack_info.get("name"),
+        ))
+
+    findings.sort(key=lambda f: SEVERITY_ORDER.get(f.severity, 99))
+    return findings
+
+
+def analyze_pr(repo_url: str, base_branch: str = "main",
+               workdir: Optional[str] = None) -> AnalysisResult:
+    """Like analyze() but clones the repo and only scans files changed vs base_branch."""
+    repo_path = clone_repo(repo_url, workdir)
+    result = AnalysisResult(repo_url=repo_url, repo_path=repo_path,
+                            pr_diff_mode=True)
+
+    try:
+        # Fetch the base branch so git diff has something to compare against
+        subprocess.run(
+            ["git", "fetch", "origin", base_branch],
+            capture_output=True, cwd=repo_path,
+        )
+        result.changed_files = get_pr_changed_files(repo_path, base_branch)
+        print(f"[*] PR diff mode: {len(result.changed_files)} changed files")
+        result.findings = run_semgrep_diff(repo_path, result.changed_files)
+        result.dependency_vulns = check_dependency_vulns(repo_path)
+    except Exception as e:
+        result.scan_errors.append(str(e))
+
+    return result
 
 
 def analyze(repo_url: str, workdir: Optional[str] = None) -> AnalysisResult:

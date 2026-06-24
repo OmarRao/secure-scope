@@ -677,6 +677,54 @@ def handle_iac_scan(data):
     t.start()
 
 
+# ── v8.0.0 API endpoints ─────────────────────────────────────────────────────
+
+@app.route("/api/trend")
+def api_trend():
+    """
+    GET /api/trend?repo=URL
+
+    Returns trend JSON records for the given repo URL.
+    Records are read from {REPORTS_DIR}/trend.jsonl.
+    """
+    repo_url = request.args.get("repo", "").strip()
+    if not repo_url:
+        return jsonify({"error": "repo parameter is required"}), 400
+    try:
+        from trend import load_trend
+        records = load_trend(repo_url, str(REPORTS_DIR))
+        return jsonify(records)
+    except Exception as exc:
+        logger.exception("Error loading trend for %s", repo_url)
+        return jsonify({"error": "Failed to load trend data"}), 500
+
+
+@app.route("/api/suppress", methods=["POST"])
+def api_suppress():
+    """
+    POST /api/suppress
+    Body: {"rule_id": str, "file": str, "reason": str, "repo_path": str}
+
+    Adds a false-positive suppression to the given repo's .secscope-suppressions.json.
+    """
+    body = request.get_json(silent=True) or {}
+    rule_id = body.get("rule_id", "").strip()
+    file_path = body.get("file", "").strip()
+    reason = body.get("reason", "").strip()
+    repo_path = body.get("repo_path", "").strip()
+
+    if not all([rule_id, file_path, reason, repo_path]):
+        return jsonify({"error": "rule_id, file, reason, and repo_path are required"}), 400
+
+    try:
+        from false_positives import save_suppression
+        save_suppression(repo_path, rule_id, file_path, reason, suppressed_by="ui-user")
+        return jsonify({"status": "suppressed", "rule_id": rule_id, "file": file_path})
+    except Exception as exc:
+        logger.exception("Error adding suppression")
+        return jsonify({"error": "Failed to save suppression"}), 500
+
+
 def _emit(sid, event, data):
     """
     Helper: emit a Socket.IO event to a specific session ID.

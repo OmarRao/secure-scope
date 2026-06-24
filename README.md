@@ -1,11 +1,11 @@
 # SecureScope / GitHub Security Review Tool
 
-![Version](https://img.shields.io/badge/version-v7.0.0-blue)
+![Version](https://img.shields.io/badge/version-v8.0.0-blue)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-v14-red)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 > AI-powered security analysis for any GitHub repository. Paste a URL, get a full threat report mapped to MITRE ATT&CK and CWE, with optional Docker sandbox execution and AI-generated fix diffs from your choice of LLM.
-> **v7.0.0** adds SARIF 2.1.0 export (GitHub Security tab integration), Trivy container image scanning, CycloneDX SBOM generation, compliance posture reports (PCI DSS / NIST / OWASP / SANS Top 25), multi-repo scanning, and a GitHub webhook trigger server. **v6.2.0** completed the security report — Secrets Detection and Dependency Vulnerability sections fully rendered in report.html. **v6.0.0** adds an IaC Misconfiguration Scanner — Terraform, Kubernetes, Dockerfiles, GitHub Actions, CloudFormation, and Ansible. **v5.0.0** expanded the YARA library to 11 rule sets. **v4.0.0** added a Dependency Vulnerability Scanner (OSV.dev). **v3.0.0** added a Secrets Detection Engine with 60+ patterns and git history scanning.
+> **v8.0.0** adds Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard integration, DAST (Nuclei + ZAP), license compliance scanning, supply-chain/typosquatting detection, PR diff mode, historical trend tracking, and false-positive suppression. **v7.0.0** added SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture (PCI DSS / NIST / OWASP / SANS Top 25), multi-repo scanning, and a GitHub webhook server. **v6.2.0** completed the security report — Secrets Detection and Dependency Vulnerability sections. **v6.0.0** added IaC Misconfiguration Scanner. **v5.0.0** expanded YARA to 11 rule sets. **v4.0.0** added OSV.dev dependency scanning. **v3.0.0** added Secrets Detection.
 
 **[View Sample Report (PDF)](https://github.com/OmarRao/secure-scope/blob/main/docs/sample_report.pdf)**
 
@@ -78,6 +78,15 @@ The 3-2-1-1-0 backup rule visualised with an interactive DR testing checklist (s
 | **Data Protection & Resilience** | 3-2-1-1-0 backup rule visual guide plus an interactive DR testing checklist (state saved to localStorage). |
 | **YARA Scanner** | Scan any local path against 11 rule sets covering ransomware, APT lateral movement, data exfiltration, credential harvesting, living-off-the-land, and supply chain attacks. Streams live progress via Socket.IO. |
 | **IaC Misconfiguration Scanner** | Scan any repo for cloud and container misconfigurations across 6 frameworks. Uses checkov when installed; falls back to 50+ built-in pattern checks with zero dependencies. |
+| **Slack / Teams Notifications** | Post scan completion summaries (finding counts, top 3 criticals, report link) to Slack or Microsoft Teams incoming webhooks. |
+| **GitHub Issues** | Auto-create labelled GitHub Issues for ERROR findings with deduplication, CWE/ATT&CK metadata, and fix suggestions. |
+| **OpenSSF Scorecard** | Fetch repository scorecard via CLI or public REST API. Renders as HTML table in the report. |
+| **DAST** | Run Nuclei (preferred) or OWASP ZAP baseline scan against a live URL. Falls back gracefully if tools not installed. |
+| **License Compliance** | Classify dependency licenses (high/medium/low/ok risk) using pip-licenses / license-checker with heuristic fallback. |
+| **Supply Chain** | Detect dependency confusion attacks (internal names on public registries) and known typosquats. |
+| **PR Diff Mode** | Only scan files changed vs the base branch — ideal for pull request CI integration. |
+| **Trend Tracking** | Append per-scan metrics to `trend.jsonl` and render an SVG sparkline of findings over time. |
+| **False Positive Suppression** | Accept-risk workflow: store suppressions in `.secscope-suppressions.json`, applied before report generation. |
 
 ### YARA Rule Sets
 
@@ -262,7 +271,212 @@ python main.py --repos-file repos.txt --sarif --sbom --no-advisor
 
 # Webhook server — auto-trigger scans on GitHub push/PR events
 python main.py --webhook --port 8080 --webhook-secret <secret>
+
+# v8.0.0 — Slack/Teams notifications
+python main.py --repo https://github.com/owner/repo --no-advisor \
+  --slack-webhook https://hooks.slack.com/services/... \
+  --teams-webhook https://your-org.webhook.office.com/...
+
+# v8.0.0 — Auto-create GitHub Issues for ERROR findings
+python main.py --repo https://github.com/owner/repo --no-advisor \
+  --create-issues --github-token ghp_...
+
+# v8.0.0 — OpenSSF Scorecard
+python main.py --repo https://github.com/owner/repo --no-advisor --scorecard
+
+# v8.0.0 — DAST (Nuclei/ZAP)
+python main.py --repo https://github.com/owner/repo --no-advisor \
+  --dast-url https://staging.myapp.com
+
+# v8.0.0 — License scan + supply chain
+python main.py --repo https://github.com/owner/repo --no-advisor \
+  --license-scan --supply-chain
+
+# v8.0.0 — PR diff mode (only scan changed files)
+python main.py --repo https://github.com/owner/repo --no-advisor \
+  --pr-diff --base-branch main
+
+# v8.0.0 — Suppress a false positive
+python main.py --repo https://github.com/owner/repo --no-advisor \
+  --suppress-fp semgrep.sql-injection src/db.py "Parameterised query — confirmed safe"
 ```
+
+---
+
+## CLI Reference (v8.0.0)
+
+| Flag | Description |
+|------|-------------|
+| `--repo URL` | Single repository to scan |
+| `--repos URL,URL,...` | Comma-separated list of repositories |
+| `--repos-file FILE` | File with one URL per line |
+| `--branch BRANCH` | Target branch (default: `main`) |
+| `--no-sandbox` | Skip Docker sandbox execution |
+| `--no-advisor` | Skip Claude fix advisor (no API cost) |
+| `--commit` | Commit AI-generated fixes to the repo |
+| `--max-findings N` | Max findings to generate advisories for (default: 20) |
+| `--out-dir DIR` | Output directory (default: `./reports`) |
+| `--sarif` | Export SARIF 2.1.0 report |
+| `--sbom` | Export CycloneDX 1.4 SBOM |
+| `--image IMAGE` | Trivy container image scan |
+| `--compliance` | Add PCI DSS / NIST / OWASP / SANS Top 25 compliance section |
+| `--slack-webhook URL` | Post completion summary to Slack |
+| `--teams-webhook URL` | Post completion summary to Microsoft Teams |
+| `--create-issues` | Auto-create GitHub Issues for ERROR findings |
+| `--scorecard` | Run OpenSSF Scorecard |
+| `--dast-url URL` | Run DAST (Nuclei first, ZAP fallback) |
+| `--license-scan` | Scan dependency licenses for compliance risk |
+| `--supply-chain` | Check for dependency confusion + typosquatting |
+| `--pr-diff` | Only scan files changed vs base branch |
+| `--base-branch BRANCH` | Base branch for PR diff (default: `main`) |
+| `--suppress-fp RULE FILE REASON` | Add a false positive suppression |
+| `--github-token TOKEN` | GitHub PAT (or `GITHUB_TOKEN` env var) |
+| `--anthropic-key KEY` | Anthropic API key (or `ANTHROPIC_API_KEY` env var) |
+| `--webhook` | Run as webhook server |
+| `--port PORT` | Webhook server port (default: 8080) |
+| `--webhook-secret SECRET` | GitHub webhook secret |
+
+---
+
+## CI/CD Integration
+
+### GitHub Actions
+
+SecureScope ships a self-scan workflow at `.github/workflows/secscope.yml` that runs on every push to `main`, uploads results to GitHub Code Scanning, and stores the SBOM as an artifact.
+
+```yaml
+- name: Run SecureScope
+  run: |
+    python main.py \
+      --repo https://github.com/${{ github.repository }} \
+      --no-advisor --no-sandbox \
+      --sarif --sbom --compliance \
+      --out-dir ./secscope-reports
+
+- name: Upload SARIF
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: ./secscope-reports/
+```
+
+For PR-only scanning (scan only changed files):
+
+```yaml
+- name: Run SecureScope (PR diff mode)
+  run: |
+    python main.py \
+      --repo https://github.com/${{ github.repository }} \
+      --no-advisor --no-sandbox --sarif \
+      --pr-diff --base-branch main \
+      --out-dir ./secscope-reports
+```
+
+---
+
+## Notification Integrations
+
+### Slack
+
+Post a rich summary card to any Slack channel via an incoming webhook:
+
+```python
+from notifications import send_slack_notification
+send_slack_notification(result, "https://hooks.slack.com/services/...", critical_only=False)
+```
+
+Or via CLI: `--slack-webhook https://hooks.slack.com/services/...`
+
+### Microsoft Teams
+
+```python
+from notifications import send_teams_notification
+send_teams_notification(result, "https://your-org.webhook.office.com/...")
+```
+
+Or via CLI: `--teams-webhook https://your-org.webhook.office.com/...`
+
+### GitHub Issues
+
+Auto-creates labelled, deduplicated GitHub Issues for findings at or above a severity threshold:
+
+```python
+from github_issues import create_issues_for_findings
+results = create_issues_for_findings(repo_url, github_token, findings, severity_threshold="ERROR")
+```
+
+Labels are color-coded (error=red, warning=orange, info=blue) and created automatically. CWE labels are added where available.
+
+---
+
+## Advanced Scanning
+
+### DAST — Dynamic Application Security Testing
+
+```bash
+python main.py --repo URL --dast-url https://staging.myapp.com --no-advisor
+```
+
+Runs Nuclei (preferred) then falls back to OWASP ZAP baseline scan via Docker. Results are merged into the HTML report.
+
+### OpenSSF Scorecard
+
+```bash
+python main.py --repo URL --scorecard --no-advisor
+```
+
+Fetches the repository's OpenSSF Scorecard via CLI (if installed) or the public REST API at `api.securityscorecards.dev`. Renders a check-by-check table in the report.
+
+### License Compliance
+
+```bash
+python main.py --repo URL --license-scan --no-advisor
+```
+
+Risk classification:
+
+| Risk | Licenses |
+|------|----------|
+| **High** | GPL-2.0, GPL-3.0, AGPL-3.0, LGPL-2.1 (copyleft) |
+| **Medium** | MPL-2.0, EPL-2.0, CDDL |
+| **Low** | LGPL-3.0 |
+| **OK** | MIT, Apache-2.0, BSD-*, ISC, Unlicense, CC0, PSF |
+
+### Supply Chain Security
+
+```bash
+python main.py --repo URL --supply-chain --no-advisor
+```
+
+Checks for:
+- **Dependency confusion**: internal-looking package names that exist on public PyPI / npm registries
+- **Typosquatting**: known misspellings of popular packages (e.g. `requets` → `requests`)
+
+### PR Diff Mode
+
+```bash
+python main.py --repo URL --pr-diff --base-branch main --no-advisor
+```
+
+Only scans files changed vs the base branch. Ideal for pull request CI — reduces scan time significantly and focuses findings on the actual change.
+
+### False Positive Suppression
+
+Suppress a finding across all future scans by adding it to `.secscope-suppressions.json`:
+
+```bash
+python main.py --repo URL --suppress-fp semgrep.rule-id src/file.py "Confirmed safe — parameterised query"
+```
+
+Or programmatically:
+
+```python
+from false_positives import save_suppression, load_suppressions, apply_suppressions
+save_suppression(repo_path, "semgrep.sql-injection", "src/db.py", "Confirmed safe", "alice@example.com")
+```
+
+### Trend Tracking
+
+Every scan automatically appends a record to `{out-dir}/trend.jsonl`. The HTML report includes an SVG sparkline of total findings over time. Query via the REST API: `GET /api/trend?repo=https://github.com/owner/repo`.
 
 ---
 
@@ -417,6 +631,54 @@ Without checkov, the scanner uses 50+ built-in pattern checks across all 6 frame
 
 ---
 
+## v8.0.0 New Features
+
+### Slack & Microsoft Teams Notifications
+Post scan completion summaries (finding counts by severity, top 3 criticals, link to report) to Slack incoming webhooks or Microsoft Teams webhook cards.
+
+```bash
+python main.py --repo URL --slack-webhook https://hooks.slack.com/services/... --no-advisor
+python main.py --repo URL --teams-webhook https://your-org.webhook.office.com/... --no-advisor
+```
+
+### GitHub Issue Auto-Creation
+Automatically create labelled, deduplicated GitHub Issues for findings at or above a severity threshold. CWE labels, ATT&CK metadata, fix suggestions, and file/line references are included.
+
+```bash
+python main.py --repo URL --create-issues --github-token ghp_... --no-advisor
+```
+
+### OpenSSF Scorecard Integration
+Fetch the repository's OpenSSF Scorecard (security hygiene score 0–10) via the local CLI or public REST API, rendered as a check-by-check table in the HTML report.
+
+### DAST — Dynamic Application Security Testing
+Run Nuclei (critical/high/medium severity) against a live URL; falls back to OWASP ZAP baseline scan via Docker if Nuclei is not installed. Results are merged into the HTML report.
+
+### License Compliance Scanner
+Classify dependency licenses as high (copyleft), medium, low, or ok risk. Uses pip-licenses/license-checker when installed; falls back to heuristic requirements.txt parsing.
+
+### Supply Chain Security
+Check for dependency confusion attacks (internal package names found on public registries) and known typosquatting pairs (e.g. `requets` → `requests`).
+
+### PR Diff Mode
+Only scan files changed vs a base branch. Reduces scan time dramatically and keeps CI noise to a minimum.
+
+```bash
+python main.py --repo URL --pr-diff --base-branch main --no-advisor
+```
+
+### Historical Trend Tracking
+Every scan appends a record to `{out-dir}/trend.jsonl`. The HTML report renders an inline SVG sparkline of total findings over time. API: `GET /api/trend?repo=URL`.
+
+### False Positive Suppression
+Accepted-risk workflow: suppress any finding by rule_id + file path. Suppressions are stored in `.secscope-suppressions.json` and applied before report generation.
+
+```bash
+python main.py --repo URL --suppress-fp semgrep.rule-id src/file.py "Confirmed safe"
+```
+
+---
+
 ## v7.0.0 New Features
 
 ### SARIF 2.1.0 Export
@@ -472,6 +734,7 @@ Each triggered scan produces JSON, HTML, SARIF, SBOM, and compliance reports aut
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| [v8.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v8.0.0) | 2026-06-24 | Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard, DAST (Nuclei + ZAP), license compliance, supply chain/typosquatting detection, PR diff mode, historical trend tracking, false-positive suppression, GitHub Actions CI workflow |
 | [v7.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v7.0.0) | 2026-06-23 | SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture report (PCI DSS/NIST/OWASP/SANS Top 25), multi-repo scanning, GitHub webhook trigger server |
 | [v6.2.0](https://github.com/OmarRao/secure-scope/releases/tag/v6.2.0) | 2026-06-22 | Report completeness — added Secrets Detection and Dependency Vulnerability sections to report.html; fixed nav sidebar; removed broken screenshot reference |
 | [v6.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v6.0.0) | 2026-06-18 | IaC Misconfiguration Scanner — Terraform, Kubernetes, Dockerfile, GitHub Actions, CloudFormation, Ansible; checkov integration + 50+ built-in pattern checks; integrated into main scan pipeline |

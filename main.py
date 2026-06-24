@@ -52,8 +52,13 @@ def _scan_one(repo_url: str, args, out_dir: Path) -> None:
     print(f"{'='*60}\n")
 
     # ── 1. Static Analysis ──────────────────────────────────────
-    from analyzer import analyze
-    result = analyze(repo_url)
+    if args.pr_diff:
+        from analyzer import analyze_pr
+        result = analyze_pr(repo_url, base_branch=args.base_branch)
+        print(f"\n[+] PR diff scan ({len(result.changed_files)} changed files):")
+    else:
+        from analyzer import analyze
+        result = analyze(repo_url)
     print(f"\n[+] Static analysis complete:")
     print(f"    Findings : {len(result.findings)}")
     print(f"    CVEs     : {len(result.dependency_vulns)}")
@@ -85,6 +90,16 @@ def _scan_one(repo_url: str, args, out_dir: Path) -> None:
 
     findings_raw = enriched or [f.to_dict() for f in result.findings]
 
+    # ── 3b. False Positive Suppression ─────────────────────────
+    suppressed_findings = []
+    if result.repo_path:
+        from false_positives import load_suppressions, apply_suppressions
+        suppressions = load_suppressions(result.repo_path)
+        if suppressions:
+            active, suppressed_findings = apply_suppressions(result.findings, suppressions)
+            print(f"[+] Suppressions: {len(suppressed_findings)} findings suppressed")
+            result.findings = active
+
     # ── 4. Compliance Posture ───────────────────────────────────
     compliance_html = ""
     if args.compliance:
@@ -112,13 +127,64 @@ def _scan_one(repo_url: str, args, out_dir: Path) -> None:
         trivy_path.write_text(json.dumps([v.to_dict() for v in container_vulns], indent=2))
         print(f"[+] Trivy: {len(container_vulns)} container issues -> {trivy_path}")
 
+    # ── 5b. OpenSSF Scorecard ───────────────────────────────────
+    scorecard_data = None
+    if args.scorecard:
+        print("\n[*] Running OpenSSF Scorecard...")
+        from scorecard import run_scorecard
+        scorecard_data = run_scorecard(repo_url)
+        score_val = scorecard_data.get("score")
+        print(f"[+] Scorecard score: {score_val}/10" if score_val else "[!] Scorecard unavailable")
+
+    # ── 5c. DAST ────────────────────────────────────────────────
+    dast_findings = None
+    if args.dast_url:
+        print(f"\n[*] Running DAST against {args.dast_url}...")
+        from dast import scan_with_nuclei, scan_with_zap
+        dast_findings = scan_with_nuclei(args.dast_url)
+        if not dast_findings:
+            dast_findings = scan_with_zap(args.dast_url)
+        print(f"[+] DAST: {len(dast_findings)} findings")
+
+    # ── 5d. License Scan ────────────────────────────────────────
+    license_results = None
+    if args.license_scan and result.repo_path:
+        print("\n[*] Scanning licenses...")
+        from license_scanner import scan_licenses
+        license_results = scan_licenses(result.repo_path)
+        high_risk = sum(1 for r in license_results if r["risk"] == "high")
+        print(f"[+] Licenses: {len(license_results)} packages, {high_risk} high-risk")
+
+    # ── 5e. Supply Chain ────────────────────────────────────────
+    supply_chain_findings = None
+    if args.supply_chain and result.repo_path:
+        print("\n[*] Checking supply-chain risks...")
+        from supply_chain import check_dependency_confusion, check_typosquatting
+        supply_chain_findings = (
+            check_dependency_confusion(result.repo_path) +
+            check_typosquatting(result.repo_path)
+        )
+        print(f"[+] Supply chain: {len(supply_chain_findings)} issues")
+
+    # ── 5f. Trend Tracking ──────────────────────────────────────
+    from trend import append_scan_record, load_trend
+    append_scan_record(result, str(out_dir))
+    trend_records = load_trend(repo_url, str(out_dir))
+
     # ── 6. Reports ──────────────────────────────────────────────
     from report import to_json, to_html
     json_path = str(out_dir / f"{repo_slug}_{ts}.json")
     html_path = str(out_dir / f"{repo_slug}_{ts}.html")
     to_json(result, obs, enriched, json_path)
-    to_html(result, obs, enriched, html_path, compliance_html=compliance_html,
-            container_vulns=container_vulns)
+    to_html(result, obs, enriched, html_path,
+            compliance_html=compliance_html,
+            container_vulns=container_vulns,
+            scorecard_data=scorecard_data,
+            dast_findings=dast_findings,
+            license_results=license_results,
+            supply_chain_findings=supply_chain_findings,
+            trend_records=trend_records,
+            suppressed_findings=suppressed_findings if suppressed_findings else None)
 
     # ── 7. SARIF ────────────────────────────────────────────────
     if args.sarif:
@@ -129,6 +195,32 @@ def _scan_one(repo_url: str, args, out_dir: Path) -> None:
     if args.sbom:
         from sbom import generate_sbom
         generate_sbom(result, str(out_dir / f"{repo_slug}_{ts}.sbom.cyclonedx.json"))
+
+    # ── 8b. Notifications ───────────────────────────────────────
+    if args.slack_webhook:
+        from notifications import send_slack_notification
+        ok = send_slack_notification(result, args.slack_webhook,
+                                     report_url=f"file://{html_path}")
+        print(f"[+] Slack notification: {'sent' if ok else 'failed'}")
+
+    if args.teams_webhook:
+        from notifications import send_teams_notification
+        ok = send_teams_notification(result, args.teams_webhook,
+                                     report_url=f"file://{html_path}")
+        print(f"[+] Teams notification: {'sent' if ok else 'failed'}")
+
+    # ── 8c. GitHub Issues ───────────────────────────────────────
+    if args.create_issues and args.github_token:
+        from github_issues import create_issues_for_findings
+        findings_raw = enriched or [f.to_dict() for f in result.findings]
+        issue_results = create_issues_for_findings(
+            repo_url=repo_url,
+            github_token=args.github_token,
+            findings=findings_raw,
+            severity_threshold="ERROR",
+        )
+        created = sum(1 for r in issue_results if r.get("status") == "created")
+        print(f"[+] GitHub Issues: {created} created, {len(issue_results)-created} already existed")
 
     # ── 9. Commit Fixes ─────────────────────────────────────────
     if enriched and args.github_token:
@@ -172,11 +264,33 @@ def main():
     parser.add_argument("--max-findings", type=int, default=20)
     parser.add_argument("--out-dir", default="reports")
 
-    # New feature flags
+    # Existing feature flags
     parser.add_argument("--sarif", action="store_true", help="Export SARIF 2.1.0 report")
     parser.add_argument("--sbom", action="store_true", help="Export CycloneDX SBOM")
     parser.add_argument("--image", default="", help="Container image for Trivy scan")
     parser.add_argument("--compliance", action="store_true", help="Include compliance posture section")
+
+    # v8.0.0 feature flags
+    parser.add_argument("--slack-webhook", default="", metavar="URL",
+                        help="Post scan results to this Slack incoming webhook URL")
+    parser.add_argument("--teams-webhook", default="", metavar="URL",
+                        help="Post scan results to this Microsoft Teams webhook URL")
+    parser.add_argument("--create-issues", action="store_true",
+                        help="Auto-create GitHub Issues for ERROR findings (requires --github-token)")
+    parser.add_argument("--scorecard", action="store_true",
+                        help="Run OpenSSF Scorecard for the repository")
+    parser.add_argument("--dast-url", default="", metavar="URL",
+                        help="Run DAST (Nuclei/ZAP) against this URL")
+    parser.add_argument("--license-scan", action="store_true",
+                        help="Scan dependency licenses for copyleft/compliance risk")
+    parser.add_argument("--supply-chain", action="store_true",
+                        help="Check for dependency confusion and typosquatting")
+    parser.add_argument("--pr-diff", action="store_true",
+                        help="Only scan files changed vs base branch (PR diff mode)")
+    parser.add_argument("--base-branch", default="main",
+                        help="Base branch for PR diff mode (default: main)")
+    parser.add_argument("--suppress-fp", nargs=3, metavar=("RULE_ID", "FILE", "REASON"),
+                        help="Add a false positive suppression to .secscope-suppressions.json")
 
     # Credentials
     parser.add_argument("--github-token", default=os.environ.get("GITHUB_TOKEN"))
@@ -230,6 +344,30 @@ def main():
     if not repos:
         print("[!] No repos to scan.")
         sys.exit(1)
+
+    # ── Handle --suppress-fp (standalone: add suppression then continue) ────
+    if args.suppress_fp:
+        rule_id, file_path, reason = args.suppress_fp
+        # We need a local path; clone the first repo if it's a URL
+        import tempfile
+        tmp = tempfile.mkdtemp(prefix="secscope_fp_")
+        try:
+            from analyzer import clone_repo
+            clone_repo(repos[0], tmp)
+            from false_positives import save_suppression
+            save_suppression(tmp, rule_id, file_path, reason)
+            print(f"[+] Suppression added: {rule_id} in {file_path}")
+            # Copy suppression file back to cwd if it doesn't exist there
+            import shutil as _sh
+            src = Path(tmp) / ".secscope-suppressions.json"
+            dst = Path(".secscope-suppressions.json")
+            if src.exists() and not dst.exists():
+                _sh.copy(src, dst)
+        except Exception as exc:
+            print(f"[!] Could not add suppression: {exc}")
+        finally:
+            import shutil as _sh
+            _sh.rmtree(tmp, ignore_errors=True)
 
     if len(repos) > 1:
         print(f"[*] Multi-repo scan: {len(repos)} repositories")

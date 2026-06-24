@@ -1884,6 +1884,60 @@
         <input class="modal-input" id="wizGhToken" type="password"
           placeholder="ghp_..." autocomplete="off">
       </div>
+
+      <!-- v8.0.0 extra options -->
+      <div class="toggle-row" style="margin-top:12px">
+        <div class="toggle-info">
+          <div class="toggle-name">Create GitHub Issues</div>
+          <div class="toggle-desc">Auto-create GitHub Issues for ERROR-level findings (requires GitHub Token above)</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="wizCreateIssues"><div class="toggle-track"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-name">Run OpenSSF Scorecard</div>
+          <div class="toggle-desc">Fetch the repository's OpenSSF Scorecard (requires public repo)</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="wizScorecard"><div class="toggle-track"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-name">License Scan</div>
+          <div class="toggle-desc">Scan dependencies for copyleft license compliance risks</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="wizLicenseScan"><div class="toggle-track"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-name">Supply Chain Check</div>
+          <div class="toggle-desc">Detect dependency confusion and typosquatting attacks</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="wizSupplyChain"><div class="toggle-track"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-name">PR Diff Mode</div>
+          <div class="toggle-desc">Only scan files changed vs the base branch (for pull request review)</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="wizPrDiff" onchange="document.getElementById('wizBaseBranchWrap').style.display=this.checked?'block':'none'"><div class="toggle-track"></div></label>
+      </div>
+      <div id="wizBaseBranchWrap" style="display:none;margin-top:6px">
+        <div class="field-label">Base Branch</div>
+        <input class="modal-input" id="wizBaseBranch" type="text" value="main" placeholder="main">
+      </div>
+      <div style="margin-top:12px">
+        <div class="field-label">Slack Webhook URL (optional)</div>
+        <input class="modal-input" id="wizSlackWebhook" type="text" placeholder="https://hooks.slack.com/services/...">
+      </div>
+      <div style="margin-top:8px">
+        <div class="field-label">Teams Webhook URL (optional)</div>
+        <input class="modal-input" id="wizTeamsWebhook" type="text" placeholder="https://your-org.webhook.office.com/...">
+      </div>
+      <div style="margin-top:8px">
+        <div class="field-label">DAST Target URL (optional — run Nuclei/ZAP against this URL)</div>
+        <input class="modal-input" id="wizDastUrl" type="text" placeholder="https://app.example.com">
+      </div>
+
       <div class="wizard-footer">
         <button class="btn-back" onclick="goStep(2)">&larr; Back</button>
         <div class="step-dots">

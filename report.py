@@ -37,7 +37,13 @@ def to_json(result: AnalysisResult, obs: Optional["RuntimeObservation"] = None,
 
 def to_html(result: AnalysisResult, obs: Optional["RuntimeObservation"] = None,
             enriched: Optional[list] = None, path: str = "report.html",
-            compliance_html: str = "", container_vulns: Optional[list] = None) -> str:
+            compliance_html: str = "", container_vulns: Optional[list] = None,
+            scorecard_data: Optional[dict] = None,
+            dast_findings: Optional[list] = None,
+            license_results: Optional[list] = None,
+            supply_chain_findings: Optional[list] = None,
+            trend_records: Optional[list] = None,
+            suppressed_findings: Optional[list] = None) -> str:
     findings = enriched or [f.to_dict() for f in result.findings]
     summary = result.summary()
 
@@ -153,12 +159,91 @@ def to_html(result: AnalysisResult, obs: Optional["RuntimeObservation"] = None,
   {runtime_section}
   {container_section}
   {compliance_html}
+  {_scorecard_section(scorecard_data)}
+  {_dast_section(dast_findings)}
+  {_license_section(license_results)}
+  {_supply_chain_section(supply_chain_findings)}
+  {_trend_section(trend_records)}
+  {_suppressed_section(suppressed_findings)}
 </body>
 </html>"""
 
     Path(path).write_text(html)
     print(f"[+] HTML report: {path}")
     return path
+
+
+def _scorecard_section(scorecard_data: Optional[dict]) -> str:
+    if not scorecard_data:
+        return ""
+    try:
+        from scorecard import scorecard_to_html
+        return scorecard_to_html(scorecard_data)
+    except ImportError:
+        return ""
+
+
+def _dast_section(dast_findings: Optional[list]) -> str:
+    if not dast_findings:
+        return ""
+    try:
+        from dast import dast_to_html
+        return dast_to_html(dast_findings)
+    except ImportError:
+        return ""
+
+
+def _license_section(license_results: Optional[list]) -> str:
+    if not license_results:
+        return ""
+    try:
+        from license_scanner import license_to_html
+        return license_to_html(license_results)
+    except ImportError:
+        return ""
+
+
+def _supply_chain_section(supply_chain_findings: Optional[list]) -> str:
+    if supply_chain_findings is None:
+        return ""
+    try:
+        from supply_chain import supply_chain_to_html
+        return supply_chain_to_html(supply_chain_findings)
+    except ImportError:
+        return ""
+
+
+def _trend_section(trend_records: Optional[list]) -> str:
+    if not trend_records:
+        return ""
+    try:
+        from trend import trend_to_html
+        return trend_to_html(trend_records)
+    except ImportError:
+        return ""
+
+
+def _suppressed_section(suppressed_findings: Optional[list]) -> str:
+    if not suppressed_findings:
+        return ""
+    rows = ""
+    for f in suppressed_findings:
+        sup = f.get("_suppression", {})
+        rows += (
+            f"<tr>"
+            f"<td><code>{f.get('rule_id','')}</code></td>"
+            f"<td>{f.get('file','')}:{f.get('line_start','')}</td>"
+            f"<td>{sup.get('reason','')}</td>"
+            f"<td>{sup.get('suppressed_by','')}</td>"
+            f"<td>{sup.get('suppressed_at','')[:10]}</td>"
+            f"</tr>"
+        )
+    return f"""
+<h2>Suppressed Findings (False Positives)</h2>
+<table>
+  <thead><tr><th>Rule</th><th>Location</th><th>Reason</th><th>By</th><th>Date</th></tr></thead>
+  <tbody>{rows}</tbody>
+</table>"""
 
 
 try:

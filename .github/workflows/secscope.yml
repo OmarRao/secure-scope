@@ -1,0 +1,62 @@
+name: SecureScope Self-Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  secscope:
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write   # required for upload-sarif
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install semgrep pip-audit requests
+
+      - name: Run SecureScope
+        run: |
+          python main.py \
+            --repo https://github.com/${{ github.repository }} \
+            --no-advisor \
+            --no-sandbox \
+            --sarif \
+            --sbom \
+            --compliance \
+            --out-dir ./secscope-reports
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload SARIF to GitHub Code Scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: ./secscope-reports/
+
+      - name: Upload SBOM as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: secscope-sbom
+          path: ./secscope-reports/*.sbom.cyclonedx.json
+          retention-days: 90
+
+      - name: Upload full reports as artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: secscope-reports
+          path: ./secscope-reports/
+          retention-days: 30
