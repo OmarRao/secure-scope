@@ -93,16 +93,18 @@ def to_html(result: AnalysisResult, obs: Optional["RuntimeObservation"] = None,
     if container_vulns:
         sev_color = {"CRITICAL": "#b71c1c", "HIGH": "#d32f2f", "MEDIUM": "#f57c00",
                      "LOW": "#388e3c", "UNKNOWN": "#757575"}
-        trivy_rows = "".join(
-            f"<tr><td><span style='color:{sev_color.get(v.get(\"severity\",\"UNKNOWN\"),\"#555\")}"
-            f";font-weight:bold'>{v.get('severity','')}</span></td>"
-            f"<td>{v.get('target','')}</td><td>{v.get('package','')}</td>"
-            f"<td>{v.get('version','')}</td><td><code>{v.get('vuln_id','')}</code></td>"
-            f"<td>{v.get('title','')[:80]}</td>"
-            f"<td>{v.get('fixed_version','') or '—'}</td></tr>"
-            for v in (container_vulns if isinstance(container_vulns[0], dict)
-                      else [cv.to_dict() for cv in container_vulns])
-        )
+        cv_list = container_vulns if isinstance(container_vulns[0], dict) else [cv.to_dict() for cv in container_vulns]
+        trivy_rows = ""
+        for v in cv_list:
+            sev = v.get("severity", "UNKNOWN")
+            color = sev_color.get(sev, "#555")
+            trivy_rows += (
+                f"<tr><td><span style='color:{color};font-weight:bold'>{sev}</span></td>"
+                f"<td>{v.get('target', '')}</td><td>{v.get('package', '')}</td>"
+                f"<td>{v.get('version', '')}</td><td><code>{v.get('vuln_id', '')}</code></td>"
+                f"<td>{v.get('title', '')[:80]}</td>"
+                f"<td>{v.get('fixed_version', '') or '—'}</td></tr>"
+            )
         container_section = f"""
         <h2>Container / Trivy Scan</h2>
         <table>
