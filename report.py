@@ -5,6 +5,7 @@ Report generator: produces a structured HTML and JSON security report.
 import json
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 from analyzer import AnalysisResult
 from sandbox import RuntimeObservation
 
