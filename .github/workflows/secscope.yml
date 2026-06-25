@@ -35,6 +35,7 @@ jobs:
             --sarif \
             --sbom \
             --compliance \
+            --secret-scan \
             --out-dir ./secscope-reports
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
