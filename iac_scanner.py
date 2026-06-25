@@ -1028,3 +1028,91 @@ def list_frameworks() -> List[dict]:
         {"id": "helm",           "name": "Helm",              "extensions": ["Chart.yaml", "values.yaml"], "icon": "⛵"},
         {"id": "ansible",        "name": "Ansible",           "extensions": [".yml", ".yaml"],          "icon": "🤖"},
     ]
+
+
+# ── Simple API for main.py / report.py integration ────────────────────────────
+
+
+def scan_iac(repo_path: str) -> list:
+    """
+    Run Checkov against repo_path and return a flat list of failed policy checks.
+
+    Returns list of dicts: {"check_id": str, "name": str, "resource": str, "file": str, "severity": str}
+    Falls back to [] if checkov is not installed or produces no output.
+    """
+    try:
+        proc = subprocess.run(
+            ["checkov", "-d", repo_path, "--output", "json", "--quiet"],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+        raw = proc.stdout.strip()
+        if not raw:
+            return []
+
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            # Try to extract first JSON object
+            m = re.search(r'\{.*\}', raw, re.DOTALL)
+            if not m:
+                return []
+            data = json.loads(m.group(0))
+
+        blocks = data if isinstance(data, list) else [data]
+        findings = []
+        for block in blocks:
+            for chk in block.get("results", {}).get("failed_checks", []):
+                check_meta = chk.get("check", {})
+                name = check_meta.get("name", "") if isinstance(check_meta, dict) else str(check_meta)
+                findings.append({
+                    "check_id": chk.get("check_id", ""),
+                    "name": name,
+                    "resource": chk.get("resource", ""),
+                    "file": chk.get("file_path", chk.get("repo_file_path", "")),
+                    "severity": chk.get("severity", "MEDIUM") or "MEDIUM",
+                })
+        return findings
+
+    except FileNotFoundError:
+        return []
+    except Exception:
+        return []
+
+
+def iac_to_html(findings: Optional[list]) -> str:
+    """Render IaC findings as an HTML table section."""
+    if not findings:
+        return ""
+
+    sev_color = {
+        "CRITICAL": "#b71c1c",
+        "HIGH": "#d32f2f",
+        "MEDIUM": "#f57c00",
+        "LOW": "#388e3c",
+        "INFO": "#1976d2",
+    }
+
+    rows = ""
+    for f in findings:
+        sev = str(f.get("severity", "MEDIUM")).upper()
+        color = sev_color.get(sev, "#555")
+        rows += (
+            f"<tr>"
+            f"<td><code>{f.get('check_id', '')}</code></td>"
+            f"<td>{f.get('name', '')}</td>"
+            f"<td>{f.get('resource', '')}</td>"
+            f"<td><code>{f.get('file', '')}</code></td>"
+            f"<td><span style='color:{color};font-weight:bold'>{sev}</span></td>"
+            f"</tr>"
+        )
+
+    return f"""
+<h2>IaC Policy Violations — Checkov ({len(findings)} found)</h2>
+<table>
+  <thead>
+    <tr><th>Check ID</th><th>Name</th><th>Resource</th><th>File</th><th>Severity</th></tr>
+  </thead>
+  <tbody>{rows}</tbody>
+</table>"""

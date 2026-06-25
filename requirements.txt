@@ -7,3 +7,8 @@ urllib3>=1.26.19 # not directly required, pinned by Snyk to avoid a vulnerabilit
 pyjwt>=2.11.0 # not directly required, pinned by Snyk to avoid a vulnerability
 requests>=2.32.2 # not directly required, pinned by Snyk to avoid a vulnerability
 idna>=3.15 # not directly required, pinned by Snyk to avoid a vulnerability
+
+# Optional — install for additional scan capabilities
+# detect-secrets>=1.4.0    # secret scanning (--secret-scan)
+# checkov>=3.0.0           # IaC scanning (--iac-scan)
+# yara-python>=4.3.0       # YARA rule scanning

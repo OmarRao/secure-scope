@@ -44,7 +44,9 @@ def to_html(result: AnalysisResult, obs: Optional["RuntimeObservation"] = None,
             license_results: Optional[list] = None,
             supply_chain_findings: Optional[list] = None,
             trend_records: Optional[list] = None,
-            suppressed_findings: Optional[list] = None) -> str:
+            suppressed_findings: Optional[list] = None,
+            secret_findings: Optional[list] = None,
+            iac_findings: Optional[list] = None) -> str:
     findings = enriched or [f.to_dict() for f in result.findings]
     summary = result.summary()
 
@@ -168,6 +170,8 @@ def to_html(result: AnalysisResult, obs: Optional["RuntimeObservation"] = None,
   {_supply_chain_section(supply_chain_findings)}
   {_trend_section(trend_records)}
   {_suppressed_section(suppressed_findings)}
+  {_secret_section(secret_findings)}
+  {_iac_section(iac_findings)}
 </body>
 </html>"""
 
@@ -247,6 +251,26 @@ def _suppressed_section(suppressed_findings: Optional[list]) -> str:
   <thead><tr><th>Rule</th><th>Location</th><th>Reason</th><th>By</th><th>Date</th></tr></thead>
   <tbody>{rows}</tbody>
 </table>"""
+
+
+def _secret_section(secret_findings: Optional[list]) -> str:
+    if not secret_findings:
+        return ""
+    try:
+        from secret_scanner import secret_to_html
+        return secret_to_html(secret_findings)
+    except ImportError:
+        return ""
+
+
+def _iac_section(iac_findings: Optional[list]) -> str:
+    if not iac_findings:
+        return ""
+    try:
+        from iac_scanner import iac_to_html
+        return iac_to_html(iac_findings)
+    except ImportError:
+        return ""
 
 
 try:

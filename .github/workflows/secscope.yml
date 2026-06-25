@@ -24,7 +24,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install semgrep pip-audit requests
+          pip install semgrep pip-audit requests detect-secrets
 
       - name: Run SecureScope
         run: |

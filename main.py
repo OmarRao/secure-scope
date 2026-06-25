@@ -100,6 +100,22 @@ def _scan_one(repo_url: str, args, out_dir: Path) -> None:
             print(f"[+] Suppressions: {len(suppressed_findings)} findings suppressed")
             result.findings = active
 
+    # ── Secret Scanning ─────────────────────────────────────────
+    secret_findings = []
+    if args.secret_scan and result.repo_path:
+        print("\n[*] Scanning for hardcoded secrets...")
+        from secret_scanner import scan_secrets
+        secret_findings = scan_secrets(result.repo_path)
+        print(f"[+] Secrets: {len(secret_findings)} potential secrets found")
+
+    # ── IaC Scanning ────────────────────────────────────────────
+    iac_findings = []
+    if args.iac_scan and result.repo_path:
+        print("\n[*] Scanning IaC files (Checkov)...")
+        from iac_scanner import scan_iac
+        iac_findings = scan_iac(result.repo_path)
+        print(f"[+] IaC: {len(iac_findings)} policy violations found")
+
     # ── 4. Compliance Posture ───────────────────────────────────
     compliance_html = ""
     if args.compliance:
@@ -184,7 +200,16 @@ def _scan_one(repo_url: str, args, out_dir: Path) -> None:
             license_results=license_results,
             supply_chain_findings=supply_chain_findings,
             trend_records=trend_records,
-            suppressed_findings=suppressed_findings if suppressed_findings else None)
+            suppressed_findings=suppressed_findings if suppressed_findings else None,
+            secret_findings=secret_findings if secret_findings else None,
+            iac_findings=iac_findings if iac_findings else None)
+
+    # ── Markdown Summary ────────────────────────────────────────
+    from markdown_report import to_markdown, post_pr_comment
+    md_path = str(out_dir / f"{repo_slug}_{ts}.md")
+    to_markdown(result, md_path, secret_findings=secret_findings, iac_findings=iac_findings)
+    if args.pr_comment and args.github_token:
+        post_pr_comment(repo_url, args.github_token, md_path, pr_number=getattr(args, 'pr_number', None))
 
     # ── 7. SARIF ────────────────────────────────────────────────
     if args.sarif:
@@ -291,6 +316,16 @@ def main():
                         help="Base branch for PR diff mode (default: main)")
     parser.add_argument("--suppress-fp", nargs=3, metavar=("RULE_ID", "FILE", "REASON"),
                         help="Add a false positive suppression to .secscope-suppressions.json")
+
+    # v9.0.0 feature flags
+    parser.add_argument("--secret-scan", action="store_true",
+                        help="Scan for hardcoded secrets using detect-secrets")
+    parser.add_argument("--iac-scan", action="store_true",
+                        help="Scan IaC files (Terraform, CloudFormation, K8s, Dockerfiles) using Checkov")
+    parser.add_argument("--pr-comment", action="store_true",
+                        help="Post markdown summary as a GitHub PR comment (requires --github-token)")
+    parser.add_argument("--pr-number", type=int, default=None,
+                        help="PR number for --pr-comment (auto-detects latest open PR if omitted)")
 
     # Credentials
     parser.add_argument("--github-token", default=os.environ.get("GITHUB_TOKEN"))
