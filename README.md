@@ -7,7 +7,7 @@
 ![Firebase](https://img.shields.io/badge/telemetry-Firebase-orange)
 ![Platforms](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
 
-**🌐 [Landing Page](https://omarrao.github.io/secure-scope/)** | **[📖 Technical User Guide](USERGUIDE.md)** | **[View Sample Report](docs/sample_report.pdf)**
+**🌐 [Live Demo](https://secure-scope.onrender.com/)** | **[📖 Technical User Guide](USERGUIDE.md)** | **[View Sample Report](docs/sample_report.pdf)**
 
 ## Documentation
 
