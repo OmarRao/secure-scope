@@ -69,7 +69,7 @@ def get_llm_client(provider: str, api_key: str):
         key = api_key or os.environ.get("GOOGLE_API_KEY", "")
         genai.configure(api_key=key)
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
+            model_name="gemini-2.0-flash",
             system_instruction=SYSTEM_PROMPT,
         )
 
