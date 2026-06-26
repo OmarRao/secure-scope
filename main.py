@@ -409,6 +409,12 @@ def main():
     parser.add_argument("--max-workers", type=int, default=4,
                         help="Concurrent workers for multi-repo scanning (default: 4)")
 
+    # Telemetry flags
+    parser.add_argument("--no-telemetry", action="store_true",
+                        help="Disable anonymous usage stats for this run")
+    parser.add_argument("--telemetry-opt-out", action="store_true",
+                        help="Permanently opt out of telemetry (writes ~/.secscope/no_telemetry)")
+
     # Credentials
     parser.add_argument("--github-token", default=os.environ.get("GITHUB_TOKEN"))
     parser.add_argument("--anthropic-key", default=os.environ.get("ANTHROPIC_API_KEY"))
@@ -420,6 +426,15 @@ def main():
                         help="GitHub webhook secret")
 
     args = parser.parse_args()
+
+    # ── Telemetry opt-out (early exit) ──────────────────────────
+    if args.telemetry_opt_out:
+        from telemetry import opt_out
+        opt_out()
+        sys.exit(0)
+
+    if args.no_telemetry:
+        os.environ["SECSCOPE_NO_TELEMETRY"] = "1"
 
     # ── Webhook server mode ─────────────────────────────────────
     if args.webhook:
@@ -486,6 +501,17 @@ def main():
             import shutil as _sh
             _sh.rmtree(tmp, ignore_errors=True)
 
+    # ── Telemetry setup ─────────────────────────────────────────
+    from telemetry import track_scan_start, track_scan_complete, track_error
+    active_features = [f for f in ["sarif", "sbom", "compliance", "secret_scan", "iac_scan",
+                                    "dast_url", "scorecard", "polyglot", "pdf", "use_db",
+                                    "supply_chain", "license_scan", "pr_diff", "pr_comment"]
+                       if getattr(args, f, False)]
+    _tel_start = track_scan_start(active_features)
+
+    print("[*] SecureScope collects anonymous usage stats to improve the tool.")
+    print("    Disable: export SECSCOPE_NO_TELEMETRY=1  or  python main.py --telemetry-opt-out")
+
     if len(repos) > 1:
         print(f"[*] Multi-repo scan: {len(repos)} repositories (max_workers={args.max_workers})")
         from queue_runner import ScanQueue
@@ -494,13 +520,16 @@ def main():
             q.add_repo(repo_url)
         q.start(args, out_dir)
         q.wait()
+        track_scan_complete(_tel_start, {}, active_features)
         if q.failed:
             print(f"[!] {len(q.failed)} scans failed: {', '.join(q.failed)}")
     else:
         for repo_url in repos:
             try:
                 _scan_one(repo_url, args, out_dir)
+                track_scan_complete(_tel_start, {}, active_features)
             except Exception as exc:
+                track_error(type(exc).__name__, active_features)
                 print(f"[!] Scan failed for {repo_url}: {exc}")
 
 

@@ -1,11 +1,33 @@
 # SecureScope / GitHub Security Review Tool
 
-![Version](https://img.shields.io/badge/version-v8.0.0-blue)
+![Version](https://img.shields.io/badge/version-v10.0.0-blue)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-v14-red)
 ![License](https://img.shields.io/badge/license-MIT-green)
+![Python](https://img.shields.io/badge/python-3.11%2B-blue)
+![Firebase](https://img.shields.io/badge/telemetry-Firebase-orange)
+![Platforms](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
 
 > AI-powered security analysis for any GitHub repository. Paste a URL, get a full threat report mapped to MITRE ATT&CK and CWE, with optional Docker sandbox execution and AI-generated fix diffs from your choice of LLM.
-> **v8.0.0** adds Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard integration, DAST (Nuclei + ZAP), license compliance scanning, supply-chain/typosquatting detection, PR diff mode, historical trend tracking, and false-positive suppression. **v7.0.0** added SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture (PCI DSS / NIST / OWASP / SANS Top 25), multi-repo scanning, and a GitHub webhook server. **v6.2.0** completed the security report — Secrets Detection and Dependency Vulnerability sections. **v6.0.0** added IaC Misconfiguration Scanner. **v5.0.0** expanded YARA to 11 rule sets. **v4.0.0** added OSV.dev dependency scanning. **v3.0.0** added Secrets Detection.
+> **v10.0.0** adds polyglot scanning, SQLite persistence, SLA tracking, Jira integration, PDF export, job queue, GitHub App auth, custom Semgrep rules, Kubernetes manifests, Helm chart, and anonymous Firebase telemetry. **v8.0.0** adds Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard integration, DAST (Nuclei + ZAP), license compliance scanning, supply-chain/typosquatting detection, PR diff mode, historical trend tracking, and false-positive suppression. **v7.0.0** added SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture (PCI DSS / NIST / OWASP / SANS Top 25), multi-repo scanning, and a GitHub webhook server. **v6.2.0** completed the security report — Secrets Detection and Dependency Vulnerability sections. **v6.0.0** added IaC Misconfiguration Scanner. **v5.0.0** expanded YARA to 11 rule sets. **v4.0.0** added OSV.dev dependency scanning. **v3.0.0** added Secrets Detection.
+
+## What's New in v10.0.0
+
+| Feature | Description |
+|---------|-------------|
+| Polyglot scanning | npm audit, cargo audit, govulncheck, bundler-audit across all ecosystems |
+| SQLite persistence | `--use-db` flag persists all scans and findings for trend analysis |
+| SLA tracking | `--sla-check` alerts on findings breaching configured SLA thresholds |
+| Jira integration | `--jira-*` flags auto-create tickets for HIGH+ findings |
+| PDF export | `--pdf` flag exports HTML report to PDF via weasyprint |
+| Job queue | `--repos-file` scans multiple repos concurrently |
+| GitHub App auth | `--github-app-id` / `--github-app-key` for installation-level auth |
+| Custom Semgrep rules | `rules/flask-security.yaml`, `rules/secrets.yaml`, `rules/api-security.yaml` |
+| Kubernetes manifests | `k8s/` deployment, service, configmap for production hosting |
+| Helm chart | `helm/` chart for parameterised K8s installs |
+| Anonymous telemetry | Opt-in usage stats via Firebase (disable: `--no-telemetry`) |
+| Secret scanning | `--secret-scan` via detect-secrets |
+| IaC scanning | `--iac-scan` via checkov + built-in pattern checks |
+| Markdown PR comments | `--pr-comment` posts summary to open PR |
 
 **[View Sample Report (PDF)](https://github.com/OmarRao/secure-scope/blob/main/docs/sample_report.pdf)**
 
@@ -303,38 +325,62 @@ python main.py --repo https://github.com/owner/repo --no-advisor \
 
 ---
 
-## CLI Reference (v8.0.0)
+## Full CLI Reference
 
+### Core Flags
 | Flag | Description |
 |------|-------------|
-| `--repo URL` | Single repository to scan |
-| `--repos URL,URL,...` | Comma-separated list of repositories |
-| `--repos-file FILE` | File with one URL per line |
-| `--branch BRANCH` | Target branch (default: `main`) |
+| `--repo <url>` | GitHub repository URL to scan |
+| `--repos <url> [url...]` | Multiple repos (space-separated) |
+| `--repos-file <path>` | File with one repo URL per line |
+| `--branch <name>` | Branch to clone (default: default branch) |
+| `--out-dir <path>` | Output directory for reports (default: `./reports`) |
+| `--no-advisor` | Skip AI fix suggestions |
 | `--no-sandbox` | Skip Docker sandbox execution |
-| `--no-advisor` | Skip Claude fix advisor (no API cost) |
-| `--commit` | Commit AI-generated fixes to the repo |
-| `--max-findings N` | Max findings to generate advisories for (default: 20) |
-| `--out-dir DIR` | Output directory (default: `./reports`) |
-| `--sarif` | Export SARIF 2.1.0 report |
+
+### Report Flags
+| Flag | Description |
+|------|-------------|
+| `--sarif` | Export SARIF 2.1.0 for GitHub Code Scanning |
 | `--sbom` | Export CycloneDX 1.4 SBOM |
-| `--image IMAGE` | Trivy container image scan |
-| `--compliance` | Add PCI DSS / NIST / OWASP / SANS Top 25 compliance section |
-| `--slack-webhook URL` | Post completion summary to Slack |
-| `--teams-webhook URL` | Post completion summary to Microsoft Teams |
-| `--create-issues` | Auto-create GitHub Issues for ERROR findings |
-| `--scorecard` | Run OpenSSF Scorecard |
-| `--dast-url URL` | Run DAST (Nuclei first, ZAP fallback) |
-| `--license-scan` | Scan dependency licenses for compliance risk |
-| `--supply-chain` | Check for dependency confusion + typosquatting |
-| `--pr-diff` | Only scan files changed vs base branch |
-| `--base-branch BRANCH` | Base branch for PR diff (default: `main`) |
-| `--suppress-fp RULE FILE REASON` | Add a false positive suppression |
-| `--github-token TOKEN` | GitHub PAT (or `GITHUB_TOKEN` env var) |
-| `--anthropic-key KEY` | Anthropic API key (or `ANTHROPIC_API_KEY` env var) |
-| `--webhook` | Run as webhook server |
-| `--port PORT` | Webhook server port (default: 8080) |
-| `--webhook-secret SECRET` | GitHub webhook secret |
+| `--sbom-diff <path>` | Compare current SBOM against previous |
+| `--compliance` | Include PCI DSS / NIST / OWASP compliance posture |
+| `--pdf` | Export PDF report (requires weasyprint) |
+| `--pr-comment` | Post markdown summary to open PR |
+| `--pr-number <n>` | Specific PR to comment on |
+
+### Scan Flags
+| Flag | Description |
+|------|-------------|
+| `--secret-scan` | Scan for hardcoded secrets (requires detect-secrets) |
+| `--iac-scan` | Scan IaC files (Dockerfile, Terraform, K8s) |
+| `--polyglot` | Multi-ecosystem dependency audit |
+| `--dast <url>` | DAST scan of running app (Nuclei + ZAP) |
+| `--trivy <image>` | Container image vulnerability scan |
+| `--scorecard` | OpenSSF Scorecard check |
+| `--supply-chain` | Supply chain / typosquatting check |
+| `--license` | License compliance check |
+
+### Persistence & Integrations
+| Flag | Description |
+|------|-------------|
+| `--use-db` | Persist results to SQLite |
+| `--db-path <path>` | SQLite database path (default: `secscope.db`) |
+| `--sla-check` | Check SLA breaches after scan |
+| `--jira-url <url>` | Jira Cloud base URL |
+| `--jira-email <email>` | Jira user email |
+| `--jira-token <token>` | Jira API token |
+| `--jira-project <key>` | Jira project key |
+| `--slack-webhook <url>` | Slack webhook for notifications |
+| `--github-app-id <id>` | GitHub App ID |
+| `--github-app-key <path>` | Path to GitHub App private key PEM |
+| `--max-workers <n>` | Concurrent workers for multi-repo scans (default: 4) |
+
+### Telemetry
+| Flag | Description |
+|------|-------------|
+| `--no-telemetry` | Disable anonymous usage stats for this run |
+| `--telemetry-opt-out` | Permanently opt out (writes ~/.secscope/no_telemetry) |
 
 ---
 
@@ -734,6 +780,7 @@ Each triggered scan produces JSON, HTML, SARIF, SBOM, and compliance reports aut
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| [v10.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v10.0.0) | 2026-06-26 | Polyglot scanning, SQLite persistence, SLA tracking, Jira integration, PDF export, job queue, GitHub App auth, custom Semgrep rules, K8s manifests, Helm chart, Firebase anonymous telemetry |
 | [v8.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v8.0.0) | 2026-06-24 | Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard, DAST (Nuclei + ZAP), license compliance, supply chain/typosquatting detection, PR diff mode, historical trend tracking, false-positive suppression, GitHub Actions CI workflow |
 | [v7.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v7.0.0) | 2026-06-23 | SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture report (PCI DSS/NIST/OWASP/SANS Top 25), multi-repo scanning, GitHub webhook trigger server |
 | [v6.2.0](https://github.com/OmarRao/secure-scope/releases/tag/v6.2.0) | 2026-06-22 | Report completeness — added Secrets Detection and Dependency Vulnerability sections to report.html; fixed nav sidebar; removed broken screenshot reference |
