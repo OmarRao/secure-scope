@@ -1,452 +1,442 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SecureScope — Security Analysis for any GitHub Repo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;900&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #0a0a0a;
-      --bg2: #111111;
-      --border: #222222;
-      --accent: #4a9eff;
-      --accent-dim: #1a3a6e;
-      --text: #ffffff;
-      --text-dim: #888888;
-      --text-muted: #555555;
-      --card-bg: #111111;
+      --ink:    #0a0c0f;
+      --ink2:   #111419;
+      --ink3:   #181c23;
+      --ink4:   #1f242d;
+      --rule:   #252b35;
+      --rule2:  #2e3540;
+      --muted:  #4a5568;
+      --dim:    #6b7785;
+      --sub:    #a0aec0;
+      --body:   #e2e8f0;
+      --head:   #ffffff;
+      --accent: #4f8ef7;
+      --danger: #f25757;
+      --warn:   #e6a817;
+      --ok:     #3ecf79;
+      --tag:    #a78bfa;
+      --gutter: 48px;
+      --max:    1100px;
     }
-
+    html.light {
+      --ink:   #f4f6f9;
+      --ink2:  #ffffff;
+      --ink3:  #eef1f5;
+      --ink4:  #e5e9f0;
+      --rule:  #d5dae4;
+      --rule2: #c4cad6;
+      --muted: #7a8494;
+      --dim:   #5e6878;
+      --sub:   #3d4756;
+      --body:  #1a2030;
+      --head:  #000000;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', sans-serif;
-      font-size: 15px;
+      background: var(--ink);
+      color: var(--body);
+      font-family: 'Geist', sans-serif;
+      font-size: 14px;
       line-height: 1.6;
       min-height: 100vh;
+      transition: background .2s, color .2s;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code { font-family: 'Geist Mono', monospace; }
+
+    .wrap {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 var(--gutter);
     }
 
-    /* NAV */
-    nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 40px;
-      height: 56px;
-      border-bottom: 1px solid var(--border);
-      position: sticky;
-      top: 0;
-      background: rgba(10,10,10,0.92);
-      backdrop-filter: blur(8px);
-      z-index: 100;
+    /* ── Topbar ── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      background: rgba(10,12,15,.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--rule);
+      height: 52px;
     }
-
-    .nav-left {
-      display: flex;
-      align-items: center;
-      gap: 24px;
+    html.light .topbar { background: rgba(244,246,249,.94); }
+    .topbar-inner {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 0 var(--gutter);
+      height: 100%;
+      display: flex; align-items: center; gap: 16px;
     }
-
-    .nav-logo {
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-      color: var(--text);
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .wordmark { font-size: 15px; font-weight: 700; letter-spacing: -.3px; color: var(--head); }
+    .wordmark sup {
+      font-size: 9px; font-weight: 500; color: var(--accent);
+      letter-spacing: .5px; text-transform: uppercase;
+      vertical-align: top; margin-top: 4px; margin-left: 3px;
     }
-
-    .nav-logo .beta {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      background: var(--accent-dim);
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      border-radius: 3px;
-      padding: 1px 5px;
+    .tb-div  { width: 1px; height: 18px; background: var(--rule2); }
+    .tb-link { font-size: 13px; color: var(--sub); transition: color .15s; }
+    .tb-link:hover { color: var(--head); text-decoration: none; }
+    .spacer  { flex: 1; }
+    .tb-badge {
+      font-size: 11px; font-weight: 600; letter-spacing: .6px;
+      text-transform: uppercase; color: var(--muted);
+      font-family: 'Geist Mono', monospace;
     }
-
-    .nav-divider { width: 1px; height: 20px; background: var(--border); }
-
-    .nav-links { display: flex; gap: 20px; list-style: none; }
-    .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 14px; transition: color 0.15s; }
-    .nav-links a:hover { color: var(--text); }
-
-    .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      font-size: 13px;
-      color: var(--text-dim);
+    .theme-btn {
+      background: none; border: 1px solid var(--rule2); border-radius: 6px;
+      color: var(--sub); cursor: pointer; padding: 5px 9px;
+      font-size: 14px; line-height: 1; transition: background .15s, color .15s;
     }
+    .theme-btn:hover { background: var(--ink3); color: var(--head); }
 
-    .nav-badge { font-size: 11px; font-weight: 600; letter-spacing: 0.5px; color: var(--text-dim); }
-
-    .theme-toggle {
-      background: none;
-      border: 1px solid var(--border);
-      color: var(--text);
-      border-radius: 6px;
-      width: 32px;
-      height: 32px;
-      cursor: pointer;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    /* ── Hero ── */
+    .hero { padding: 128px 0 64px; }
+    .hero-eye {
+      font-size: 11px; font-weight: 600; letter-spacing: 1.4px;
+      text-transform: uppercase; color: var(--accent);
+      font-family: 'Geist Mono', monospace;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
     }
-
-    /* HERO */
-    .hero { max-width: 720px; padding: 96px 40px 80px; }
-
-    .hero-eyebrow {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 28px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 1.5px;
-      color: var(--text-muted);
-    }
-
-    .hero-eyebrow::before {
-      content: '';
-      display: block;
-      width: 28px;
-      height: 1px;
-      background: var(--text-muted);
-    }
-
-    .hero h1 {
-      font-size: clamp(48px, 7vw, 80px);
-      font-weight: 800;
-      line-height: 1.05;
-      letter-spacing: -2px;
-      margin-bottom: 24px;
-    }
-
-    .hero p {
-      font-size: 17px;
-      color: var(--text-dim);
-      max-width: 520px;
-      margin-bottom: 40px;
-      line-height: 1.7;
-    }
-
-    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
+    .hero-eye::before {
+      content: ''; display: block; width: 24px; height: 1px;
       background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      padding: 12px 24px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
+    }
+    .hero h1 {
+      font-size: clamp(36px, 5vw, 62px); font-weight: 900;
+      color: var(--head); line-height: 1.07; letter-spacing: -1.5px;
+      margin-bottom: 22px;
+    }
+    .hero-sub {
+      font-size: 17px; color: var(--sub); line-height: 1.72;
+      max-width: 560px; margin-bottom: 40px; font-weight: 300;
+    }
+    .hero-cta {
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 10px;
+      padding: 14px 30px;
+      font-family: 'Geist', sans-serif; font-size: 15px; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; gap: 10px;
+      transition: opacity .15s, transform .1s;
       text-decoration: none;
-      transition: opacity 0.15s;
     }
-    .btn-primary:hover { opacity: 0.88; }
+    .hero-cta:hover { opacity: .88; text-decoration: none; }
+    .hero-cta:active { transform: scale(.98); }
 
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: transparent;
-      color: var(--text-dim);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 24px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      text-decoration: none;
-      transition: border-color 0.15s, color 0.15s;
+    /* ── Section eyebrow ── */
+    .eye {
+      font-size: 10px; font-weight: 600; letter-spacing: 1.4px;
+      text-transform: uppercase; color: var(--muted);
+      font-family: 'Geist Mono', monospace;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
     }
-    .btn-secondary:hover { border-color: #444; color: var(--text); }
+    .eye::before { content: ''; display: block; width: 16px; height: 1px; background: var(--rule2); }
 
-    /* SECTIONS */
-    .section { padding: 72px 40px; border-top: 1px solid var(--border); }
-
-    .section-label {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 1.5px;
-      color: var(--text-muted);
-      margin-bottom: 48px;
+    /* ── Feature grid ── */
+    .features { margin-bottom: 72px; }
+    .feat-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+      border: 1px solid var(--rule); border-radius: 10px; overflow: hidden;
     }
-
-    .section-label::before {
-      content: '';
-      display: block;
-      width: 28px;
-      height: 1px;
-      background: var(--text-muted);
+    .feat {
+      background: var(--ink2); padding: 24px;
+      border-right: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+      transition: background .15s;
     }
-
-    /* CARDS */
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
+    .feat:hover { background: var(--ink3); }
+    .feat-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--ink3); border: 1px solid var(--rule2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; margin-bottom: 14px;
     }
+    .feat h3 { font-size: 14px; font-weight: 600; color: var(--head); margin-bottom: 8px; letter-spacing: -.2px; }
+    .feat p  { font-size: 13px; color: var(--sub); line-height: 1.55; }
 
-    .card { background: var(--card-bg); padding: 28px 24px; }
-
-    .card-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      margin-bottom: 16px;
+    /* ── Why This Matters ── */
+    .why { margin-bottom: 80px; }
+    .why-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
     }
-
-    .card h3 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
-    .card p  { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
-
-    /* INSTALL */
-    .install-block {
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      max-width: 680px;
+    .why-card {
+      background: var(--ink2);
+      border: 1px solid var(--rule); border-radius: 10px;
+      padding: 24px 26px;
     }
-
-    .install-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 16px;
-      border-bottom: 1px solid var(--border);
+    .why-num {
+      font-size: 36px; font-weight: 900; letter-spacing: -1.5px;
+      color: var(--accent); font-family: 'Geist Mono', monospace;
+      line-height: 1; margin-bottom: 6px;
     }
+    .why-num.r { color: var(--danger); }
+    .why-num.o { color: var(--warn); }
+    .why-num.g { color: var(--ok); }
+    .why-stat { font-size: 13px; font-weight: 600; color: var(--head); margin-bottom: 8px; }
+    .why-text { font-size: 13px; color: var(--sub); line-height: 1.6; }
 
-    .install-dots { display: flex; gap: 6px; }
+    /* ── Install ── */
+    .install { margin-bottom: 80px; }
+    .code-block {
+      background: var(--ink2);
+      border: 1px solid var(--rule); border-radius: 10px; overflow: hidden;
+    }
+    .code-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; border-bottom: 1px solid var(--rule);
+    }
+    .code-dots { display: flex; gap: 6px; }
     .dot { width: 10px; height: 10px; border-radius: 50%; }
-    .dot-red    { background: #ff5f56; }
-    .dot-yellow { background: #ffbd2e; }
-    .dot-green  { background: #27c93f; }
-    .install-label { font-size: 11px; color: var(--text-muted); font-family: monospace; }
-
-    .install-code {
+    .dot-r { background: #ff5f56; }
+    .dot-y { background: #ffbd2e; }
+    .dot-g { background: #27c93f; }
+    .code-label { font-size: 11px; color: var(--muted); font-family: 'Geist Mono', monospace; }
+    .code-body {
       padding: 20px 24px;
-      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
-      font-size: 13px;
-      line-height: 1.8;
+      font-family: 'Geist Mono', monospace;
+      font-size: 13px; line-height: 1.8; color: var(--sub);
     }
-    .install-code .comment { color: #555; }
-    .install-code .cmd     { color: #ccc; }
-    .install-code .flag    { color: var(--accent); }
-    .install-code .url     { color: #7ee787; }
+    .code-body .cmt { color: var(--muted); }
+    .code-body .flag { color: var(--accent); }
+    .code-body .url  { color: var(--ok); }
 
-    /* WHATS NEW */
-    .new-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; max-width: 800px; }
-
-    .new-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 12px;
-      background: var(--bg2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 14px 16px;
+    /* ── Footer ── */
+    .footer-wrap {
+      border-top: 1px solid var(--rule);
+      background: var(--ink2);
+      margin-top: 40px;
     }
-
-    .new-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
-    .new-item h4 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
-    .new-item p  { font-size: 12px; color: var(--text-dim); }
-
-    /* FOOTER */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 28px 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 13px;
-      color: var(--text-muted);
+    .footer-top {
+      padding: 48px var(--gutter) 40px;
+      max-width: var(--max); margin: 0 auto;
+      display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 48px;
     }
-    footer a { color: var(--text-muted); text-decoration: none; transition: color 0.15s; }
-    footer a:hover { color: var(--text-dim); }
-    .footer-links { display: flex; gap: 20px; }
+    .footer-brand .wordmark { font-size: 16px; margin-bottom: 10px; display: block; }
+    .footer-brand p { font-size: 13px; color: var(--sub); line-height: 1.65; max-width: 300px; }
+    .footer-col h4 {
+      font-size: 11px; font-weight: 700; letter-spacing: .8px;
+      text-transform: uppercase; color: var(--muted);
+      font-family: 'Geist Mono', monospace; margin-bottom: 14px;
+    }
+    .footer-col a {
+      display: block; font-size: 13px; color: var(--sub);
+      margin-bottom: 8px; transition: color .15s;
+    }
+    .footer-col a:hover { color: var(--head); text-decoration: none; }
+    .footer-bottom {
+      border-top: 1px solid var(--rule);
+      padding: 18px var(--gutter);
+      max-width: var(--max); margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .founder-block { display: flex; align-items: center; gap: 14px; }
+    .founder-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--tag));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 800; color: #fff; flex-shrink: 0;
+    }
+    .founder-name { font-size: 13px; font-weight: 700; color: var(--head); margin-bottom: 2px; }
+    .founder-title { font-size: 11px; color: var(--sub); }
+    .footer-copy { font-size: 11px; color: var(--muted); }
 
-    /* RESPONSIVE */
+    /* ── Responsive ── */
     @media (max-width: 768px) {
-      nav { padding: 0 20px; }
-      .hero { padding: 60px 20px 48px; }
-      .section { padding: 48px 20px; }
-      .cards-grid { grid-template-columns: 1fr; }
-      .new-grid { grid-template-columns: 1fr; }
-      footer { flex-direction: column; gap: 12px; align-items: flex-start; }
-      .nav-right .nav-badge { display: none; }
+      :root { --gutter: 20px; }
+      .hero { padding: 88px 0 48px; }
+      .feat-grid { grid-template-columns: 1fr; }
+      .why-grid  { grid-template-columns: 1fr; }
+      .footer-top { grid-template-columns: 1fr; gap: 32px; }
+      .tb-badge { display: none; }
     }
   </style>
 </head>
 <body>
 
-<!-- NAV -->
-<nav>
-  <div class="nav-left">
-    <a href="#" class="nav-logo">SecureScope <span class="beta">BETA</span></a>
-    <div class="nav-divider"></div>
-    <ul class="nav-links">
-      <li><a href="https://github.com/OmarRao/secure-scope/blob/main/USERGUIDE.md">Docs</a></li>
-      <li><a href="https://github.com/OmarRao/secure-scope/commits/main">History</a></li>
-    </ul>
-  </div>
-  <div class="nav-right">
-    <span class="nav-badge">MITRE ATT&amp;CK V14</span>
-    <div class="nav-divider"></div>
-    <button class="theme-toggle" title="Toggle theme">🌙</button>
+<!-- Topbar -->
+<nav class="topbar">
+  <div class="topbar-inner">
+    <div class="wordmark">SecureScope<sup>BETA</sup></div>
+    <div class="tb-div"></div>
+    <a class="tb-link" href="https://github.com/OmarRao/secure-scope/blob/main/USERGUIDE.md" target="_blank">Docs</a>
+    <a class="tb-link" href="https://github.com/OmarRao/secure-scope/commits/main" target="_blank">History</a>
+    <div class="spacer"></div>
+    <span class="tb-badge">MITRE ATT&CK v14</span>
+    <div class="tb-div"></div>
+    <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode">&#x1F319;</button>
   </div>
 </nav>
 
-<!-- HERO -->
-<section>
-  <div class="hero">
-    <div class="hero-eyebrow">STATIC ANALYSIS / RUNTIME OBSERVATION / AI REMEDIATION</div>
-    <h1>Security Analysis<br>for any GitHub Repo</h1>
-    <p>Paste a GitHub URL. SecureScope clones the repo, runs a full static scan, maps every finding to MITRE ATT&amp;CK and CWE, optionally executes the code in an isolated Docker sandbox, and generates a visual threat report in seconds.</p>
-    <div class="hero-actions">
-      <a href="https://github.com/OmarRao/secure-scope" class="btn-primary">Analyze Repository →</a>
-      <a href="https://github.com/OmarRao/secure-scope/blob/main/USERGUIDE.md" class="btn-secondary">Read the Docs</a>
-    </div>
-  </div>
-</section>
+<main>
+  <div class="wrap">
 
-<!-- CAPABILITIES -->
-<section class="section">
-  <div class="section-label">CAPABILITIES</div>
-  <div class="cards-grid">
-    <div class="card">
-      <div class="card-icon" style="background:#1a1f2e;">🎯</div>
-      <h3>MITRE ATT&amp;CK Mapping</h3>
-      <p>Every vulnerability mapped to a technique ID, tactic phase, and CWE identifier with severity scoring.</p>
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-eye">Static Analysis / Runtime Observation / AI Remediation</div>
+      <h1>Security Analysis<br>for any GitHub Repo</h1>
+      <p class="hero-sub">
+        Paste a GitHub URL. SecureScope clones the repo, runs a full static scan,
+        maps every finding to MITRE ATT&amp;CK and CWE, optionally executes the code
+        in an isolated Docker sandbox, and generates a visual threat report in seconds.
+      </p>
+      <a class="hero-cta" href="https://github.com/OmarRao/secure-scope" target="_blank">
+        Analyze Repository &nbsp;&#x2192;
+      </a>
     </div>
-    <div class="card">
-      <div class="card-icon" style="background:#1a2020;">🐳</div>
-      <h3>Docker Sandbox</h3>
-      <p>Executes the target repo in an isolated container. Captures file writes, spawned processes and attempted network connections.</p>
-    </div>
-    <div class="card">
-      <div class="card-icon" style="background:#1f1a2e;">🤖</div>
-      <h3>Multi-LLM AI Advisor</h3>
-      <p>Choose from Anthropic Claude, GPT-4o, Gemini, Groq, or a local Ollama model to generate diff-style patches.</p>
-    </div>
-    <div class="card">
-      <div class="card-icon" style="background:#1a2520;">📊</div>
-      <h3>Compliance Posture</h3>
-      <p>Automated scoring against PCI DSS, NIST CSF, OWASP Top 10, and SANS Top 25 with remediation guidance.</p>
-    </div>
-    <div class="card">
-      <div class="card-icon" style="background:#251a1a;">🔍</div>
-      <h3>Secrets Detection</h3>
-      <p>Entropy-based and pattern-matching detection across 40+ secret types including API keys, tokens, and private certificates.</p>
-    </div>
-    <div class="card">
-      <div class="card-icon" style="background:#1a1a25;">🚀</div>
-      <h3>CI/CD Integration</h3>
-      <p>GitHub Actions workflow with SARIF upload, PR annotations, Jira ticket creation, and Slack breach alerts.</p>
-    </div>
-  </div>
-</section>
 
-<!-- QUICK START -->
-<section class="section">
-  <div class="section-label">QUICK START</div>
-  <div class="install-block">
-    <div class="install-header">
-      <div class="install-dots">
-        <span class="dot dot-red"></span>
-        <span class="dot dot-yellow"></span>
-        <span class="dot dot-green"></span>
+    <!-- Capabilities -->
+    <div class="features">
+      <div class="eye">Capabilities</div>
+      <div class="feat-grid">
+        <div class="feat">
+          <div class="feat-icon">&#x1F3AF;</div>
+          <h3>MITRE ATT&amp;CK Mapping</h3>
+          <p>Every vulnerability mapped to a technique ID, tactic phase, and CWE identifier with severity scoring.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#x1F433;</div>
+          <h3>Docker Sandbox</h3>
+          <p>Executes the target repo in an isolated container. Captures file writes, spawned processes and attempted network connections.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#x1F916;</div>
+          <h3>Multi-LLM AI Advisor</h3>
+          <p>Choose from Anthropic Claude, GPT-4o, Gemini, Groq, or a local Ollama model to generate diff-style patches.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#x1F4CA;</div>
+          <h3>Threat Scoring</h3>
+          <p>Composite risk score from severity, exploitability, attack surface exposure and dependency CVE count.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#x1F4E6;</div>
+          <h3>Dependency CVEs</h3>
+          <p>Audits every ecosystem against OSV.dev — Python, npm, Go, Rust, Ruby, Java, PHP — for known CVEs with CVSS scores.</p>
+        </div>
+        <div class="feat">
+          <div class="feat-icon">&#x1F680;</div>
+          <h3>Auto-Fix Commits</h3>
+          <p>Push AI-generated patches directly to a target branch. Dry-run mode is on by default for safety.</p>
+        </div>
       </div>
-      <span class="install-label">terminal</span>
     </div>
-    <div class="install-code">
-      <div><span class="comment"># Clone and install</span></div>
-      <div><span class="cmd">git clone </span><span class="url">https://github.com/OmarRao/secure-scope.git</span></div>
-      <div><span class="cmd">cd secure-scope &amp;&amp; pip install -r requirements.txt</span></div>
-      <div>&nbsp;</div>
-      <div><span class="comment"># Scan any repository</span></div>
-      <div><span class="cmd">python securescope.py <span class="flag">--repo</span> </span><span class="url">https://github.com/org/repo</span></div>
-      <div>&nbsp;</div>
-      <div><span class="comment"># Full scan with persistence, SLA tracking, and Jira</span></div>
-      <div><span class="cmd">python securescope.py <span class="flag">--repo</span> </span><span class="url">https://github.com/org/repo</span> <span class="flag">\</span></div>
-      <div><span class="cmd">&nbsp;&nbsp;<span class="flag">--use-db --sla-check --jira --pdf</span></span></div>
+
+    <!-- Why This Matters -->
+    <div class="why">
+      <div class="eye">Why This Matters</div>
+      <div class="why-grid">
+        <div class="why-card">
+          <div class="why-num r">84%</div>
+          <div class="why-stat">of data breaches involve a vulnerability in application code</div>
+          <div class="why-text">Most security incidents trace back to code-level weaknesses that static analysis can detect before they reach production. SecureScope catches them at the source, before a threat actor does.</div>
+        </div>
+        <div class="why-card">
+          <div class="why-num o">$4.88M</div>
+          <div class="why-stat">average cost of a data breach in 2024 (IBM Security Report)</div>
+          <div class="why-text">Early detection during development costs a fraction of post-breach remediation. Every finding caught here is a potential incident avoided and significant financial and reputational risk eliminated.</div>
+        </div>
+        <div class="why-card">
+          <div class="why-num">560+</div>
+          <div class="why-stat">MITRE ATT&amp;CK techniques mapped to real code patterns</div>
+          <div class="why-text">Understanding how attackers think is as important as fixing the bug. SecureScope maps every CWE finding to the attacker's playbook so defenders can prioritize by exploitability, not just severity.</div>
+        </div>
+        <div class="why-card">
+          <div class="why-num g">92%</div>
+          <div class="why-stat">of vulnerabilities have a known fix available immediately</div>
+          <div class="why-text">The gap between knowing about a vulnerability and fixing it is where risk lives. The AI Fix Advisor closes that gap instantly with commit-ready patches, removing the delay between discovery and remediation.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Start -->
+    <div class="install">
+      <div class="eye">Quick Start</div>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots">
+            <span class="dot dot-r"></span>
+            <span class="dot dot-y"></span>
+            <span class="dot dot-g"></span>
+          </div>
+          <span class="code-label">terminal</span>
+        </div>
+        <div class="code-body">
+          <div><span class="cmt"># Clone and install</span></div>
+          <div>git clone <span class="url">https://github.com/OmarRao/secure-scope.git</span></div>
+          <div>cd secure-scope &amp;&amp; pip install -r requirements.txt</div>
+          <div>&nbsp;</div>
+          <div><span class="cmt"># Run the web UI</span></div>
+          <div>python -m ui.server &nbsp;&nbsp;<span class="cmt"># open http://localhost:5001</span></div>
+          <div>&nbsp;</div>
+          <div><span class="cmt"># Or CLI — full scan with persistence, SLA tracking, Jira</span></div>
+          <div>python main.py <span class="flag">--repo</span> <span class="url">https://github.com/org/repo</span> <span class="flag">\</span></div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="flag">--use-db --sla-check --jira --pdf</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /wrap -->
+</main>
+
+<!-- Footer -->
+<footer class="footer-wrap">
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="wordmark">SecureScope<sup>BETA</sup></div>
+      <p>An open-source AI-powered security analysis platform for GitHub repositories. Maps findings to MITRE ATT&amp;CK and CWE, generates AI-assisted remediations, and produces interactive visual threat reports.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Resources</h4>
+      <a href="https://github.com/OmarRao/secure-scope" target="_blank">GitHub Repository</a>
+      <a href="https://github.com/OmarRao/secure-scope/blob/main/USERGUIDE.md" target="_blank">User Guide</a>
+      <a href="https://github.com/OmarRao/secure-scope/blob/main/docs/sample_report.pdf" target="_blank">Sample Report</a>
+      <a href="https://github.com/OmarRao/secure-scope/blob/main/SECURITY.md" target="_blank">Security Policy</a>
+    </div>
+    <div class="footer-col">
+      <h4>References</h4>
+      <a href="https://attack.mitre.org/" target="_blank">MITRE ATT&amp;CK</a>
+      <a href="https://cwe.mitre.org/" target="_blank">CWE Top 25</a>
+      <a href="https://osv.dev" target="_blank">OSV.dev</a>
+      <a href="https://github.com/OmarRao/secure-scope/issues" target="_blank">Report an Issue</a>
     </div>
   </div>
-</section>
-
-<!-- WHAT'S NEW -->
-<section class="section">
-  <div class="section-label">WHAT'S NEW IN V10.0.0</div>
-  <div class="new-grid">
-    <div class="new-item">
-      <span class="new-icon">🌐</span>
-      <div><h4>Polyglot Scanning</h4><p>npm audit, cargo audit, govulncheck, bundler-audit, and Maven across all ecosystems.</p></div>
+  <div class="footer-bottom">
+    <div class="founder-block">
+      <div class="founder-avatar">O</div>
+      <div>
+        <div class="founder-name">Omar Rao</div>
+        <div class="founder-title">Engineer — Data Resilience, Cybersecurity and Privacy</div>
+      </div>
     </div>
-    <div class="new-item">
-      <span class="new-icon">🗄️</span>
-      <div><h4>SQLite Persistence</h4><p><code>--use-db</code> persists all scans and findings for historical trend analysis.</p></div>
-    </div>
-    <div class="new-item">
-      <span class="new-icon">⏱️</span>
-      <div><h4>SLA Tracking</h4><p>Auto-alert via Slack when Critical (7d), High (14d), Medium (30d) SLAs breach.</p></div>
-    </div>
-    <div class="new-item">
-      <span class="new-icon">🎫</span>
-      <div><h4>Jira Integration</h4><p>Auto-create Jira Cloud tickets for each finding with deduplication via JQL.</p></div>
-    </div>
-    <div class="new-item">
-      <span class="new-icon">📄</span>
-      <div><h4>PDF Export</h4><p>Executive-ready PDF reports alongside HTML and SARIF output formats.</p></div>
-    </div>
-    <div class="new-item">
-      <span class="new-icon">🔑</span>
-      <div><h4>GitHub App Auth</h4><p>RS256 JWT-based GitHub App authentication for private repository scanning.</p></div>
-    </div>
-    <div class="new-item">
-      <span class="new-icon">⚙️</span>
-      <div><h4>Custom Semgrep Rules</h4><p>Drop <code>.semgrep/</code> YAML rules into the target repo for organization-specific policies.</p></div>
-    </div>
-    <div class="new-item">
-      <span class="new-icon">☸️</span>
-      <div><h4>Kubernetes / Helm</h4><p>Production-ready K8s manifests and Helm chart for scalable deployment.</p></div>
-    </div>
-  </div>
-</section>
-
-<!-- FOOTER -->
-<footer>
-  <span>Built by <a href="https://github.com/OmarRao">Omar Rao</a> · MIT License</span>
-  <div class="footer-links">
-    <a href="https://github.com/OmarRao/secure-scope">GitHub</a>
-    <a href="https://github.com/OmarRao/secure-scope/blob/main/USERGUIDE.md">User Guide</a>
-    <a href="https://github.com/OmarRao/secure-scope/blob/main/SECURITY.md">Security Policy</a>
-    <a href="https://github.com/OmarRao/secure-scope/issues">Issues</a>
+    <div class="footer-copy">SecureScope &nbsp;·&nbsp; MITRE ATT&amp;CK v14 &nbsp;·&nbsp; CWE Top 25 &nbsp;·&nbsp; Open Source</div>
   </div>
 </footer>
+
+<script>
+  function toggleTheme() {
+    const isLight = document.documentElement.classList.toggle('light');
+    document.getElementById('themeBtn').textContent = isLight ? '🌙' : '🌙';
+    document.getElementById('themeBtn').innerHTML = isLight ? '&#x2600;&#xFE0F;' : '&#x1F319;';
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  }
+  // Restore saved theme
+  if (localStorage.getItem('theme') === 'light') {
+    document.documentElement.classList.add('light');
+    document.getElementById('themeBtn').innerHTML = '&#x2600;&#xFE0F;';
+  }
+</script>
 
 </body>
 </html>
