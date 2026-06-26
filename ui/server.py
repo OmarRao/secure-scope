@@ -96,6 +96,12 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = "secreview-ui-key"
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
 
+# Log key tool availability at startup so Render logs show exactly what's present
+import shutil as _shutil
+for _tool in ("semgrep", "git", "docker"):
+    _loc = _shutil.which(_tool)
+    logging.getLogger(__name__).info("tool check: %s → %s", _tool, _loc or "NOT FOUND")
+
 REPORTS_DIR = Path(__file__).parent.parent / "reports"
 REPORTS_DIR.mkdir(exist_ok=True)
 
@@ -398,7 +404,7 @@ def handle_scan(data):
 
         except Exception as e:
             logger.exception("Scan pipeline error for sid %s", sid)
-            _emit(sid, "error", {"message": "Scan failed. Check server logs for details."})
+            _emit(sid, "error", {"message": f"Scan failed: {type(e).__name__}: {e}"})
 
     t = threading.Thread(target=run, daemon=True)
     t.start()
