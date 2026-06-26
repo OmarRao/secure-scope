@@ -169,7 +169,8 @@ def check_dependency_vulns(repo_path: str) -> list[dict]:
     # Python
     req_files = list(Path(repo_path).rglob("requirements*.txt")) + \
                 list(Path(repo_path).rglob("pyproject.toml"))
-    if req_files:
+    import shutil as _sh2
+    if req_files and _sh2.which("pip-audit"):
         print("[*] Running pip-audit for Python dependencies...")
         result = subprocess.run(
             ["pip-audit", "--format", "json", "-r", str(req_files[0])],
@@ -190,10 +191,11 @@ def check_dependency_vulns(repo_path: str) -> list[dict]:
         except (json.JSONDecodeError, KeyError):
             pass
 
-    # Node
+    # Node — skip silently if npm is not on PATH
+    import shutil as _sh
     pkg_files = list(Path(repo_path).rglob("package.json"))
     pkg_files = [p for p in pkg_files if "node_modules" not in str(p)]
-    if pkg_files:
+    if pkg_files and _sh.which("npm"):
         print("[*] Running npm audit for Node dependencies...")
         result = subprocess.run(
             ["npm", "audit", "--json"],
@@ -212,6 +214,8 @@ def check_dependency_vulns(repo_path: str) -> list[dict]:
                 })
         except (json.JSONDecodeError, KeyError):
             pass
+    elif pkg_files:
+        print("[*] npm not found — skipping Node dependency audit")
 
     return vulns
 
