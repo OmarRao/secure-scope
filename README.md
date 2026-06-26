@@ -7,6 +7,17 @@
 ![Firebase](https://img.shields.io/badge/telemetry-Firebase-orange)
 ![Platforms](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
 
+**[📖 Technical User Guide](USERGUIDE.md)** | **[View Sample Report](docs/sample_report.pdf)**
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [USERGUIDE.md](USERGUIDE.md) | Full technical user guide — installation, all flags, integrations, CI/CD, K8s, troubleshooting |
+| [SECURITY.md](SECURITY.md) | Security policy and responsible disclosure |
+| [docs/exploits/](docs/exploits/) | Per-vulnerability writeups (SecureScope self-scan) |
+| [.github/workflows/secscope.yml](.github/workflows/secscope.yml) | CI/CD self-scan pipeline |
+
 > AI-powered security analysis for any GitHub repository. Paste a URL, get a full threat report mapped to MITRE ATT&CK and CWE, with optional Docker sandbox execution and AI-generated fix diffs from your choice of LLM.
 > **v10.0.0** adds polyglot scanning, SQLite persistence, SLA tracking, Jira integration, PDF export, job queue, GitHub App auth, custom Semgrep rules, Kubernetes manifests, Helm chart, and anonymous Firebase telemetry. **v8.0.0** adds Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard integration, DAST (Nuclei + ZAP), license compliance scanning, supply-chain/typosquatting detection, PR diff mode, historical trend tracking, and false-positive suppression. **v7.0.0** added SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture (PCI DSS / NIST / OWASP / SANS Top 25), multi-repo scanning, and a GitHub webhook server. **v6.2.0** completed the security report — Secrets Detection and Dependency Vulnerability sections. **v6.0.0** added IaC Misconfiguration Scanner. **v5.0.0** expanded YARA to 11 rule sets. **v4.0.0** added OSV.dev dependency scanning. **v3.0.0** added Secrets Detection.
 
