@@ -187,10 +187,19 @@ def _scan_one(repo_url: str, args, out_dir: Path) -> None:
     append_scan_record(result, str(out_dir))
     trend_records = load_trend(repo_url, str(out_dir))
 
+    # ── Polyglot Dependency Scan ────────────────────────────────
+    polyglot_findings = []
+    if args.polyglot and result.repo_path:
+        print("\n[*] Running polyglot dependency scan...")
+        from polyglot_scanner import scan_polyglot
+        polyglot_findings = scan_polyglot(result.repo_path)
+        print(f"[+] Polyglot: {len(polyglot_findings)} dependency issues across all ecosystems")
+
     # ── 6. Reports ──────────────────────────────────────────────
     from report import to_json, to_html
     json_path = str(out_dir / f"{repo_slug}_{ts}.json")
     html_path = str(out_dir / f"{repo_slug}_{ts}.html")
+    sarif_path = str(out_dir / f"{repo_slug}_{ts}.sarif") if args.sarif else None
     to_json(result, obs, enriched, json_path)
     to_html(result, obs, enriched, html_path,
             compliance_html=compliance_html,
@@ -202,7 +211,8 @@ def _scan_one(repo_url: str, args, out_dir: Path) -> None:
             trend_records=trend_records,
             suppressed_findings=suppressed_findings if suppressed_findings else None,
             secret_findings=secret_findings if secret_findings else None,
-            iac_findings=iac_findings if iac_findings else None)
+            iac_findings=iac_findings if iac_findings else None,
+            polyglot_findings=polyglot_findings if polyglot_findings else None)
 
     # ── Markdown Summary ────────────────────────────────────────
     from markdown_report import to_markdown, post_pr_comment
@@ -217,9 +227,60 @@ def _scan_one(repo_url: str, args, out_dir: Path) -> None:
         to_sarif(result, enriched, str(out_dir / f"{repo_slug}_{ts}.sarif"))
 
     # ── 8. SBOM ─────────────────────────────────────────────────
+    sbom_path = str(out_dir / f"{repo_slug}_{ts}.sbom.cyclonedx.json")
     if args.sbom:
         from sbom import generate_sbom
-        generate_sbom(result, str(out_dir / f"{repo_slug}_{ts}.sbom.cyclonedx.json"))
+        generate_sbom(result, sbom_path)
+
+    # ── PDF Export ───────────────────────────────────────────────
+    if args.pdf:
+        from pdf_report import to_pdf
+        pdf_path = str(out_dir / f"{repo_slug}_{ts}.pdf")
+        to_pdf(html_path, pdf_path)
+
+    # ── SQLite Persistence ───────────────────────────────────────
+    if args.use_db:
+        from db import init_db, record_scan
+        init_db(args.db_path)
+        record_scan(args.db_path, result, {
+            "html": html_path,
+            "sarif": sarif_path if args.sarif else None,
+            "sbom": sbom_path if args.sbom else None,
+        })
+        print(f"[+] Results persisted to SQLite: {args.db_path}")
+
+    # ── SLA Check ────────────────────────────────────────────────
+    if args.sla_check and args.use_db:
+        from sla_tracker import check_sla, update_sla_status
+        update_sla_status(args.db_path)
+        breaches = check_sla(args.db_path,
+                             slack_webhook=getattr(args, 'slack_webhook', None) or None)
+        if breaches:
+            print(f"[!] SLA breaches: {len(breaches)} findings past SLA threshold")
+        else:
+            print("[+] SLA check: no breaches")
+
+    # ── Jira Integration ─────────────────────────────────────────
+    if args.jira_url and args.jira_token:
+        from jira_integration import create_jira_issues
+        created = create_jira_issues(
+            args.jira_url,
+            args.jira_email,
+            args.jira_token,
+            args.jira_project,
+            findings_raw,
+            threshold="HIGH",
+        )
+        print(f"[+] Jira: {len(created)} issues created")
+
+    # ── SBOM Diff ────────────────────────────────────────────────
+    if args.sbom_diff and args.sbom:
+        from sbom_diff import diff_sboms, diff_to_markdown
+        diff = diff_sboms(args.sbom_diff, sbom_path)
+        diff_md_path = str(out_dir / f"{repo_slug}_{ts}_sbom_diff.md")
+        Path(diff_md_path).write_text(diff_to_markdown(diff))
+        print(f"[+] SBOM diff: {len(diff['added'])} added, {len(diff['removed'])} removed, "
+              f"{len(diff['version_changed'])} changed -> {diff_md_path}")
 
     # ── 8b. Notifications ───────────────────────────────────────
     if args.slack_webhook:
@@ -327,6 +388,27 @@ def main():
     parser.add_argument("--pr-number", type=int, default=None,
                         help="PR number for --pr-comment (auto-detects latest open PR if omitted)")
 
+    # v10.0.0 feature flags
+    parser.add_argument("--polyglot", action="store_true",
+                        help="Run polyglot dependency scan (npm, cargo, go, bundler, maven)")
+    parser.add_argument("--sbom-diff", default="", metavar="OLD_SBOM",
+                        help="Compare current SBOM against this CycloneDX JSON path")
+    parser.add_argument("--db-path", default="secscope.db",
+                        help="SQLite database path (default: secscope.db)")
+    parser.add_argument("--use-db", action="store_true",
+                        help="Persist scan results to SQLite database")
+    parser.add_argument("--sla-check", action="store_true",
+                        help="Check SLA breaches after scan (requires --use-db)")
+    parser.add_argument("--jira-url", default="", help="Jira Cloud base URL")
+    parser.add_argument("--jira-email", default="", help="Jira user email for Basic Auth")
+    parser.add_argument("--jira-token", default="", help="Jira API token")
+    parser.add_argument("--jira-project", default="", help="Jira project key (e.g. SEC)")
+    parser.add_argument("--pdf", action="store_true", help="Export HTML report to PDF")
+    parser.add_argument("--github-app-id", default="", help="GitHub App ID for App-based auth")
+    parser.add_argument("--github-app-key", default="", help="Path to GitHub App private key PEM file")
+    parser.add_argument("--max-workers", type=int, default=4,
+                        help="Concurrent workers for multi-repo scanning (default: 4)")
+
     # Credentials
     parser.add_argument("--github-token", default=os.environ.get("GITHUB_TOKEN"))
     parser.add_argument("--anthropic-key", default=os.environ.get("ANTHROPIC_API_KEY"))
@@ -405,13 +487,21 @@ def main():
             _sh.rmtree(tmp, ignore_errors=True)
 
     if len(repos) > 1:
-        print(f"[*] Multi-repo scan: {len(repos)} repositories")
-
-    for repo_url in repos:
-        try:
-            _scan_one(repo_url, args, out_dir)
-        except Exception as exc:
-            print(f"[!] Scan failed for {repo_url}: {exc}")
+        print(f"[*] Multi-repo scan: {len(repos)} repositories (max_workers={args.max_workers})")
+        from queue_runner import ScanQueue
+        q = ScanQueue(max_workers=args.max_workers)
+        for repo_url in repos:
+            q.add_repo(repo_url)
+        q.start(args, out_dir)
+        q.wait()
+        if q.failed:
+            print(f"[!] {len(q.failed)} scans failed: {', '.join(q.failed)}")
+    else:
+        for repo_url in repos:
+            try:
+                _scan_one(repo_url, args, out_dir)
+            except Exception as exc:
+                print(f"[!] Scan failed for {repo_url}: {exc}")
 
 
 if __name__ == "__main__":

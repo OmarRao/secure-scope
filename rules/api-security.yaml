@@ -1,0 +1,68 @@
+rules:
+  - id: missing-auth-decorator
+    patterns:
+      - pattern: |
+          @$APP.route(...)
+          def $FUNC(...):
+              ...
+      - pattern-not: |
+          @$APP.route(...)
+          @login_required
+          def $FUNC(...):
+              ...
+      - pattern-not: |
+          @$APP.route(...)
+          @$AUTH(...)
+          def $FUNC(...):
+              ...
+    message: >
+      Flask route is not protected by a @login_required or authentication
+      decorator. Unauthenticated users may access this endpoint. Add an
+      authentication decorator or ensure this route is intentionally public.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      cwe: CWE-306
+      owasp: "A01:2021 - Broken Access Control"
+      category: security
+
+  - id: sql-string-format
+    pattern-either:
+      - pattern: |
+          $DB.execute(f"... {$VAR} ...")
+      - pattern: |
+          $DB.execute("..." % $VAR)
+      - pattern: |
+          $DB.execute("..." .format($VAR))
+      - pattern: |
+          $CURSOR.execute(f"... {$VAR} ...")
+      - pattern: |
+          $CURSOR.execute("..." % $VAR)
+      - pattern: |
+          $CURSOR.execute("..." .format($VAR))
+    message: >
+      SQL query constructed with string formatting. This pattern is vulnerable
+      to SQL Injection. Use parameterized queries with placeholders (?, %s)
+      and pass values as a tuple: cursor.execute("SELECT * FROM t WHERE id=?", (id,))
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: CWE-89
+      owasp: "A03:2021 - Injection"
+      category: security
+
+  - id: unvalidated-redirect
+    pattern-either:
+      - pattern: redirect(request.args.get(...))
+      - pattern: redirect(request.form.get(...))
+      - pattern: redirect(request.values.get(...))
+    message: >
+      Open redirect vulnerability: redirect() is called with an unvalidated
+      user-supplied URL. An attacker can craft a link that redirects victims
+      to a malicious site. Validate or whitelist the target URL before redirecting.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: CWE-601
+      owasp: "A01:2021 - Broken Access Control"
+      category: security

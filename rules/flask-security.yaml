@@ -1,0 +1,80 @@
+rules:
+  - id: flask-debug-true
+    pattern-either:
+      - pattern: app.run(..., debug=True, ...)
+      - pattern: app.run(debug=True)
+      - pattern: |
+          $APP.config['DEBUG'] = True
+      - pattern: |
+          $APP.config["DEBUG"] = True
+    message: >
+      Flask debug mode is enabled. Debug mode exposes an interactive debugger
+      in the browser, which can allow arbitrary code execution. Disable debug
+      mode in production.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: CWE-94
+      owasp: "A05:2021 - Security Misconfiguration"
+      category: security
+
+  - id: flask-secret-key-hardcoded
+    pattern-either:
+      - pattern: |
+          $APP.secret_key = "..."
+      - pattern: |
+          $APP.secret_key = '...'
+      - pattern: |
+          SECRET_KEY = "..."
+      - pattern: |
+          SECRET_KEY = '...'
+    message: >
+      Hardcoded Flask secret key detected. Secret keys must be random and kept
+      secret. A hardcoded key allows attackers to forge session cookies.
+      Use os.urandom(24) or load from environment variables.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: CWE-798
+      owasp: "A02:2021 - Cryptographic Failures"
+      category: security
+
+  - id: flask-render-template-string-injection
+    pattern-either:
+      - pattern: render_template_string(f"...", ...)
+      - pattern: render_template_string(f'...', ...)
+      - pattern: render_template_string("..." % $X, ...)
+      - pattern: render_template_string("..." .format(...), ...)
+    message: >
+      Server-Side Template Injection (SSTI) risk: render_template_string is
+      called with a dynamically-formatted string. An attacker may inject Jinja2
+      template directives. Use render_template with a static template file, or
+      escape user input before passing to render_template_string.
+    severity: ERROR
+    languages: [python]
+    metadata:
+      cwe: CWE-94
+      owasp: "A03:2021 - Injection"
+      category: security
+
+  - id: flask-no-csrf
+    patterns:
+      - pattern: |
+          @$APP.route("...", methods=[..., "POST", ...])
+          def $FUNC(...):
+              ...
+      - pattern-not: |
+          @$APP.route("...", methods=[..., "POST", ...])
+          @$CSRF(...)
+          def $FUNC(...):
+              ...
+    message: >
+      Flask route handles POST requests without an obvious CSRF protection
+      decorator. Ensure CSRF tokens are validated for state-changing requests.
+      Consider using Flask-WTF or a similar CSRF protection library.
+    severity: WARNING
+    languages: [python]
+    metadata:
+      cwe: CWE-352
+      owasp: "A01:2021 - Broken Access Control"
+      category: security

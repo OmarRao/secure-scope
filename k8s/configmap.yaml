@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: secscope-config
+  labels:
+    app: secscope
+data:
+  OUT_DIR: "/app/reports"
+  DB_PATH: "/app/secscope.db"
+  PORT: "8080"
+  MAX_FINDINGS: "20"
+  BRANCH: "main"

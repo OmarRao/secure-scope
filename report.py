@@ -46,7 +46,8 @@ def to_html(result: AnalysisResult, obs: Optional["RuntimeObservation"] = None,
             trend_records: Optional[list] = None,
             suppressed_findings: Optional[list] = None,
             secret_findings: Optional[list] = None,
-            iac_findings: Optional[list] = None) -> str:
+            iac_findings: Optional[list] = None,
+            polyglot_findings: Optional[list] = None) -> str:
     findings = enriched or [f.to_dict() for f in result.findings]
     summary = result.summary()
 
@@ -172,6 +173,7 @@ def to_html(result: AnalysisResult, obs: Optional["RuntimeObservation"] = None,
   {_suppressed_section(suppressed_findings)}
   {_secret_section(secret_findings)}
   {_iac_section(iac_findings)}
+  {_polyglot_section(polyglot_findings)}
 </body>
 </html>"""
 
@@ -269,6 +271,16 @@ def _iac_section(iac_findings: Optional[list]) -> str:
     try:
         from iac_scanner import iac_to_html
         return iac_to_html(iac_findings)
+    except ImportError:
+        return ""
+
+
+def _polyglot_section(polyglot_findings: Optional[list]) -> str:
+    if not polyglot_findings:
+        return ""
+    try:
+        from polyglot_scanner import polyglot_to_html
+        return polyglot_to_html(polyglot_findings)
     except ImportError:
         return ""
 
