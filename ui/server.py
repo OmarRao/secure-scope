@@ -276,134 +276,135 @@ def handle_scan(data):
         return
 
     def run():
-        try:
-            _emit(sid, "progress", {"step": "github_info", "message": "📋 Fetching repository information...", "pct": 5})
-            gh_info = fetch_repo_info(repo_url)
-
-            _emit(sid, "github_info", gh_info)
-            _emit(sid, "progress", {"step": "clone", "message": "📥 Cloning repository...", "pct": 15})
-
-            from analyzer import clone_repo, run_semgrep, check_dependency_vulns, AnalysisResult
-            import tempfile, shutil
-
-            workdir = tempfile.mkdtemp(prefix="secreview_")
+        with app.app_context():
             try:
-                clone_repo(repo_url, workdir)
-                _emit(sid, "progress", {"step": "semgrep", "message": "🔍 Running Semgrep security scan...", "pct": 35})
+                _emit(sid, "progress", {"step": "github_info", "message": "📋 Fetching repository information...", "pct": 5})
+                gh_info = fetch_repo_info(repo_url)
 
-                result = AnalysisResult(repo_url=repo_url, repo_path=workdir)
-                result.findings = run_semgrep(workdir)
-                _emit(sid, "progress", {"step": "deps", "message": "📦 Checking dependency CVEs...", "pct": 50})
-                result.dependency_vulns = check_dependency_vulns(workdir)
+                _emit(sid, "github_info", gh_info)
+                _emit(sid, "progress", {"step": "clone", "message": "📥 Cloning repository...", "pct": 15})
 
-                obs = None
-                if run_sandbox:
-                    _emit(sid, "progress", {"step": "sandbox", "message": "🐳 Running Docker sandbox...", "pct": 60})
-                    from sandbox import run_in_sandbox
-                    obs = run_in_sandbox(workdir)
+                from analyzer import clone_repo, run_semgrep, check_dependency_vulns, AnalysisResult
+                import tempfile, shutil
 
-                enriched = None
-                if run_advisor and (llm_api_key or os.environ.get("ANTHROPIC_API_KEY") or llm_provider == "ollama" or llm_provider == "none"):
-                    _emit(sid, "progress", {"step": "advisor", "message": f"🤖 Generating AI fix advisories for {min(len(result.findings),20)} findings...", "pct": 75})
-                    from advisor import enrich_findings
-                    enriched = enrich_findings(result, obs, provider=llm_provider, api_key=llm_api_key, max_findings=20)
+                workdir = tempfile.mkdtemp(prefix="secreview_")
+                try:
+                    clone_repo(repo_url, workdir)
+                    _emit(sid, "progress", {"step": "semgrep", "message": "🔍 Running Semgrep security scan...", "pct": 35})
 
-                # ── Secrets Detection (v3.0.0) ────────────────────────────────
-                _emit(sid, "progress", {"step": "secrets", "message": "🔑 Scanning for hardcoded secrets and credentials...", "pct": 78})
-                secrets_result = None
-                if _SECRETS_AVAILABLE:
-                    try:
-                        secrets_result = secrets_scan_repo(
-                            repo_path=workdir,
-                            include_history=True,
-                            entropy_check=True,
-                            progress_cb=None,
-                        )
-                    except Exception as _sec_exc:
-                        pass
+                    result = AnalysisResult(repo_url=repo_url, repo_path=workdir)
+                    result.findings = run_semgrep(workdir)
+                    _emit(sid, "progress", {"step": "deps", "message": "📦 Checking dependency CVEs...", "pct": 50})
+                    result.dependency_vulns = check_dependency_vulns(workdir)
 
-                # ── Dependency Vulnerability Scan (v4.0.0) ───────────────────
-                _emit(sid, "progress", {"step": "deps", "message": "📦 Scanning dependencies for CVEs via OSV.dev...", "pct": 80})
-                deps_result = None
-                if _DEPS_AVAILABLE:
-                    try:
-                        deps_result = deps_scan_repo(
-                            repo_path=workdir,
-                            progress_cb=None,
-                        )
-                    except Exception as _dep_exc:
-                        pass  # non-fatal
+                    obs = None
+                    if run_sandbox:
+                        _emit(sid, "progress", {"step": "sandbox", "message": "🐳 Running Docker sandbox...", "pct": 60})
+                        from sandbox import run_in_sandbox
+                        obs = run_in_sandbox(workdir)
 
-                # ── IaC Misconfiguration Scan (v6.0.0) ───────────────────────
-                _emit(sid, "progress", {"step": "iac", "message": "🏗️ Scanning IaC for cloud misconfigurations...", "pct": 83})
-                iac_result = None
-                if _IAC_AVAILABLE:
-                    try:
-                        iac_result = iac_scan_repo(repo_path=workdir, progress_cb=None)
-                    except Exception as _iac_exc:
-                        pass  # non-fatal
+                    enriched = None
+                    if run_advisor and (llm_api_key or os.environ.get("ANTHROPIC_API_KEY") or llm_provider == "ollama" or llm_provider == "none"):
+                        _emit(sid, "progress", {"step": "advisor", "message": f"🤖 Generating AI fix advisories for {min(len(result.findings),20)} findings...", "pct": 75})
+                        from advisor import enrich_findings
+                        enriched = enrich_findings(result, obs, provider=llm_provider, api_key=llm_api_key, max_findings=20)
 
-                _emit(sid, "progress", {"step": "report", "message": "Analysing ransomware indicators...", "pct": 87})
+                    # ── Secrets Detection (v3.0.0) ────────────────────────────────
+                    _emit(sid, "progress", {"step": "secrets", "message": "🔑 Scanning for hardcoded secrets and credentials...", "pct": 78})
+                    secrets_result = None
+                    if _SECRETS_AVAILABLE:
+                        try:
+                            secrets_result = secrets_scan_repo(
+                                repo_path=workdir,
+                                include_history=True,
+                                entropy_check=True,
+                                progress_cb=None,
+                            )
+                        except Exception as _sec_exc:
+                            pass
 
-                from ransomware import detect as ransomware_detect
-                findings_dicts = enriched or [f.to_dict() for f in result.findings]
-                rw_report = ransomware_detect(findings_dicts, workdir)
+                    # ── Dependency Vulnerability Scan (v4.0.0) ───────────────────
+                    _emit(sid, "progress", {"step": "deps", "message": "📦 Scanning dependencies for CVEs via OSV.dev...", "pct": 80})
+                    deps_result = None
+                    if _DEPS_AVAILABLE:
+                        try:
+                            deps_result = deps_scan_repo(
+                                repo_path=workdir,
+                                progress_cb=None,
+                            )
+                        except Exception as _dep_exc:
+                            pass  # non-fatal
 
-                _emit(sid, "progress", {"step": "report", "message": "Building report...", "pct": 90})
+                    # ── IaC Misconfiguration Scan (v6.0.0) ───────────────────────
+                    _emit(sid, "progress", {"step": "iac", "message": "🏗️ Scanning IaC for cloud misconfigurations...", "pct": 83})
+                    iac_result = None
+                    if _IAC_AVAILABLE:
+                        try:
+                            iac_result = iac_scan_repo(repo_path=workdir, progress_cb=None)
+                        except Exception as _iac_exc:
+                            pass  # non-fatal
 
-                from report import to_json, to_html
-                from datetime import datetime
-                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-                repo_slug = repo_url.rstrip("/").split("/")[-1]
-                json_path = str(REPORTS_DIR / f"{repo_slug}_{ts}.json")
-                html_path = str(REPORTS_DIR / f"{repo_slug}_{ts}.html")
+                    _emit(sid, "progress", {"step": "report", "message": "Analysing ransomware indicators...", "pct": 87})
 
-                to_json(result, obs, enriched, json_path)
+                    from ransomware import detect as ransomware_detect
+                    findings_dicts = enriched or [f.to_dict() for f in result.findings]
+                    rw_report = ransomware_detect(findings_dicts, workdir)
 
-                # Build the rich UI report (separate from the basic one)
-                report_data = {
-                    "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M UTC"),
-                    "repo_url": repo_url,
-                    "repo_slug": repo_slug,
-                    "ts": ts,
-                    "gh_info": gh_info,
-                    "summary": result.summary(),
-                    "findings": findings_dicts,
-                    "dependency_vulns": result.dependency_vulns,
-                    "ransomware": rw_report,
-                    "secrets": secrets_result.to_dict() if secrets_result else None,
-                    "deps": deps_result.to_dict() if deps_result else None,
-                    "iac": iac_result.to_dict() if iac_result else None,
-                    "runtime": {
-                        "exit_code": obs.exit_code if obs else None,
-                        "suspicious_behaviors": obs.suspicious_behaviors if obs else [],
-                        "outbound_connections": obs.outbound_connections if obs else [],
-                        "processes_spawned": obs.processes_spawned[:20] if obs else [],
-                        "stdout": (obs.stdout or "")[:3000] if obs else "",
-                    } if obs else None,
-                }
+                    _emit(sid, "progress", {"step": "report", "message": "Building report...", "pct": 90})
 
-                # Save rich HTML report
-                rich_html = Path(REPORTS_DIR / f"{repo_slug}_{ts}_ui.html")
-                rich_html.write_text(
-                    render_template("report.html", **report_data),
-                    encoding="utf-8"
-                )
+                    from report import to_json, to_html
+                    from datetime import datetime
+                    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    repo_slug = repo_url.rstrip("/").split("/")[-1]
+                    json_path = str(REPORTS_DIR / f"{repo_slug}_{ts}.json")
+                    html_path = str(REPORTS_DIR / f"{repo_slug}_{ts}.html")
 
-                _emit(sid, "progress", {"step": "done", "message": "✅ Scan complete!", "pct": 100})
-                _emit(sid, "scan_complete", {
-                    "report_url": f"/report/{repo_slug}_{ts}_ui.html",
-                    "json_url":   f"/report/{repo_slug}_{ts}.json",
-                    "summary":    result.summary(),
-                    "repo_slug":  repo_slug,
-                    "ts":         ts,
-                })
+                    to_json(result, obs, enriched, json_path)
 
-            finally:
-                shutil.rmtree(workdir, ignore_errors=True)
+                    # Build the rich UI report (separate from the basic one)
+                    report_data = {
+                        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M UTC"),
+                        "repo_url": repo_url,
+                        "repo_slug": repo_slug,
+                        "ts": ts,
+                        "gh_info": gh_info,
+                        "summary": result.summary(),
+                        "findings": findings_dicts,
+                        "dependency_vulns": result.dependency_vulns,
+                        "ransomware": rw_report,
+                        "secrets": secrets_result.to_dict() if secrets_result else None,
+                        "deps": deps_result.to_dict() if deps_result else None,
+                        "iac": iac_result.to_dict() if iac_result else None,
+                        "runtime": {
+                            "exit_code": obs.exit_code if obs else None,
+                            "suspicious_behaviors": obs.suspicious_behaviors if obs else [],
+                            "outbound_connections": obs.outbound_connections if obs else [],
+                            "processes_spawned": obs.processes_spawned[:20] if obs else [],
+                            "stdout": (obs.stdout or "")[:3000] if obs else "",
+                        } if obs else None,
+                    }
 
-        except Exception as e:
-            logger.exception("Scan pipeline error for sid %s", sid)
+                    # Save rich HTML report
+                    rich_html = Path(REPORTS_DIR / f"{repo_slug}_{ts}_ui.html")
+                    rich_html.write_text(
+                        render_template("report.html", **report_data),
+                        encoding="utf-8"
+                    )
+
+                    _emit(sid, "progress", {"step": "done", "message": "✅ Scan complete!", "pct": 100})
+                    _emit(sid, "scan_complete", {
+                        "report_url": f"/report/{repo_slug}_{ts}_ui.html",
+                        "json_url":   f"/report/{repo_slug}_{ts}.json",
+                        "summary":    result.summary(),
+                        "repo_slug":  repo_slug,
+                        "ts":         ts,
+                    })
+
+                finally:
+                    shutil.rmtree(workdir, ignore_errors=True)
+
+            except Exception as e:
+                logger.exception("Scan pipeline error for sid %s", sid)
             _emit(sid, "error", {"message": f"Scan failed: {type(e).__name__}: {e}"})
 
     t = threading.Thread(target=run, daemon=True)
