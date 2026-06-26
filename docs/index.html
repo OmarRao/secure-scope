@@ -393,6 +393,15 @@
     .setup-notice p { font-size: 13px; color: #a0aec0; line-height: 1.6; }
     .setup-notice a { color: #4f8ef7; }
 
+    /* ── Scan progress ── */
+    .scan-progress-wrap { margin: 20px 0 12px; }
+    .scan-progress-bar { height: 6px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden; margin-bottom: 10px; }
+    .scan-progress-fill { height: 100%; width: 0%; background: var(--accent); border-radius: 99px; transition: width .4s ease; }
+    .scan-status-msg { font-size: 13px; color: var(--ink3); min-height: 20px; }
+    .scan-result { background: rgba(79,142,247,.08); border: 1px solid rgba(79,142,247,.3); border-radius: 10px; padding: 16px 20px; font-size: 13px; color: var(--ink2); line-height: 1.6; margin-top: 8px; }
+    .scan-result.error { background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.3); color: #fca5a5; }
+    .scan-result strong { color: var(--ink); }
+
     /* ── Responsive ── */
     @media (max-width: 768px) {
       :root { --gutter: 20px; }
@@ -667,28 +676,24 @@
       </div>
     </div>
 
-    <!-- Step 4: Setup instructions (static page — no backend here) -->
+    <!-- Step 4: Live scan progress -->
     <div class="wizard-step" id="step4">
-      <div class="step-ind">Ready to Scan</div>
-      <div class="modal-title">Run Locally</div>
-      <div class="modal-sub">This is the static landing page. To run a live scan, start the web UI locally:</div>
-      <div class="setup-notice">
-        <h4>Quick Setup</h4>
-        <pre>git clone https://github.com/OmarRao/secure-scope.git
-cd secure-scope
-pip install -r requirements.txt
-python -m ui.server
-# Open http://localhost:5001</pre>
-        <p>Then click <strong>Analyze Repository</strong> in the local app and paste your repo URL. Full scan results, threat report, and AI fix advisor will be available there.</p>
+      <div class="step-ind" id="scanStepInd">Scanning</div>
+      <div class="modal-title" id="scanTitle">Running Security Scan</div>
+      <div class="modal-sub" id="scanSub">Connecting to SecureScope&hellip;</div>
+      <div class="scan-progress-wrap">
+        <div class="scan-progress-bar"><div class="scan-progress-fill" id="scanFill"></div></div>
+        <div class="scan-status-msg" id="scanMsg">Initializing&hellip;</div>
       </div>
+      <div class="scan-result" id="scanResult" style="display:none"></div>
       <div class="wizard-footer">
-        <button class="btn-back" onclick="goStep(3)">&larr; Back</button>
+        <button class="btn-back" id="scanBack" onclick="cancelScan()">&larr; Back</button>
         <div class="step-dots">
           <div class="step-dot done"></div>
           <div class="step-dot done"></div>
           <div class="step-dot done"></div>
         </div>
-        <a class="btn-next accent" href="https://github.com/OmarRao/secure-scope" target="_blank" style="text-decoration:none">View on GitHub</a>
+        <a class="btn-next accent" id="scanReportBtn" href="#" target="_blank" style="display:none;text-decoration:none">View Report &rarr;</a>
       </div>
     </div>
 
@@ -730,6 +735,7 @@ python -m ui.server
   </div>
 </footer>
 
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script>
   let currentWizStep = 1;
 
@@ -777,8 +783,87 @@ python -m ui.server
     document.getElementById('step' + n).classList.add('active');
     currentWizStep = n;
   }
+  const BACKEND = 'https://secure-scope.onrender.com';
+  let _socket = null;
+
   function showSetup() {
     goStep(4);
+    // Reset UI
+    document.getElementById('scanFill').style.width = '0%';
+    document.getElementById('scanMsg').textContent = 'Connecting to SecureScope…';
+    document.getElementById('scanTitle').textContent = 'Running Security Scan';
+    document.getElementById('scanStepInd').textContent = 'Scanning';
+    document.getElementById('scanResult').style.display = 'none';
+    document.getElementById('scanReportBtn').style.display = 'none';
+    document.getElementById('scanBack').textContent = '✕ Cancel';
+
+    // Collect inputs
+    const repoUrl = document.getElementById('wizRepoUrl').value.trim();
+    const provider = document.querySelector('.provider-card.selected')?.dataset.provider || 'none';
+    const apiKey = document.getElementById('wizApiKey').value.trim();
+    const sandbox = document.getElementById('wizSandbox').checked;
+
+    // Connect via Socket.IO
+    if (_socket) { _socket.disconnect(); }
+    _socket = io(BACKEND, { transports: ['websocket', 'polling'] });
+
+    _socket.on('connect', () => {
+      document.getElementById('scanMsg').textContent = 'Connected — starting scan…';
+      _socket.emit('start_scan', {
+        repo_url: repoUrl,
+        llm_provider: provider,
+        llm_api_key: apiKey,
+        sandbox: sandbox,
+        advisor: provider !== 'none'
+      });
+    });
+
+    _socket.on('progress', (data) => {
+      document.getElementById('scanFill').style.width = (data.pct || 0) + '%';
+      document.getElementById('scanMsg').textContent = data.message || '';
+    });
+
+    _socket.on('scan_complete', (data) => {
+      _socket.disconnect();
+      document.getElementById('scanFill').style.width = '100%';
+      document.getElementById('scanTitle').textContent = 'Scan Complete';
+      document.getElementById('scanStepInd').textContent = 'Done ✓';
+      const summary = data.summary || {};
+      const result = document.getElementById('scanResult');
+      result.style.display = 'block';
+      result.className = 'scan-result';
+      result.innerHTML = `<strong>${repoUrl.split('/').pop()}</strong> scanned successfully.<br>
+        ${summary.total_findings !== undefined ? `<br>🔍 <strong>${summary.total_findings}</strong> findings &nbsp;|&nbsp; ` : ''}
+        ${summary.critical !== undefined ? `🔴 <strong>${summary.critical}</strong> critical` : ''}`;
+      const btn = document.getElementById('scanReportBtn');
+      btn.href = BACKEND + data.report_url;
+      btn.style.display = 'inline-flex';
+      document.getElementById('scanBack').textContent = '← Back';
+    });
+
+    _socket.on('error', (data) => {
+      _socket.disconnect();
+      document.getElementById('scanMsg').textContent = '';
+      const result = document.getElementById('scanResult');
+      result.style.display = 'block';
+      result.className = 'scan-result error';
+      result.textContent = '⚠ ' + (data.message || 'Scan failed. Please check the repo URL and API key.');
+      document.getElementById('scanBack').textContent = '← Back';
+    });
+
+    _socket.on('connect_error', () => {
+      document.getElementById('scanMsg').textContent = '';
+      const result = document.getElementById('scanResult');
+      result.style.display = 'block';
+      result.className = 'scan-result error';
+      result.textContent = '⚠ Could not connect to the scan server. It may be waking up — please try again in 30 seconds.';
+      document.getElementById('scanBack').textContent = '← Back';
+    });
+  }
+
+  function cancelScan() {
+    if (_socket) { _socket.disconnect(); _socket = null; }
+    goStep(3);
   }
 
   const KEY_LABELS = { anthropic:'API Key — Anthropic', openai:'API Key — OpenAI', gemini:'API Key — Google AI', groq:'API Key — Groq', ollama:'', none:'' };
