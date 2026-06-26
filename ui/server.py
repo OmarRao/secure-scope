@@ -740,4 +740,5 @@ def _emit(sid, event, data):
 if __name__ == "__main__":
     print("\nSecurity Review UI")
     print("   Open: http://localhost:5001\n")
-    socketio.run(app, host="0.0.0.0", port=5001, debug=False, allow_unsafe_werkzeug=True)
+    port = int(os.environ.get("PORT", 5001))
+    socketio.run(app, host="0.0.0.0", port=port, debug=False, allow_unsafe_werkzeug=True)
