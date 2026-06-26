@@ -252,6 +252,147 @@
     .founder-title { font-size: 11px; color: var(--sub); }
     .footer-copy { font-size: 11px; color: var(--muted); }
 
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.75);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: #111419; border: 1px solid #2e3540;
+      border-radius: 16px; width: 100%; max-width: 560px;
+      padding: 32px; position: relative;
+      transform: translateY(12px); transition: transform .2s;
+      max-height: 90vh; overflow-y: auto;
+      margin: 20px;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-close {
+      position: absolute; top: 18px; right: 18px;
+      background: none; border: 1px solid #2e3540; border-radius: 6px;
+      color: #a0aec0; cursor: pointer; width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; transition: background .15s, color .15s;
+    }
+    .modal-close:hover { background: #1f242d; color: #fff; }
+    .step-ind {
+      font-size: 11px; font-family: 'Geist Mono', monospace;
+      color: #4f8ef7; font-weight: 600; letter-spacing: .8px;
+      text-transform: uppercase; margin-bottom: 8px;
+    }
+    .modal-title {
+      font-size: 22px; font-weight: 800; color: #fff;
+      letter-spacing: -.4px; margin-bottom: 6px;
+    }
+    .modal-sub { font-size: 13px; color: #a0aec0; margin-bottom: 28px; line-height: 1.6; }
+    .wizard-step { display: none; }
+    .wizard-step.active { display: block; }
+    .field-label {
+      font-size: 11px; font-weight: 600; letter-spacing: .8px;
+      text-transform: uppercase; color: #6b7785;
+      font-family: 'Geist Mono', monospace; margin-bottom: 8px;
+    }
+    .modal-input {
+      width: 100%; background: #0a0c0f;
+      border: 1px solid #2e3540; border-radius: 8px;
+      padding: 13px 16px; color: #fff;
+      font-family: 'Geist Mono', monospace; font-size: 13px;
+      outline: none; transition: border-color .2s; margin-bottom: 16px;
+    }
+    .modal-input:focus { border-color: #4f8ef7; }
+    .modal-input::placeholder { color: #4a5568; }
+    .provider-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+      margin-bottom: 20px;
+    }
+    .provider-card {
+      background: #0a0c0f; border: 1.5px solid #2e3540;
+      border-radius: 10px; padding: 14px 12px;
+      cursor: pointer; transition: border-color .15s, background .15s;
+      user-select: none;
+    }
+    .provider-card:hover { border-color: #4a5568; background: #111419; }
+    .provider-card.selected { border-color: #4f8ef7; background: rgba(79,142,247,.08); }
+    .provider-card input[type=radio] { display: none; }
+    .provider-name { font-size: 13px; font-weight: 600; color: #e2e8f0; margin-bottom: 3px; line-height: 1.3; }
+    .provider-model { font-size: 10px; color: #6b7785; font-family: 'Geist Mono', monospace; margin-bottom: 6px; }
+    .provider-badge {
+      display: inline-block; font-size: 10px; font-weight: 600;
+      font-family: 'Geist Mono', monospace; padding: 2px 7px; border-radius: 4px;
+      background: rgba(79,142,247,.13); color: #4f8ef7;
+    }
+    .apikey-wrap { margin-bottom: 4px; }
+    .apikey-label {
+      font-size: 11px; font-weight: 600; letter-spacing: .8px;
+      text-transform: uppercase; color: #6b7785;
+      font-family: 'Geist Mono', monospace; margin-bottom: 8px;
+    }
+    .toggle-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 0; border-bottom: 1px solid #1f242d;
+    }
+    .toggle-row:last-of-type { border-bottom: none; }
+    .toggle-info { flex: 1; }
+    .toggle-name { font-size: 14px; font-weight: 500; color: #e2e8f0; margin-bottom: 3px; }
+    .toggle-desc { font-size: 12px; color: #6b7785; }
+    .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; margin-left: 16px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute; inset: 0; background: #1f242d;
+      border-radius: 11px; border: 1px solid #2e3540;
+      cursor: pointer; transition: background .2s;
+    }
+    .toggle input:checked + .toggle-track { background: #4f8ef7; border-color: #4f8ef7; }
+    .toggle-track::after {
+      content: ''; position: absolute; top: 2px; left: 2px;
+      width: 16px; height: 16px; background: #fff; border-radius: 50%;
+      transition: transform .2s;
+    }
+    .toggle input:checked + .toggle-track::after { transform: translateX(18px); }
+    .wizard-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 28px; padding-top: 20px; border-top: 1px solid #1f242d;
+    }
+    .btn-back {
+      background: none; border: 1px solid #2e3540; border-radius: 8px;
+      color: #a0aec0; font-family: 'Geist', sans-serif;
+      font-size: 14px; font-weight: 500; padding: 10px 20px;
+      cursor: pointer; transition: background .15s, color .15s;
+    }
+    .btn-back:hover { background: #1f242d; color: #fff; }
+    .btn-back.hidden { visibility: hidden; }
+    .btn-next {
+      background: #1f242d; border: 1px solid #2e3540; border-radius: 8px;
+      color: #e2e8f0; font-family: 'Geist', sans-serif;
+      font-size: 14px; font-weight: 600; padding: 10px 24px;
+      cursor: pointer; transition: background .15s, color .15s, opacity .15s;
+    }
+    .btn-next:hover { background: #252b35; color: #fff; }
+    .btn-next.accent { background: #4f8ef7; border-color: #4f8ef7; color: #fff; }
+    .btn-next.accent:hover { opacity: .88; }
+    .step-dots { display: flex; gap: 6px; align-items: center; }
+    .step-dot { width: 6px; height: 6px; border-radius: 50%; background: #2e3540; transition: all .2s; }
+    .step-dot.active { background: #4f8ef7; width: 18px; border-radius: 3px; }
+    .step-dot.done   { background: #3ecf79; }
+    .gh-token-wrap { margin-top: 12px; display: none; }
+    .setup-notice {
+      background: rgba(79,142,247,.08); border: 1px solid rgba(79,142,247,.3);
+      border-radius: 10px; padding: 20px 24px; margin-top: 8px;
+    }
+    .setup-notice h4 { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 12px; }
+    .setup-notice pre {
+      background: #0a0c0f; border: 1px solid #2e3540; border-radius: 8px;
+      padding: 14px 16px; font-family: 'Geist Mono', monospace;
+      font-size: 12px; color: #a0aec0; overflow-x: auto;
+      white-space: pre; margin-bottom: 16px;
+    }
+    .setup-notice p { font-size: 13px; color: #a0aec0; line-height: 1.6; }
+    .setup-notice a { color: #4f8ef7; }
+
     /* ── Responsive ── */
     @media (max-width: 768px) {
       :root { --gutter: 20px; }
@@ -291,9 +432,9 @@
         maps every finding to MITRE ATT&amp;CK and CWE, optionally executes the code
         in an isolated Docker sandbox, and generates a visual threat report in seconds.
       </p>
-      <a class="hero-cta" href="https://github.com/OmarRao/secure-scope" target="_blank">
+      <button class="hero-cta" onclick="openModal()">
         Analyze Repository &nbsp;&#x2192;
-      </a>
+      </button>
     </div>
 
     <!-- Capabilities -->
@@ -388,6 +529,171 @@
     </div>
 
   </div><!-- /wrap -->
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" onclick="closeModal()" aria-label="Close">&times;</button>
+
+    <!-- Step 1: Repository -->
+    <div class="wizard-step active" id="step1">
+      <div class="step-ind">Step 1 of 3 &mdash; Repository</div>
+      <div class="modal-title" id="modalTitle">Analyze Repository</div>
+      <div class="modal-sub">Enter the GitHub repository you want to scan for security vulnerabilities.</div>
+      <div class="field-label">GitHub URL</div>
+      <input class="modal-input" id="wizRepoUrl" type="text"
+        placeholder="https://github.com/owner/repository"
+        value="https://github.com/OmarRao/analyzer"
+        autocomplete="off" spellcheck="false">
+      <div class="field-label">Branch</div>
+      <input class="modal-input" id="wizBranch" type="text"
+        placeholder="main" value="main"
+        autocomplete="off" spellcheck="false">
+      <div class="wizard-footer">
+        <button class="btn-back hidden">Back</button>
+        <div class="step-dots">
+          <div class="step-dot active"></div>
+          <div class="step-dot"></div>
+          <div class="step-dot"></div>
+        </div>
+        <button class="btn-next" onclick="goStep(2)">Next &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Step 2: AI Provider -->
+    <div class="wizard-step" id="step2">
+      <div class="step-ind">Step 2 of 3 &mdash; AI Provider</div>
+      <div class="modal-title">Choose AI Advisor</div>
+      <div class="modal-sub">Select which LLM to use for fix generation. All free tiers supported.</div>
+      <div class="provider-grid" id="providerGrid">
+        <label class="provider-card selected" data-provider="anthropic">
+          <input type="radio" name="provider" value="anthropic" checked>
+          <div class="provider-name">Anthropic Claude</div>
+          <div class="provider-model">claude-sonnet-4-5</div>
+          <span class="provider-badge">Best quality</span>
+        </label>
+        <label class="provider-card" data-provider="openai">
+          <input type="radio" name="provider" value="openai">
+          <div class="provider-name">OpenAI GPT-4o</div>
+          <div class="provider-model">gpt-4o</div>
+          <span class="provider-badge">Fast &amp; capable</span>
+        </label>
+        <label class="provider-card" data-provider="gemini">
+          <input type="radio" name="provider" value="gemini">
+          <div class="provider-name">Google Gemini</div>
+          <div class="provider-model">gemini-1.5-flash</div>
+          <span class="provider-badge">Free tier</span>
+        </label>
+        <label class="provider-card" data-provider="groq">
+          <input type="radio" name="provider" value="groq">
+          <div class="provider-name">Groq Llama 3.1</div>
+          <div class="provider-model">llama-3.1-70b-versatile</div>
+          <span class="provider-badge">Ultra fast</span>
+        </label>
+        <label class="provider-card" data-provider="ollama">
+          <input type="radio" name="provider" value="ollama">
+          <div class="provider-name">Ollama (local)</div>
+          <div class="provider-model">llama3</div>
+          <span class="provider-badge">No API key</span>
+        </label>
+        <label class="provider-card" data-provider="none">
+          <input type="radio" name="provider" value="none">
+          <div class="provider-name">None</div>
+          <div class="provider-model">skip advisor</div>
+          <span class="provider-badge">Skip advisor</span>
+        </label>
+      </div>
+      <div class="apikey-wrap" id="apikeyWrap">
+        <div class="apikey-label" id="apikeyLabel">API Key &mdash; Anthropic</div>
+        <input class="modal-input" id="wizApiKey" type="password"
+          placeholder="sk-ant-..." autocomplete="off">
+      </div>
+      <div class="wizard-footer">
+        <button class="btn-back" onclick="goStep(1)">&larr; Back</button>
+        <div class="step-dots">
+          <div class="step-dot done"></div>
+          <div class="step-dot active"></div>
+          <div class="step-dot"></div>
+        </div>
+        <button class="btn-next" onclick="goStep(3)">Next &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Scan Options -->
+    <div class="wizard-step" id="step3">
+      <div class="step-ind">Step 3 of 3 &mdash; Options</div>
+      <div class="modal-title">Scan Options</div>
+      <div class="modal-sub">Configure additional scan behaviors.</div>
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-name">Docker Sandbox</div>
+          <div class="toggle-desc">Execute code in isolated container &mdash; captures file writes, processes &amp; network calls</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="wizSandbox"><div class="toggle-track"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-name">Auto-commit Fixes</div>
+          <div class="toggle-desc">Push AI-generated patches directly to the repository branch</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="wizAutoCommit" onchange="toggleGhToken()"><div class="toggle-track"></div></label>
+      </div>
+      <div class="gh-token-wrap" id="ghTokenWrap">
+        <div class="field-label">GitHub Token</div>
+        <input class="modal-input" id="wizGhToken" type="password" placeholder="ghp_..." autocomplete="off">
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-name">License Scan</div>
+          <div class="toggle-desc">Scan dependencies for copyleft license compliance risks</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="wizLicenseScan"><div class="toggle-track"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-name">Supply Chain Check</div>
+          <div class="toggle-desc">Detect dependency confusion and typosquatting attacks</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="wizSupplyChain"><div class="toggle-track"></div></label>
+      </div>
+      <div class="wizard-footer">
+        <button class="btn-back" onclick="goStep(2)">&larr; Back</button>
+        <div class="step-dots">
+          <div class="step-dot done"></div>
+          <div class="step-dot done"></div>
+          <div class="step-dot active"></div>
+        </div>
+        <button class="btn-next accent" onclick="showSetup()">Run Scan</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Setup instructions (static page — no backend here) -->
+    <div class="wizard-step" id="step4">
+      <div class="step-ind">Ready to Scan</div>
+      <div class="modal-title">Run Locally</div>
+      <div class="modal-sub">This is the static landing page. To run a live scan, start the web UI locally:</div>
+      <div class="setup-notice">
+        <h4>Quick Setup</h4>
+        <pre>git clone https://github.com/OmarRao/secure-scope.git
+cd secure-scope
+pip install -r requirements.txt
+python -m ui.server
+# Open http://localhost:5001</pre>
+        <p>Then click <strong>Analyze Repository</strong> in the local app and paste your repo URL. Full scan results, threat report, and AI fix advisor will be available there.</p>
+      </div>
+      <div class="wizard-footer">
+        <button class="btn-back" onclick="goStep(3)">&larr; Back</button>
+        <div class="step-dots">
+          <div class="step-dot done"></div>
+          <div class="step-dot done"></div>
+          <div class="step-dot done"></div>
+        </div>
+        <a class="btn-next accent" href="https://github.com/OmarRao/secure-scope" target="_blank" style="text-decoration:none">View on GitHub</a>
+      </div>
+    </div>
+
+  </div>
+</div>
 </main>
 
 <!-- Footer -->
@@ -425,16 +731,78 @@
 </footer>
 
 <script>
+  let currentWizStep = 1;
+
   function toggleTheme() {
-    const isLight = document.documentElement.classList.toggle('light');
-    document.getElementById('themeBtn').textContent = isLight ? '🌙' : '🌙';
-    document.getElementById('themeBtn').innerHTML = isLight ? '&#x2600;&#xFE0F;' : '&#x1F319;';
-    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    const html = document.documentElement;
+    const btn  = document.getElementById('themeBtn');
+    if (html.classList.contains('light')) {
+      html.classList.remove('light');
+      btn.innerHTML = '&#x1F319;';
+      localStorage.setItem('theme', 'dark');
+    } else {
+      html.classList.add('light');
+      btn.innerHTML = '&#x2600;&#xFE0F;';
+      localStorage.setItem('theme', 'light');
+    }
   }
-  // Restore saved theme
-  if (localStorage.getItem('theme') === 'light') {
-    document.documentElement.classList.add('light');
-    document.getElementById('themeBtn').innerHTML = '&#x2600;&#xFE0F;';
+  (function() {
+    if (localStorage.getItem('theme') === 'light') {
+      document.documentElement.classList.add('light');
+      document.getElementById('themeBtn').innerHTML = '&#x2600;&#xFE0F;';
+    }
+  })();
+
+  function openModal() {
+    document.getElementById('modalOverlay').classList.add('open');
+    goStep(1);
+    setTimeout(() => document.getElementById('wizRepoUrl').focus(), 200);
+  }
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('open')) {
+      if (currentWizStep === 1) goStep(2);
+      else if (currentWizStep === 2) goStep(3);
+      else if (currentWizStep === 3) showSetup();
+    }
+  });
+  function goStep(n) {
+    document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + n).classList.add('active');
+    currentWizStep = n;
+  }
+  function showSetup() {
+    goStep(4);
+  }
+
+  const KEY_LABELS = { anthropic:'API Key — Anthropic', openai:'API Key — OpenAI', gemini:'API Key — Google AI', groq:'API Key — Groq', ollama:'', none:'' };
+  const KEY_PLACEHOLDERS = { anthropic:'sk-ant-...', openai:'sk-...', gemini:'AIza...', groq:'gsk_...', ollama:'', none:'' };
+  document.getElementById('providerGrid').addEventListener('click', function(e) {
+    const card = e.target.closest('.provider-card');
+    if (!card) return;
+    document.querySelectorAll('.provider-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    const radio = card.querySelector('input[type=radio]');
+    if (radio) radio.checked = true;
+    const p = card.dataset.provider;
+    const wrap = document.getElementById('apikeyWrap');
+    if (p === 'ollama' || p === 'none') {
+      wrap.style.display = 'none';
+    } else {
+      wrap.style.display = 'block';
+      document.getElementById('apikeyLabel').textContent = KEY_LABELS[p] || 'API Key';
+      document.getElementById('wizApiKey').placeholder = KEY_PLACEHOLDERS[p] || '';
+    }
+  });
+  function toggleGhToken() {
+    document.getElementById('ghTokenWrap').style.display =
+      document.getElementById('wizAutoCommit').checked ? 'block' : 'none';
   }
 </script>
 
