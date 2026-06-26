@@ -1,0 +1,131 @@
+<svg viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#555"/>
+    </marker>
+    <filter id="shadow" x="-5%" y="-5%" width="115%" height="115%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#00000022"/>
+    </filter>
+  </defs>
+  <text x="450" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a237e">SecureScope — System Architecture v10.0.0</text>
+  <rect x="30" y="55" width="840" height="60" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="450" y="78" text-anchor="middle" font-size="12" font-weight="bold" fill="#0d47a1">INPUT LAYER</text>
+  <rect x="50" y="70" width="180" height="30" rx="5" fill="#1565c0"/>
+  <text x="140" y="90" text-anchor="middle" font-size="11" fill="white">GitHub Repository URL</text>
+  <rect x="250" y="70" width="180" height="30" rx="5" fill="#1565c0"/>
+  <text x="340" y="90" text-anchor="middle" font-size="11" fill="white">CLI Flags &amp; Config</text>
+  <rect x="450" y="70" width="180" height="30" rx="5" fill="#1565c0"/>
+  <text x="540" y="90" text-anchor="middle" font-size="11" fill="white">GITHUB_TOKEN / App Key</text>
+  <rect x="650" y="70" width="200" height="30" rx="5" fill="#1565c0"/>
+  <text x="750" y="90" text-anchor="middle" font-size="11" fill="white">Webhook (push/PR events)</text>
+  <line x1="450" y1="115" x2="450" y2="145" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="460" y="135" font-size="10" fill="#555">git clone</text>
+  <rect x="300" y="145" width="300" height="45" rx="8" fill="#4a148c" filter="url(#shadow)"/>
+  <text x="450" y="165" text-anchor="middle" font-size="13" font-weight="bold" fill="white">main.py — Orchestrator</text>
+  <text x="450" y="181" text-anchor="middle" font-size="10" fill="#e1bee7">Arg parsing · Queue runner · Report assembly</text>
+  <line x1="450" y1="190" x2="450" y2="220" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="450" y="215" text-anchor="middle" font-size="11" font-weight="bold" fill="#37474f">SCANNER MODULES (parallel)</text>
+  <rect x="30" y="225" width="130" height="75" rx="6" fill="#fff8e1" stroke="#f9a825" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="30" y="225" width="130" height="22" rx="6" fill="#f9a825"/>
+  <text x="95" y="241" text-anchor="middle" font-size="11" font-weight="bold" fill="white">SAST</text>
+  <text x="95" y="258" text-anchor="middle" font-size="10" fill="#555">Semgrep + custom</text>
+  <text x="95" y="272" text-anchor="middle" font-size="10" fill="#555">rules/flask-security</text>
+  <text x="95" y="286" text-anchor="middle" font-size="10" fill="#555">rules/secrets</text>
+  <rect x="175" y="225" width="130" height="75" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="175" y="225" width="130" height="22" rx="6" fill="#2e7d32"/>
+  <text x="240" y="241" text-anchor="middle" font-size="11" font-weight="bold" fill="white">SCA / Deps</text>
+  <text x="240" y="258" text-anchor="middle" font-size="10" fill="#555">pip-audit · OSV.dev</text>
+  <text x="240" y="272" text-anchor="middle" font-size="10" fill="#555">polyglot: npm/cargo</text>
+  <text x="240" y="286" text-anchor="middle" font-size="10" fill="#555">go / bundler / maven</text>
+  <rect x="320" y="225" width="130" height="75" rx="6" fill="#fce4ec" stroke="#c62828" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="320" y="225" width="130" height="22" rx="6" fill="#c62828"/>
+  <text x="385" y="241" text-anchor="middle" font-size="11" font-weight="bold" fill="white">Secrets</text>
+  <text x="385" y="258" text-anchor="middle" font-size="10" fill="#555">detect-secrets</text>
+  <text x="385" y="272" text-anchor="middle" font-size="10" fill="#555">Entropy analysis</text>
+  <text x="385" y="286" text-anchor="middle" font-size="10" fill="#555">Pattern matching</text>
+  <rect x="465" y="225" width="130" height="75" rx="6" fill="#e8eaf6" stroke="#283593" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="465" y="225" width="130" height="22" rx="6" fill="#283593"/>
+  <text x="530" y="241" text-anchor="middle" font-size="11" font-weight="bold" fill="white">IaC</text>
+  <text x="530" y="258" text-anchor="middle" font-size="10" fill="#555">Checkov · Terraform</text>
+  <text x="530" y="272" text-anchor="middle" font-size="10" fill="#555">Kubernetes · Dockerfile</text>
+  <text x="530" y="286" text-anchor="middle" font-size="10" fill="#555">GitHub Actions</text>
+  <rect x="610" y="225" width="130" height="75" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="610" y="225" width="130" height="22" rx="6" fill="#e65100"/>
+  <text x="675" y="241" text-anchor="middle" font-size="11" font-weight="bold" fill="white">Container</text>
+  <text x="675" y="258" text-anchor="middle" font-size="10" fill="#555">Trivy image scan</text>
+  <text x="675" y="272" text-anchor="middle" font-size="10" fill="#555">OS + pkg CVEs</text>
+  <text x="675" y="286" text-anchor="middle" font-size="10" fill="#555">CRITICAL / HIGH</text>
+  <rect x="755" y="225" width="120" height="75" rx="6" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1.5" filter="url(#shadow)"/>
+  <rect x="755" y="225" width="120" height="22" rx="6" fill="#6a1b9a"/>
+  <text x="815" y="241" text-anchor="middle" font-size="11" font-weight="bold" fill="white">DAST</text>
+  <text x="815" y="258" text-anchor="middle" font-size="10" fill="#555">Nuclei templates</text>
+  <text x="815" y="272" text-anchor="middle" font-size="10" fill="#555">OWASP ZAP</text>
+  <text x="815" y="286" text-anchor="middle" font-size="10" fill="#555">Live app testing</text>
+  <line x1="95" y1="300" x2="280" y2="335" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="240" y1="300" x2="320" y2="335" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="385" y1="300" x2="400" y2="335" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="530" y1="300" x2="490" y2="335" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="675" y1="300" x2="590" y2="335" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="815" y1="300" x2="660" y2="335" stroke="#888" stroke-width="1.5" marker-end="url(#arr)"/>
+  <rect x="250" y="335" width="400" height="55" rx="8" fill="#1b5e20" filter="url(#shadow)"/>
+  <text x="450" y="358" text-anchor="middle" font-size="13" font-weight="bold" fill="white">AI Advisor (advisor.py)</text>
+  <text x="450" y="375" text-anchor="middle" font-size="10" fill="#c8e6c9">Claude · GPT-4o · Gemini · Groq · Ollama · None</text>
+  <line x1="450" y1="390" x2="450" y2="415" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>
+  <text x="450" y="412" text-anchor="middle" font-size="11" font-weight="bold" fill="#37474f">OUTPUT / REPORT LAYER</text>
+  <rect x="30" y="420" width="100" height="45" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="80" y="440" text-anchor="middle" font-size="11" font-weight="bold" fill="#1565c0">HTML</text>
+  <text x="80" y="455" text-anchor="middle" font-size="10" fill="#555">report.py</text>
+  <rect x="145" y="420" width="100" height="45" rx="6" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5"/>
+  <text x="195" y="440" text-anchor="middle" font-size="11" font-weight="bold" fill="#1565c0">JSON</text>
+  <text x="195" y="455" text-anchor="middle" font-size="10" fill="#555">machine-readable</text>
+  <rect x="260" y="420" width="100" height="45" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="310" y="440" text-anchor="middle" font-size="11" font-weight="bold" fill="#2e7d32">SARIF</text>
+  <text x="310" y="455" text-anchor="middle" font-size="10" fill="#555">Code Scanning</text>
+  <rect x="375" y="420" width="100" height="45" rx="6" fill="#e8f5e9" stroke="#2e7d32" stroke-width="1.5"/>
+  <text x="425" y="440" text-anchor="middle" font-size="11" font-weight="bold" fill="#2e7d32">SBOM</text>
+  <text x="425" y="455" text-anchor="middle" font-size="10" fill="#555">CycloneDX 1.4</text>
+  <rect x="490" y="420" width="100" height="45" rx="6" fill="#fff3e0" stroke="#e65100" stroke-width="1.5"/>
+  <text x="540" y="440" text-anchor="middle" font-size="11" font-weight="bold" fill="#e65100">PDF</text>
+  <text x="540" y="455" text-anchor="middle" font-size="10" fill="#555">weasyprint</text>
+  <rect x="605" y="420" width="110" height="45" rx="6" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="660" y="440" text-anchor="middle" font-size="11" font-weight="bold" fill="#6a1b9a">SQLite DB</text>
+  <text x="660" y="455" text-anchor="middle" font-size="10" fill="#555">trend · SLA</text>
+  <rect x="730" y="420" width="140" height="45" rx="6" fill="#fff8e1" stroke="#f9a825" stroke-width="1.5"/>
+  <text x="800" y="440" text-anchor="middle" font-size="11" font-weight="bold" fill="#f9a825">Markdown</text>
+  <text x="800" y="455" text-anchor="middle" font-size="10" fill="#555">PR comment</text>
+  <rect x="30" y="485" width="840" height="55" rx="8" fill="#eceff1" stroke="#546e7a" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="450" y="503" text-anchor="middle" font-size="11" font-weight="bold" fill="#37474f">INTEGRATION LAYER</text>
+  <rect x="45" y="508" width="110" height="22" rx="4" fill="#546e7a"/>
+  <text x="100" y="524" text-anchor="middle" font-size="10" fill="white">GitHub Issues</text>
+  <rect x="170" y="508" width="110" height="22" rx="4" fill="#546e7a"/>
+  <text x="225" y="524" text-anchor="middle" font-size="10" fill="white">Jira Cloud</text>
+  <rect x="295" y="508" width="110" height="22" rx="4" fill="#546e7a"/>
+  <text x="350" y="524" text-anchor="middle" font-size="10" fill="white">Slack / Teams</text>
+  <rect x="420" y="508" width="110" height="22" rx="4" fill="#546e7a"/>
+  <text x="475" y="524" text-anchor="middle" font-size="10" fill="white">PR Comment</text>
+  <rect x="545" y="508" width="110" height="22" rx="4" fill="#546e7a"/>
+  <text x="600" y="524" text-anchor="middle" font-size="10" fill="white">GitHub App</text>
+  <rect x="670" y="508" width="110" height="22" rx="4" fill="#546e7a"/>
+  <text x="725" y="524" text-anchor="middle" font-size="10" fill="white">Firebase Telemetry</text>
+  <rect x="795" y="508" width="65" height="22" rx="4" fill="#546e7a"/>
+  <text x="827" y="524" text-anchor="middle" font-size="10" fill="white">SBOM Diff</text>
+  <rect x="30" y="550" width="840" height="60" rx="6" fill="#f9f9f9" stroke="#ccc"/>
+  <text x="50" y="568" font-size="10" font-weight="bold" fill="#333">Legend:</text>
+  <rect x="100" y="558" width="12" height="12" fill="#f9a825"/>
+  <text x="118" y="568" font-size="10" fill="#555">SAST</text>
+  <rect x="165" y="558" width="12" height="12" fill="#2e7d32"/>
+  <text x="183" y="568" font-size="10" fill="#555">SCA/Deps</text>
+  <rect x="250" y="558" width="12" height="12" fill="#c62828"/>
+  <text x="268" y="568" font-size="10" fill="#555">Secrets</text>
+  <rect x="320" y="558" width="12" height="12" fill="#283593"/>
+  <text x="338" y="568" font-size="10" fill="#555">IaC</text>
+  <rect x="375" y="558" width="12" height="12" fill="#e65100"/>
+  <text x="393" y="568" font-size="10" fill="#555">Container</text>
+  <rect x="455" y="558" width="12" height="12" fill="#6a1b9a"/>
+  <text x="473" y="568" font-size="10" fill="#555">DAST</text>
+  <rect x="515" y="558" width="12" height="12" fill="#4a148c"/>
+  <text x="533" y="568" font-size="10" fill="#555">Orchestrator</text>
+  <rect x="620" y="558" width="12" height="12" fill="#1b5e20"/>
+  <text x="638" y="568" font-size="10" fill="#555">AI Advisor</text>
+  <text x="50" y="598" font-size="9" fill="#777">SecureScope v10.0.0 — github.com/OmarRao/secure-scope</text>
+</svg>

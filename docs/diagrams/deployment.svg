@@ -1,0 +1,80 @@
+<svg viewBox="0 0 750 450" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <marker id="arr" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#555"/>
+    </marker>
+    <filter id="shadow" x="-5%" y="-5%" width="115%" height="115%">
+      <feDropShadow dx="2" dy="2" stdDeviation="2" flood-color="#00000022"/>
+    </filter>
+  </defs>
+  <text x="375" y="25" text-anchor="middle" font-size="16" font-weight="bold" fill="#1a237e">SecureScope — Kubernetes Deployment</text>
+
+  <!-- External Traffic -->
+  <rect x="20" y="50" width="110" height="45" rx="6" fill="#37474f" filter="url(#shadow)"/>
+  <text x="75" y="70" text-anchor="middle" font-size="11" fill="white">External</text>
+  <text x="75" y="85" text-anchor="middle" font-size="11" fill="white">Traffic</text>
+  <line x1="130" y1="72" x2="170" y2="72" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- LoadBalancer -->
+  <rect x="170" y="50" width="110" height="45" rx="6" fill="#0277bd" filter="url(#shadow)"/>
+  <text x="225" y="70" text-anchor="middle" font-size="11" fill="white">LoadBalancer</text>
+  <text x="225" y="85" text-anchor="middle" font-size="10" fill="#bbdefb">:443 / :80</text>
+  <line x1="280" y1="72" x2="320" y2="72" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- nginx ingress -->
+  <rect x="320" y="50" width="110" height="45" rx="6" fill="#1565c0" filter="url(#shadow)"/>
+  <text x="375" y="70" text-anchor="middle" font-size="11" fill="white">nginx Ingress</text>
+  <text x="375" y="85" text-anchor="middle" font-size="10" fill="#bbdefb">TLS termination</text>
+  <line x1="430" y1="72" x2="470" y2="72" stroke="#555" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- K8s cluster box -->
+  <rect x="460" y="35" width="270" height="240" rx="8" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2" stroke-dasharray="6,3"/>
+  <text x="595" y="55" text-anchor="middle" font-size="11" font-weight="bold" fill="#1b5e20">Kubernetes Cluster</text>
+
+  <!-- SecureScope pod -->
+  <rect x="475" y="60" width="230" height="80" rx="6" fill="#4a148c" filter="url(#shadow)"/>
+  <text x="590" y="82" text-anchor="middle" font-size="12" font-weight="bold" fill="white">SecureScope Pod ×2</text>
+  <text x="590" y="98" text-anchor="middle" font-size="10" fill="#e1bee7">main.py · analyzer.py</text>
+  <text x="590" y="113" text-anchor="middle" font-size="10" fill="#e1bee7">advisor.py · report.py</text>
+  <text x="590" y="128" text-anchor="middle" font-size="10" fill="#e1bee7">HPA: 2–10 replicas</text>
+
+  <!-- Redis -->
+  <rect x="475" y="155" width="100" height="45" rx="6" fill="#b71c1c" filter="url(#shadow)"/>
+  <text x="525" y="175" text-anchor="middle" font-size="11" fill="white">Redis</text>
+  <text x="525" y="190" text-anchor="middle" font-size="10" fill="#ffcdd2">Job queue</text>
+  <line x1="590" y1="140" x2="525" y2="155" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- PersistentVolume -->
+  <rect x="600" y="155" width="120" height="45" rx="6" fill="#e65100" filter="url(#shadow)"/>
+  <text x="660" y="172" text-anchor="middle" font-size="11" fill="white">PersistentVolume</text>
+  <text x="660" y="187" text-anchor="middle" font-size="10" fill="#ffe0b2">reports/ + sqlite.db</text>
+  <line x1="650" y1="140" x2="660" y2="155" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <!-- GitHub API external -->
+  <rect x="475" y="215" width="100" height="45" rx="6" fill="#24292e" filter="url(#shadow)"/>
+  <text x="525" y="235" text-anchor="middle" font-size="11" fill="white">GitHub API</text>
+  <text x="525" y="250" text-anchor="middle" font-size="10" fill="#8b949e">api.github.com</text>
+  <line x1="590" y1="155" x2="525" y2="215" stroke="#555" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr)"/>
+
+  <!-- docker-compose alternative -->
+  <rect x="20" y="310" width="440" height="120" rx="8" fill="#fff8e1" stroke="#f9a825" stroke-width="2" stroke-dasharray="6,3"/>
+  <text x="240" y="330" text-anchor="middle" font-size="12" font-weight="bold" fill="#e65100">docker-compose Alternative</text>
+  <rect x="35" y="340" width="120" height="40" rx="5" fill="#1565c0"/>
+  <text x="95" y="357" text-anchor="middle" font-size="11" fill="white">secscope</text>
+  <text x="95" y="371" text-anchor="middle" font-size="10" fill="#bbdefb">:5000 (API)</text>
+  <rect x="175" y="340" width="120" height="40" rx="5" fill="#b71c1c"/>
+  <text x="235" y="357" text-anchor="middle" font-size="11" fill="white">redis</text>
+  <text x="235" y="371" text-anchor="middle" font-size="10" fill="#ffcdd2">:6379</text>
+  <rect x="315" y="340" width="130" height="40" rx="5" fill="#546e7a"/>
+  <text x="380" y="357" text-anchor="middle" font-size="11" fill="white">nginx</text>
+  <text x="380" y="371" text-anchor="middle" font-size="10" fill="#cfd8dc">:80 → :5000</text>
+  <line x1="155" y1="360" x2="175" y2="360" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="295" y1="360" x2="315" y2="360" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+  <text x="240" y="410" text-anchor="middle" font-size="10" fill="#777">docker-compose up -d  (development / single-host)</text>
+
+  <!-- ConfigMap / Secrets -->
+  <rect x="480" y="295" width="250" height="50" rx="6" fill="#f3e5f5" stroke="#6a1b9a" stroke-width="1.5"/>
+  <text x="605" y="315" text-anchor="middle" font-size="11" font-weight="bold" fill="#4a148c">ConfigMap + Secrets</text>
+  <text x="605" y="331" text-anchor="middle" font-size="10" fill="#555">GITHUB_TOKEN · OPENAI_API_KEY · SLACK_URL</text>
+  <line x1="590" y1="295" x2="590" y2="275" stroke="#555" stroke-width="1.5" marker-end="url(#arr)"/>
+</svg>
