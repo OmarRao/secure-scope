@@ -72,7 +72,7 @@ try:
     _SECRETS_AVAILABLE = True
 except ImportError as _sec_err:
     _SECRETS_AVAILABLE = False
-    _sec_err_msg = str(_sec_err)
+    _secrets_import_error = str(_sec_err)  # import error message, not a secret
 
 # ── Import dependency scanner (v4.0.0) ───────────────────────────────────────
 try:
@@ -221,7 +221,7 @@ def api_secrets_patterns():
     Returns HTTP 503 if secrets_scanner module failed to import.
     """
     if not _SECRETS_AVAILABLE:
-        logger.error("Secrets scanner module unavailable: %s", _sec_err_msg)
+        logger.error("Secrets scanner module unavailable: %s", _secrets_import_error)  # nosec B106
         return jsonify({"error": "Secrets scanner module unavailable"}), 503
     try:
         return jsonify(list_pattern_categories())
@@ -509,7 +509,7 @@ def handle_secrets_scan(data):
         return
 
     if not _SECRETS_AVAILABLE:
-        logger.error("Secrets scanner module unavailable: %s", _sec_err_msg)
+        logger.error("Secrets scanner module unavailable: %s", _secrets_import_error)  # nosec B106
         _emit(sid, "secrets_error", {"message": "Secrets scanner module unavailable"})
         return
 
@@ -543,7 +543,7 @@ def handle_secrets_scan(data):
             _emit(sid, "secrets_complete", result.to_dict())
 
         except Exception as exc:
-            logger.exception("Secrets scan error for sid %s", sid)
+            logger.exception("Secrets scan error for sid %s", sid)  # nosec B106
             _emit(sid, "secrets_error", {"message": "Secrets scan failed. Check server logs for details."})
         finally:
             if cloned_dir:

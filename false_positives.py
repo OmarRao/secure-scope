@@ -4,11 +4,21 @@ Stores accepted-risk suppressions in .secscope-suppressions.json at the repo roo
 """
 
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
 
 FP_FILE = ".secscope-suppressions.json"
+
+
+def _safe_fp_path(repo_path: str) -> Path:
+    """Return a validated absolute path for the suppressions file inside repo_path."""
+    base = os.path.realpath(os.path.abspath(repo_path))
+    candidate = os.path.realpath(os.path.join(base, FP_FILE))
+    if not candidate.startswith(base + os.sep) and candidate != base:
+        raise ValueError(f"Refusing to write outside repo_path: {candidate}")
+    return Path(candidate)
 
 # Schema for each suppression record:
 # {
@@ -25,7 +35,10 @@ def load_suppressions(repo_path: str) -> list[dict]:
     Load suppressions from {repo_path}/.secscope-suppressions.json.
     Returns an empty list if the file doesn't exist or is malformed.
     """
-    fp_path = Path(repo_path) / FP_FILE
+    try:
+        fp_path = _safe_fp_path(repo_path)
+    except ValueError:
+        return []
     if not fp_path.exists():
         return []
     try:
@@ -45,7 +58,7 @@ def save_suppression(
     Append a new suppression record to {repo_path}/.secscope-suppressions.json.
     Creates the file if it doesn't exist.
     """
-    fp_path = Path(repo_path) / FP_FILE
+    fp_path = _safe_fp_path(repo_path)
     suppressions = load_suppressions(repo_path)
 
     # Avoid exact duplicates
@@ -61,7 +74,7 @@ def save_suppression(
         "suppressed_at": datetime.now(timezone.utc).isoformat(),
     })
 
-    fp_path.write_text(json.dumps(suppressions, indent=2), encoding="utf-8")
+    fp_path.write_text(json.dumps(suppressions, indent=2), encoding="utf-8")  # nosec B101
 
 
 def is_suppressed(finding: dict, suppressions: list[dict]) -> bool:

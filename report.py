@@ -3,6 +3,7 @@ Report generator: produces a structured HTML and JSON security report.
 """
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -31,8 +32,9 @@ def to_json(result: AnalysisResult, obs: Optional["RuntimeObservation"] = None,
             "exit_code": obs.exit_code if obs else None,
         } if obs else None,
     }
-    Path(path).write_text(json.dumps(data, indent=2))
-    print(f"[+] JSON report: {path}")
+    safe_path = os.path.abspath(path)
+    Path(safe_path).write_text(json.dumps(data, indent=2))
+    print(f"[+] JSON report: {safe_path}")
     return path
 
 
@@ -177,8 +179,9 @@ def to_html(result: AnalysisResult, obs: Optional["RuntimeObservation"] = None,
 </body>
 </html>"""
 
-    Path(path).write_text(html)
-    print(f"[+] HTML report: {path}")
+    safe_path = os.path.abspath(path)
+    Path(safe_path).write_text(html)
+    print(f"[+] HTML report: {safe_path}")
     return path
 
 

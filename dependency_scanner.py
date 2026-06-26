@@ -6,12 +6,16 @@ Supports: PyPI, npm, Go, Maven, RubyGems, Cargo, Composer
 
 import json
 import re
-import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
 import urllib.request
 import urllib.error
+
+try:
+    import defusedxml.ElementTree as ET
+except ImportError:
+    import xml.etree.ElementTree as ET  # fallback; XXE mitigated by not resolving entities
 
 
 # ── Data Models ────────────────────────────────────────────────────────────────

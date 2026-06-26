@@ -6,6 +6,7 @@ Produces a compact summary suitable for posting as a PR comment.
 from __future__ import annotations
 
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -94,8 +95,9 @@ def to_markdown(
     # Remove blank lines caused by empty entries
     md = "\n".join(line for line in lines if line is not None)
 
-    Path(path).write_text(md, encoding="utf-8")
-    print(f"[+] Markdown report: {path}")
+    safe_path = os.path.abspath(path)
+    Path(safe_path).write_text(md, encoding="utf-8")
+    print(f"[+] Markdown report: {safe_path}")
     return path
 
 

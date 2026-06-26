@@ -136,9 +136,12 @@ jobs:
       # The digest is the immutable sha256 reference — useful for pinning in
       # Kubernetes manifests or docker-compose for reproducible deployments.
       - name: Print image digest
+        env:
+          IMAGE_DIGEST: ${{ steps.build-and-push.outputs.digest }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          echo "Image digest: ${{ steps.build-and-push.outputs.digest }}"
+          echo "Image digest: ${IMAGE_DIGEST}"
           echo ""
           echo "Pull commands:"
           echo "  docker pull ghcr.io/omarrao/secure-scope:latest"
-          echo "  docker pull ghcr.io/omarrao/secure-scope:${{ github.ref_name }}"
+          echo "  docker pull ghcr.io/omarrao/secure-scope:${REF_NAME}"

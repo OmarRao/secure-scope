@@ -17,6 +17,13 @@ spec:
       containers:
         - name: secscope
           image: ghcr.io/omarrao/secure-scope:latest
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
           ports:
             - containerPort: 8080
           env:
