@@ -108,6 +108,9 @@ REPORTS_DIR.mkdir(exist_ok=True)
 # Active scan jobs: sid -> status dict
 _jobs: dict[str, dict] = {}
 
+# History file (local fallback when Gist is unavailable)
+_HISTORY_FILE = REPORTS_DIR / "scan_history.jsonl"
+
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
@@ -269,6 +272,8 @@ def handle_scan(data):
     run_advisor = data.get("advisor", False)
     llm_provider = data.get("llm_provider", "anthropic") or "anthropic"
     llm_api_key = data.get("llm_api_key", "") or ""
+    auto_fix = data.get("auto_fix", False)
+    gh_token = data.get("gh_token", "") or os.environ.get("GITHUB_TOKEN", "")
     sid = request.sid
 
     if not repo_url or not parse_repo_url(repo_url):
@@ -391,10 +396,39 @@ def handle_scan(data):
                         encoding="utf-8"
                     )
 
+                    # ── Gist upload ───────────────────────────────────────
+                    gist_url = ""
+                    if gh_token:
+                        _emit(sid, "progress", {"step": "done", "message": "☁️ Uploading report to Gist...", "pct": 95})
+                        try:
+                            from gist_storage import upload_report, append_history_record, build_history_record
+                            gist_url = upload_report(rich_html.read_text(encoding="utf-8"), repo_slug, ts)
+                            rec = build_history_record(repo_url, repo_slug, ts, result.summary(), gist_url)
+                            # Local history fallback
+                            with open(_HISTORY_FILE, "a", encoding="utf-8") as hf:
+                                import json as _json
+                                hf.write(_json.dumps(rec) + "\n")
+                            # Gist history index
+                            append_history_record(rec)
+                        except Exception as _ge:
+                            logger.warning("Gist/history upload failed: %s", _ge)
+
+                    # ── Auto-fix PR ───────────────────────────────────────
+                    fix_pr_url = ""
+                    if auto_fix and gh_token and findings_dicts:
+                        _emit(sid, "progress", {"step": "done", "message": "🔧 Creating fix PR...", "pct": 97})
+                        try:
+                            from autofix import create_fix_pr
+                            fix_pr_url = create_fix_pr(repo_url, gh_token, workdir, findings_dicts, ts)
+                        except Exception as _fe:
+                            logger.warning("Auto-fix PR failed: %s", _fe)
+
                     _emit(sid, "progress", {"step": "done", "message": "✅ Scan complete!", "pct": 100})
                     _emit(sid, "scan_complete", {
                         "report_url": f"/report/{repo_slug}_{ts}_ui.html",
                         "json_url":   f"/report/{repo_slug}_{ts}.json",
+                        "gist_url":   gist_url,
+                        "fix_pr_url": fix_pr_url,
                         "summary":    result.summary(),
                         "repo_slug":  repo_slug,
                         "ts":         ts,
@@ -730,6 +764,101 @@ def api_suppress():
     except Exception as exc:
         logger.exception("Error adding suppression")
         return jsonify({"error": "Failed to save suppression"}), 500
+
+
+@app.route("/api/history")
+def api_history():
+    """GET /api/history — return last 50 scan records (Gist or local fallback)."""
+    records = []
+    # Try Gist first
+    if os.environ.get("GITHUB_TOKEN"):
+        try:
+            from gist_storage import load_history_from_gist
+            records = load_history_from_gist()
+        except Exception:
+            pass
+    # Local fallback
+    if not records and _HISTORY_FILE.exists():
+        import json as _json
+        lines = _HISTORY_FILE.read_text(encoding="utf-8").splitlines()
+        for line in reversed(lines):
+            line = line.strip()
+            if line:
+                try:
+                    records.append(_json.loads(line))
+                except Exception:
+                    pass
+    return jsonify(records[:50])
+
+
+@app.route("/webhook/github", methods=["POST"])
+def github_webhook():
+    """POST /webhook/github — receive GitHub pull_request events and trigger scans."""
+    import hashlib, hmac as _hmac
+    secret = os.environ.get("GITHUB_WEBHOOK_SECRET", "")
+    if secret:
+        sig_header = request.headers.get("X-Hub-Signature-256", "")
+        expected = "sha256=" + _hmac.new(secret.encode(), request.data, hashlib.sha256).hexdigest()
+        if not _hmac.compare_digest(sig_header, expected):
+            return jsonify({"error": "Invalid signature"}), 401
+
+    event = request.headers.get("X-GitHub-Event", "")
+    if event != "pull_request":
+        return jsonify({"status": "ignored", "event": event}), 200
+
+    payload = request.get_json(silent=True) or {}
+    action = payload.get("action", "")
+    if action not in ("opened", "synchronize", "reopened"):
+        return jsonify({"status": "ignored", "action": action}), 200
+
+    pr = payload.get("pull_request", {})
+    repo_url = pr.get("head", {}).get("repo", {}).get("clone_url", "").replace(".git", "")
+    if not repo_url.startswith("https://github.com/"):
+        repo_url = "https://github.com/" + payload.get("repository", {}).get("full_name", "")
+    pr_number = payload.get("number")
+    pr_html_url = pr.get("html_url", "")
+    repo_full = payload.get("repository", {}).get("full_name", "")
+    head_sha = pr.get("head", {}).get("sha", "")
+
+    def _scan_and_comment():
+        with app.app_context():
+            try:
+                from analyzer import clone_repo, run_semgrep, AnalysisResult
+                import tempfile, shutil as _sh
+                workdir = tempfile.mkdtemp(prefix="webhook_")
+                try:
+                    clone_repo(repo_url, workdir)
+                    result = AnalysisResult(repo_url=repo_url, repo_path=workdir)
+                    result.findings = run_semgrep(workdir)
+                    summary = result.summary()
+                    # Post PR review comment
+                    gh_token = os.environ.get("GITHUB_TOKEN", "")
+                    if gh_token and repo_full and pr_number:
+                        from github import Github as _GH
+                        gh = _GH(gh_token)
+                        repo_obj = gh.get_repo(repo_full)
+                        pr_obj = repo_obj.get_pull(pr_number)
+                        crit = summary.get("critical", 0)
+                        warn = summary.get("warnings", 0)
+                        score = summary.get("risk_score", 0)
+                        icon = "🔴" if crit > 0 else "🟡" if warn > 0 else "🟢"
+                        body = (
+                            f"## {icon} SecureScope Security Scan — PR #{pr_number}\n\n"
+                            f"| Metric | Value |\n|--------|-------|\n"
+                            f"| Risk Score | **{score}/100** |\n"
+                            f"| Critical Findings | **{crit}** |\n"
+                            f"| Warnings | **{warn}** |\n"
+                            f"| Commit | `{head_sha[:7]}` |\n\n"
+                            f"[View full scan on SecureScope](https://secure-scope.onrender.com)"
+                        )
+                        pr_obj.create_issue_comment(body)
+                finally:
+                    _sh.rmtree(workdir, ignore_errors=True)
+            except Exception as exc:
+                logger.exception("Webhook scan failed for %s PR#%s", repo_full, pr_number)
+
+    threading.Thread(target=_scan_and_comment, daemon=True).start()
+    return jsonify({"status": "scan_started", "pr": pr_number}), 202
 
 
 def _emit(sid, event, data):

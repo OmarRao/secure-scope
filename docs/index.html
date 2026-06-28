@@ -832,9 +832,16 @@
       const result = document.getElementById('scanResult');
       result.style.display = 'block';
       result.className = 'scan-result';
+      const gistLine = data.gist_url
+        ? `<br>☁️ <a href="${data.gist_url}" target="_blank" style="color:var(--accent)">Permanent Gist link</a>`
+        : '';
+      const prLine = data.fix_pr_url
+        ? `<br>🔧 <a href="${data.fix_pr_url}" target="_blank" style="color:var(--accent)">Fix PR opened</a>`
+        : '';
       result.innerHTML = `<strong>${repoUrl.split('/').pop()}</strong> scanned successfully.<br>
         ${summary.total_findings !== undefined ? `<br>🔍 <strong>${summary.total_findings}</strong> findings &nbsp;|&nbsp; ` : ''}
-        ${summary.critical !== undefined ? `🔴 <strong>${summary.critical}</strong> critical` : ''}`;
+        ${summary.critical !== undefined ? `🔴 <strong>${summary.critical}</strong> critical` : ''}
+        ${gistLine}${prLine}`;
       const btn = document.getElementById('scanReportBtn');
       btn.href = BACKEND + data.report_url;
       btn.style.display = 'inline-flex';
