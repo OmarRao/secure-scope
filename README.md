@@ -60,7 +60,13 @@ A three-column row above the capabilities grid lets you launch a focused scan wi
 | **Dependency Vulnerability Scanner** | Every dependency audited against OSV.dev across Python, npm, Go, Rust, Ruby, Java and PHP for known CVEs |
 | **IaC Misconfiguration Scanner** | Cloud misconfigurations in Terraform, CloudFormation, Kubernetes and Docker manifests |
 
+Each focused scanner opens the same streamlined modal — a GitHub URL and branch, then **Run Scan**:
+
+![Targeted Scanner Modal](docs/screenshots/12_scanner_modal.png)
+
 While any scan runs, the landing-page sections collapse into a single full-page progress stage. On completion the browser **redirects automatically to the interactive dashboard** — no extra click required.
+
+![Full-Page Scan Stage](docs/screenshots/13_scan_stage.png)
 
 ---
 
