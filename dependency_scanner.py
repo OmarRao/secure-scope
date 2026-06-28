@@ -92,6 +92,8 @@ class DepScanResult:
 
     def to_dict(self) -> dict:
         return {
+            # Total CVE findings — the report template reads `deps.total_findings`
+            "total_findings": len(self.vulnerabilities),
             "total_packages": self.total_packages,
             "vulnerable_packages": self.vulnerable_packages,
             "critical_count": self.critical_count,
