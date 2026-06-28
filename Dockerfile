@@ -54,8 +54,10 @@ RUN pip install --no-cache-dir \
         jinja2 \
         playwright
 
-# Install Playwright browser binaries needed by gen_pdf_report.py
-# (Chromium only — minimises image size)
+# Install Playwright browser binaries used to render the PDF report.
+# Install into a shared, world-readable path (NOT /root/.cache) so the non-root
+# runtime user can read them. Chromium only — minimises image size.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN playwright install chromium && \
     playwright install-deps chromium
 
@@ -99,8 +101,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy the virtual environment from the builder stage
 COPY --from=builder /opt/venv /opt/venv
 
-# Copy Playwright browser binaries from builder
-COPY --from=builder /root/.cache/ms-playwright /root/.cache/ms-playwright
+# Copy Playwright browser binaries from builder into a shared, world-readable
+# location and point Playwright at it (used by the non-root runtime user).
+COPY --from=builder /ms-playwright /ms-playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN chmod -R a+rX /ms-playwright
 
 # Activate the virtual environment for all subsequent commands
 ENV PATH="/opt/venv/bin:$PATH"
