@@ -119,16 +119,12 @@ WORKDIR /app
 # Ordered from least-to-most frequently changed to maximise layer cache hits.
 COPY yara_rules/          ./yara_rules/
 COPY ui/                  ./ui/
-COPY analyzer.py          .
-COPY advisor.py           .
-COPY github_agent.py      .
-COPY main.py              .
-COPY ransomware.py        .
-COPY report.py            .
-COPY sandbox.py           .
-COPY threat_intel.py      .
-COPY yara_scanner.py      .
 COPY requirements.txt     .
+# Copy every root-level Python module. Using a glob (rather than an explicit
+# per-file list) ensures new modules — pdf_report, secret/dependency/iac
+# scanners, gist_storage, autofix, etc. — are always included in the image.
+# .dockerignore already excludes dev-only generators and scan output.
+COPY *.py                 .
 
 # Create the reports directory that the server writes scan results to.
 # Owned by the non-root user so the server can write without sudo.
