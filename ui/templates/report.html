@@ -478,7 +478,7 @@
 
     <div class="nav-grp">Actions</div>
     <div class="nav-item" onclick="window.open('{{ gh.get('url','#') }}','_blank')"><span class="nav-ic">&#x1F517;</span> View on GitHub</div>
-    <div class="nav-item" onclick="window.print()"><span class="nav-ic">&#x1F5A8;</span> Print Report</div>
+    <div class="nav-item" onclick="downloadPDF()"><span class="nav-ic">&#x1F4C4;</span> Print Report</div>
     <div class="nav-item" onclick="window.location='/'"><span class="nav-ic">&#x2190;</span> New Scan</div>
 
     <div class="side-foot">
@@ -1571,6 +1571,30 @@ function toggleSec(head) {
 })();
 
 // ── Theme toggle ──────────────────────────────────────────────────────────────
+function downloadPDF() {
+  const btn = document.querySelector('.nav-item[onclick="downloadPDF()"]');
+  const orig = btn ? btn.innerHTML : '';
+  if (btn) btn.innerHTML = '<span class="nav-ic">⏳</span> Generating…';
+  const pdfUrl = window.location.pathname + '/pdf';
+  fetch(pdfUrl)
+    .then(r => {
+      if (!r.ok) throw new Error('PDF generation failed');
+      return r.blob();
+    })
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'securescope_report.pdf';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      if (btn) btn.innerHTML = orig;
+    })
+    .catch(err => {
+      alert('PDF generation failed: ' + err.message);
+      if (btn) btn.innerHTML = orig;
+    });
+}
+
 function toggleTheme() {
   const html = document.documentElement;
   const btn = document.getElementById('themeBtn');

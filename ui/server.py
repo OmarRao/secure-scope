@@ -244,6 +244,32 @@ def serve_report(filename):
     return send_from_directory(REPORTS_DIR, filename)
 
 
+@app.route("/report/<path:filename>/pdf")
+def download_pdf(filename):
+    """Generate and stream a PDF for the given report JSON."""
+    base = filename.replace("_ui.html", "").replace(".html", "").replace(".json", "")
+    json_path = REPORTS_DIR / f"{base}.json"
+    if not json_path.exists():
+        return jsonify({"error": "Report JSON not found"}), 404
+    try:
+        import json as _json
+        from pdf_report import generate as gen_pdf
+        report_data = _json.loads(json_path.read_text(encoding="utf-8"))
+        pdf_bytes = gen_pdf(report_data)
+        from flask import Response
+        return Response(
+            pdf_bytes,
+            mimetype="application/pdf",
+            headers={
+                "Content-Disposition": f'attachment; filename="securescope_{base}.pdf"',
+                "Content-Length": str(len(pdf_bytes)),
+            }
+        )
+    except Exception as exc:
+        logger.exception("PDF generation failed for %s", filename)
+        return jsonify({"error": str(exc)}), 500
+
+
 @app.route("/reports")
 def list_reports():
     files = sorted(REPORTS_DIR.glob("*.json"), key=lambda f: f.stat().st_mtime, reverse=True)
