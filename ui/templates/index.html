@@ -1565,7 +1565,7 @@
     <div id="progResult" style="display:none;border-radius:10px;padding:14px 18px;font-size:13px;line-height:1.6;margin-top:6px"></div>
     <div class="wizard-footer">
       <button class="btn-back" id="progCancel" onclick="cancelProgress()">&larr; Back</button>
-      <a class="btn-next accent" id="progOpen" href="#" style="display:none;text-decoration:none">Open Dashboard &rarr;</a>
+      <a class="btn-next accent" id="progOpen" href="#" style="display:none;text-decoration:none">Detailed Dashboard &amp; Reporting &rarr;</a>
     </div>
   </div>
 </div>
@@ -1871,23 +1871,46 @@ socket.on('scan_complete', d => {
   progSetStage('done');
   document.getElementById('progBar').style.width = '100%';
   document.getElementById('progPct').textContent = '100%';
-  document.getElementById('progMsg').textContent = '✅ Scan complete — opening dashboard…';
+  document.getElementById('progMsg').textContent = 'Your detailed dashboard & report are ready.';
   const sev = d.summary?.by_severity || {};
+  const slug = (d.repo_slug || d.report_url || '').split('/').pop();
+  const crit = sev.ERROR || 0, warn = sev.WARNING || 0, cve = d.summary?.dependency_vulns || 0;
+  const total = (d.summary?.total_findings != null) ? d.summary.total_findings : (crit + warn);
   const res = document.getElementById('progResult');
   res.style.display = 'block';
-  res.style.background = 'rgba(79,142,247,.08)';
-  res.style.border = '1px solid rgba(79,142,247,.3)';
+  res.style.background = 'var(--ink2)';
+  res.style.border = '1px solid var(--rule)';
   res.style.color = 'var(--body)';
-  res.innerHTML = `<strong>${(d.repo_slug || d.report_url || '').split('/').pop()}</strong> scanned successfully.`
-    + ` &nbsp;·&nbsp; 🔴 <strong>${sev.ERROR || 0}</strong> critical`
-    + ` &nbsp;·&nbsp; 🟡 <strong>${sev.WARNING || 0}</strong> warnings`
-    + ` &nbsp;·&nbsp; 📦 <strong>${d.summary?.dependency_vulns || 0}</strong> CVEs<br>Redirecting to the dashboard…`;
+  res.style.padding = '0';
+  res.style.overflow = 'hidden';
+  res.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--rule);background:rgba(62,207,121,.08)">
+      <span style="font-size:20px">✅</span>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--head)">Scan complete — <span style="font-family:'Geist Mono',monospace">${slug}</span></div>
+        <div style="font-size:12px;color:var(--sub)">${total} findings analysed &amp; mapped to MITRE ATT&amp;CK · CWE</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule)">
+      <div style="background:var(--ink2);padding:14px 10px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--danger);font-family:'Geist Mono',monospace;line-height:1">${crit}</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Critical</div>
+      </div>
+      <div style="background:var(--ink2);padding:14px 10px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--warn);font-family:'Geist Mono',monospace;line-height:1">${warn}</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Warnings</div>
+      </div>
+      <div style="background:var(--ink2);padding:14px 10px;text-align:center">
+        <div style="font-size:22px;font-weight:800;color:var(--accent);font-family:'Geist Mono',monospace;line-height:1">${cve}</div>
+        <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Dep. CVEs</div>
+      </div>
+    </div>`;
   const open = document.getElementById('progOpen');
   open.href = d.report_url; open.style.display = 'inline-flex';
+  open.textContent = 'Detailed Dashboard & Reporting →';
   document.getElementById('progCancel').textContent = '← Back';
   loadRecent();
-  // Automatic dashboard redirect on completion
-  setTimeout(() => { window.location.href = d.report_url; }, 1200);
+  // No auto-redirect — the user opens the dashboard via the button when ready.
 });
 
 socket.on('error', d => {

@@ -664,6 +664,7 @@
         <div class="scan-stage-result" id="stageResult"></div>
         <div class="scan-stage-actions">
           <button class="scan-stage-cancel" id="stageCancel" onclick="cancelStageScan()">&larr; Cancel</button>
+          <a class="hero-cta" id="stageOpen" href="#" style="display:none;text-decoration:none">Detailed Dashboard &amp; Reporting &nbsp;&rarr;</a>
         </div>
       </div>
     </div>
@@ -980,6 +981,7 @@
     const result = document.getElementById('stageResult');
     result.style.display = 'none';
     result.className = 'scan-stage-result';
+    document.getElementById('stageOpen').style.display = 'none';
     document.getElementById('stageCancel').textContent = '✕ Cancel';
 
     if (_socket) { _socket.disconnect(); }
@@ -1004,15 +1006,44 @@
     _socket.on('scan_complete', (data) => {
       _socket.disconnect();
       document.getElementById('stageFill').style.width = '100%';
-      document.getElementById('stageMsg').textContent = '✅ Scan complete — opening dashboard…';
+      document.getElementById('stageMsg').textContent = 'Your detailed dashboard & report are ready.';
       const summary = data.summary || {};
+      const slug = opts.repoUrl.split('/').pop();
+      const sev = summary.by_severity || {};
+      const crit = (summary.critical != null) ? summary.critical : (sev.ERROR || 0);
+      const warn = (summary.warnings != null) ? summary.warnings : (sev.WARNING || 0);
+      const cve = summary.dependency_vulns || 0;
+      const total = (summary.total_findings != null) ? summary.total_findings : (crit + warn);
       result.style.display = 'block';
-      result.innerHTML = `<strong>${opts.repoUrl.split('/').pop()}</strong> scanned successfully.
-        ${summary.total_findings !== undefined ? `&nbsp;·&nbsp; 🔍 <strong>${summary.total_findings}</strong> findings` : ''}
-        ${summary.critical !== undefined ? `&nbsp;·&nbsp; 🔴 <strong>${summary.critical}</strong> critical` : ''}
-        <br>Redirecting to the dashboard…`;
-      // Automatic dashboard redirect
-      setTimeout(() => { window.location.href = BACKEND + data.report_url; }, 1200);
+      result.style.padding = '0';
+      result.style.overflow = 'hidden';
+      result.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--rule);background:rgba(62,207,121,.10)">
+          <span style="font-size:20px">✅</span>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--head)">Scan complete — <span style="font-family:'Geist Mono',monospace">${slug}</span></div>
+            <div style="font-size:12px;color:var(--sub)">${total} findings analysed &amp; mapped to MITRE ATT&CK · CWE</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule)">
+          <div style="background:var(--ink3);padding:14px 10px;text-align:center">
+            <div style="font-size:22px;font-weight:800;color:var(--danger);font-family:'Geist Mono',monospace;line-height:1">${crit}</div>
+            <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Critical</div>
+          </div>
+          <div style="background:var(--ink3);padding:14px 10px;text-align:center">
+            <div style="font-size:22px;font-weight:800;color:var(--warn);font-family:'Geist Mono',monospace;line-height:1">${warn}</div>
+            <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Warnings</div>
+          </div>
+          <div style="background:var(--ink3);padding:14px 10px;text-align:center">
+            <div style="font-size:22px;font-weight:800;color:var(--accent);font-family:'Geist Mono',monospace;line-height:1">${cve}</div>
+            <div style="font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Dep. CVEs</div>
+          </div>
+        </div>`;
+      const open = document.getElementById('stageOpen');
+      open.href = BACKEND + data.report_url;
+      open.style.display = 'inline-flex';
+      document.getElementById('stageCancel').textContent = '← Back';
+      // No auto-redirect — the user opens the dashboard via the button when ready.
     });
 
     _socket.on('error', (data) => {
