@@ -938,73 +938,6 @@
       </button>
     </div>
 
-    <!-- ── Scan activity area (shown when scan is running) ──────────── -->
-    <div class="scan-area" id="scanArea">
-
-      <!-- Left column: progress bar + step track + stats -->
-      <div class="scan-left">
-        <div class="pbar-header">
-          <div class="pbar-label">
-            <div class="pulse-dot" id="pulseDot"></div>
-            Scan Progress
-          </div>
-          <div class="pbar-pct" id="pbarPct">0%</div>
-        </div>
-        <div class="pbar-track">
-          <div class="pbar-fill" id="pbarFill"></div>
-        </div>
-
-        <div class="step-track">
-          <div class="step-cell" id="s-github_info">Repo Info</div>
-          <div class="step-cell" id="s-clone">Clone</div>
-          <div class="step-cell" id="s-semgrep">Semgrep</div>
-          <div class="step-cell" id="s-deps">CVEs</div>
-          <div class="step-cell" id="s-sandbox">Sandbox</div>
-          <div class="step-cell" id="s-advisor">Advisor</div>
-          <div class="step-cell" id="s-report">Build</div>
-          <div class="step-cell" id="s-done">Done</div>
-        </div>
-
-        <div class="stat-strip" id="statStrip">
-          <div class="stat-cell">
-            <div class="stat-num clr-r" id="statCrit">0</div>
-            <div class="stat-lbl">Critical Findings</div>
-          </div>
-          <div class="stat-cell">
-            <div class="stat-num clr-w" id="statWarn">0</div>
-            <div class="stat-lbl">Warnings</div>
-          </div>
-          <div class="stat-cell">
-            <div class="stat-num clr-b" id="statCve">0</div>
-            <div class="stat-lbl">Dependency CVEs</div>
-          </div>
-          <div class="stat-cell">
-            <div class="stat-num clr-g" id="statLang">--</div>
-            <div class="stat-lbl">Primary Language</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right column: live step log -->
-      <div class="scan-right" id="scanLog">
-        <div class="log-header">
-          <div class="pulse-dot" id="logPulseDot"></div>
-          <div class="log-title">Live Pipeline</div>
-        </div>
-        <div class="log-body" id="logBody">
-          <div class="log-entry" id="logInit">
-            <div class="log-icon running">&#x21BB;</div>
-            <div class="log-text">
-              <div class="log-step-name">Initializing</div>
-              <div class="log-step-detail">Connecting to scan pipeline...</div>
-            </div>
-            <div class="log-time" id="logInitTime"></div>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /scan-area -->
-
     <!-- ── Targeted Scanners ──────────────────────────────────────── -->
     <div class="scanners">
       <div class="eye">Targeted Scanners</div>
@@ -1322,458 +1255,6 @@
       </div><!-- /ti-grid -->
     </div><!-- /ti-section -->
 
-    <!-- ═══════════════════════════════════════════════════════════════════
-         SECRETS DETECTION SECTION (v3.0.0)
-         Standalone scanner — accepts any local path or GitHub URL.
-         Streams progress via Socket.IO, renders categorised findings table.
-    ════════════════════════════════════════════════════════════════════ -->
-    <div class="ti-section" id="secrets-section">
-      <div class="ti-section-head">
-        <div>
-          <div class="ti-section-title">🔑 Secrets Detection</div>
-          <div class="ti-section-sub">
-            Scan any repository for hardcoded API keys, tokens, credentials, and
-            high-entropy strings — including deleted secrets still present in git history.
-          </div>
-        </div>
-        <div style="font-size:12px;color:var(--muted);text-align:right;">
-          60+ patterns &nbsp;·&nbsp; 10 provider categories<br>
-          Git history scan &nbsp;·&nbsp; Entropy analysis
-        </div>
-      </div>
-
-      <!-- Secrets summary KPI strip (shown after scan) -->
-      <div class="rw-strip" id="secretsStrip" style="display:none;margin-bottom:20px;">
-        <div class="rw-cell">
-          <div class="rw-val" id="secTotalVal">—</div>
-          <div class="rw-lbl">Total Secrets</div>
-        </div>
-        <div class="rw-cell">
-          <div class="rw-val" style="color:#ef4444;" id="secCriticalVal">—</div>
-          <div class="rw-lbl">Critical</div>
-        </div>
-        <div class="rw-cell">
-          <div class="rw-val" style="color:#f97316;" id="secHighVal">—</div>
-          <div class="rw-lbl">High</div>
-        </div>
-        <div class="rw-cell">
-          <div class="rw-val" style="color:#6366f1;" id="secHistoryVal">—</div>
-          <div class="rw-lbl">In Git History</div>
-        </div>
-        <div class="rw-cell">
-          <div class="rw-val" id="secFilesVal">—</div>
-          <div class="rw-lbl">Files Scanned</div>
-        </div>
-        <div class="rw-cell">
-          <div class="rw-val" id="secCommitsVal">—</div>
-          <div class="rw-lbl">Commits Scanned</div>
-        </div>
-      </div>
-
-      <div class="ti-grid">
-
-        <!-- Panel: Scanner Controls -->
-        <div class="ti-panel ti-grid-full">
-          <div class="ti-panel-head">
-            <span class="ti-panel-title">Scanner Configuration</span>
-          </div>
-          <div class="ti-panel-body" style="padding:20px;">
-
-            <!-- Input row -->
-            <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-              <input
-                id="secretsRepoInput"
-                type="text"
-                placeholder="GitHub URL (https://github.com/owner/repo) or local path"
-                style="flex:1;min-width:260px;background:#0f1117;border:1px solid #2e3540;
-                       border-radius:8px;padding:10px 14px;color:#e2e8f0;font-size:13px;
-                       outline:none;"
-                value="https://github.com/OmarRao/analyzer"
-              />
-              <button id="secretsScanBtn" onclick="startSecretsScan()"
-                style="background:#4f8ef7;color:#fff;border:none;border-radius:8px;
-                       padding:10px 22px;font-size:13px;font-weight:600;cursor:pointer;
-                       white-space:nowrap;">
-                🔍 Scan for Secrets
-              </button>
-            </div>
-
-            <!-- Options row -->
-            <div style="display:flex;gap:24px;flex-wrap:wrap;">
-              <label style="display:flex;align-items:center;gap:8px;font-size:13px;
-                            color:#94a3b8;cursor:pointer;">
-                <input type="checkbox" id="secOptHistory" checked
-                  style="accent-color:#4f8ef7;width:15px;height:15px;">
-                Scan git history <span style="color:var(--muted);font-size:11px;">
-                  (catches deleted secrets)</span>
-              </label>
-              <label style="display:flex;align-items:center;gap:8px;font-size:13px;
-                            color:#94a3b8;cursor:pointer;">
-                <input type="checkbox" id="secOptEntropy" checked
-                  style="accent-color:#4f8ef7;width:15px;height:15px;">
-                Entropy analysis <span style="color:var(--muted);font-size:11px;">
-                  (generic high-entropy strings)</span>
-              </label>
-            </div>
-
-            <!-- Progress bar -->
-            <div id="secretsProgress" style="display:none;margin-top:18px;">
-              <div style="display:flex;justify-content:space-between;
-                          margin-bottom:6px;font-size:12px;color:#94a3b8;">
-                <span id="secretsProgMsg">Scanning...</span>
-                <span id="secretsProgPct">0%</span>
-              </div>
-              <div style="background:#1a1f2b;border-radius:6px;height:6px;overflow:hidden;">
-                <div id="secretsProgBar"
-                  style="height:100%;width:0%;background:linear-gradient(90deg,#ef4444,#f97316);
-                         border-radius:6px;transition:width .3s;"></div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- Panel: Findings Table -->
-        <div class="ti-panel ti-grid-full" id="secretsResultsPanel" style="display:none;">
-          <div class="ti-panel-head" style="display:flex;justify-content:space-between;align-items:center;">
-            <span class="ti-panel-title">Findings</span>
-            <div style="display:flex;gap:8px;" id="secretsFilterRow">
-              <button onclick="filterSecrets('all')" class="sec-filter-btn active" data-filter="all">All</button>
-              <button onclick="filterSecrets('critical')" class="sec-filter-btn" data-filter="critical"
-                style="color:#ef4444;">Critical</button>
-              <button onclick="filterSecrets('high')" class="sec-filter-btn" data-filter="high"
-                style="color:#f97316;">High</button>
-              <button onclick="filterSecrets('medium')" class="sec-filter-btn" data-filter="medium"
-                style="color:#eab308;">Medium</button>
-              <button onclick="filterSecrets('history')" class="sec-filter-btn" data-filter="history"
-                style="color:#6366f1;">History Only</button>
-            </div>
-          </div>
-          <div class="ti-panel-body" style="padding:0;overflow-x:auto;">
-            <table style="width:100%;border-collapse:collapse;font-size:12px;">
-              <thead>
-                <tr style="border-bottom:1px solid #1f2937;">
-                  <th style="padding:10px 16px;text-align:left;color:#6b7785;font-weight:600;
-                             white-space:nowrap;">Severity</th>
-                  <th style="padding:10px 16px;text-align:left;color:#6b7785;font-weight:600;">Provider</th>
-                  <th style="padding:10px 16px;text-align:left;color:#6b7785;font-weight:600;">Type</th>
-                  <th style="padding:10px 16px;text-align:left;color:#6b7785;font-weight:600;">File</th>
-                  <th style="padding:10px 16px;text-align:left;color:#6b7785;font-weight:600;">Secret (redacted)</th>
-                  <th style="padding:10px 16px;text-align:left;color:#6b7785;font-weight:600;">Source</th>
-                  <th style="padding:10px 16px;text-align:left;color:#6b7785;font-weight:600;">Blast Radius</th>
-                </tr>
-              </thead>
-              <tbody id="secretsTableBody"></tbody>
-            </table>
-            <div id="secretsNoFindings" style="display:none;padding:32px;text-align:center;
-                 color:#6b7785;font-size:13px;">
-              ✅ No secrets detected. Ensure git history scan is enabled for complete coverage.
-            </div>
-          </div>
-        </div>
-
-        <!-- Panel: Category Breakdown -->
-        <div class="ti-panel" id="secretsCategoryPanel" style="display:none;">
-          <div class="ti-panel-head">
-            <span class="ti-panel-title">By Category</span>
-          </div>
-          <div class="ti-panel-body" style="padding:16px;" id="secretsCategoryBody"></div>
-        </div>
-
-        <!-- Panel: Remediation Guide -->
-        <div class="ti-panel" id="secretsRemPanel" style="display:none;">
-          <div class="ti-panel-head">
-            <span class="ti-panel-title">Remediation Steps</span>
-          </div>
-          <div class="ti-panel-body" style="padding:20px;font-size:13px;line-height:1.7;color:#94a3b8;">
-            <div style="margin-bottom:16px;">
-              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">
-                ① Rotate immediately
-              </div>
-              Revoke and regenerate every exposed secret from the provider's dashboard
-              before doing anything else. Assume the secret was already found.
-            </div>
-            <div style="margin-bottom:16px;">
-              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">
-                ② Purge git history
-              </div>
-              Use <code style="background:#1a1f2b;padding:1px 5px;border-radius:3px;">
-              git filter-repo</code> to remove the secret from all commits,
-              then force-push. Every team member must re-clone.
-            </div>
-            <div style="margin-bottom:16px;">
-              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">
-                ③ Use environment variables
-              </div>
-              Store secrets in <code style="background:#1a1f2b;padding:1px 5px;border-radius:3px;">
-              .env</code> files (gitignored), CI/CD secret stores, or a vault
-              (HashiCorp Vault, AWS Secrets Manager, Azure Key Vault).
-            </div>
-            <div style="margin-bottom:16px;">
-              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">
-                ④ Enable push protection
-              </div>
-              Turn on GitHub Secret Scanning + Push Protection in
-              Settings → Code Security → Secret Scanning to block future leaks at push time.
-            </div>
-            <div>
-              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">
-                ⑤ Audit access logs
-              </div>
-              Check provider audit logs for any unauthorised API calls made with
-              the exposed credential. Document findings for your incident record.
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /ti-grid -->
-    </div><!-- /secrets-section -->
-
-    <!-- ── Dependency Vulnerability Scanner (v4.0.0) ──────────────── -->
-    <div class="ti-section" id="deps-section">
-      <div class="ti-section-header">
-        <span class="ti-section-icon">📦</span>
-        <div>
-          <div class="ti-section-title">Dependency Vulnerability Scanner</div>
-          <div class="ti-section-sub">OSV.dev — PyPI · npm · Go · Maven · RubyGems · Cargo · Composer</div>
-        </div>
-        <span class="badge-new" style="margin-left:auto;">v4.0.0</span>
-      </div>
-
-      <!-- KPI Strip -->
-      <div class="rw-strip" id="depsStrip" style="display:none;margin-bottom:20px;">
-        <div class="rw-cell">
-          <div class="rw-val" id="depsTotalVal">—</div>
-          <div class="rw-lbl">Total Packages</div>
-        </div>
-        <div class="rw-cell">
-          <div class="rw-val" id="depsVulnVal" style="color:#f56565;">—</div>
-          <div class="rw-lbl">Vulnerable</div>
-        </div>
-        <div class="rw-cell">
-          <div class="rw-val" id="depsCritVal" style="color:#fc8181;">—</div>
-          <div class="rw-lbl">Critical CVEs</div>
-        </div>
-        <div class="rw-cell">
-          <div class="rw-val" id="depsHighVal" style="color:#f6ad55;">—</div>
-          <div class="rw-lbl">High CVEs</div>
-        </div>
-        <div class="rw-cell">
-          <div class="rw-val" id="depsMedVal" style="color:#fbd38d;">—</div>
-          <div class="rw-lbl">Medium CVEs</div>
-        </div>
-        <div class="rw-cell">
-          <div class="rw-val" id="depsEcoVal">—</div>
-          <div class="rw-lbl">Ecosystems</div>
-        </div>
-      </div>
-
-      <div class="ti-grid" style="grid-template-columns:1fr;">
-
-        <!-- Scanner Controls -->
-        <div class="ti-panel" style="margin-bottom:16px;">
-          <div class="ti-panel-title">Scan Repository</div>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
-            <input id="depsRepoInput" type="text" placeholder="GitHub URL or local path (e.g. https://github.com/owner/repo)"
-              style="flex:1;min-width:280px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;" />
-            <button id="depsScanBtn" onclick="startDepsScan()"
-              style="padding:8px 20px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;">
-              Scan Dependencies
-            </button>
-          </div>
-          <div style="display:none;" id="depsProgWrap">
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;" id="depsProgMsg">Initialising...</div>
-            <div style="background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;">
-              <div id="depsProgBar" style="height:100%;background:var(--accent);width:0%;transition:width 0.3s;"></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Results Table -->
-        <div class="ti-panel" id="depsResultsPanel" style="display:none;margin-bottom:16px;">
-          <div class="ti-panel-title" style="display:flex;justify-content:space-between;align-items:center;">
-            <span>Vulnerability Findings</span>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button onclick="filterDeps('all')" class="sec-filter-btn active" data-depfilter="all">All</button>
-              <button onclick="filterDeps('critical')" class="sec-filter-btn" data-depfilter="critical">Critical</button>
-              <button onclick="filterDeps('high')" class="sec-filter-btn" data-depfilter="high">High</button>
-              <button onclick="filterDeps('medium')" class="sec-filter-btn" data-depfilter="medium">Medium</button>
-            </div>
-          </div>
-          <div style="overflow-x:auto;">
-            <table style="width:100%;border-collapse:collapse;font-size:12px;">
-              <thead>
-                <tr style="background:var(--surface2);color:var(--text-muted);text-align:left;">
-                  <th style="padding:8px 10px;">Severity</th>
-                  <th style="padding:8px 10px;">Package</th>
-                  <th style="padding:8px 10px;">Version</th>
-                  <th style="padding:8px 10px;">CVE / ID</th>
-                  <th style="padding:8px 10px;">Summary</th>
-                  <th style="padding:8px 10px;">Fix Available</th>
-                  <th style="padding:8px 10px;">Manifest</th>
-                </tr>
-              </thead>
-              <tbody id="depsTableBody"></tbody>
-            </table>
-          </div>
-          <div id="depsNoFindings" style="display:none;text-align:center;padding:20px;color:var(--text-muted);font-size:13px;">
-            No vulnerabilities found for this filter.
-          </div>
-        </div>
-
-        <!-- Ecosystem Breakdown -->
-        <div class="ti-panel" id="depsEcoPanel" style="display:none;margin-bottom:16px;">
-          <div class="ti-panel-title">Ecosystem Breakdown</div>
-          <div id="depsEcoBreakdown" style="display:flex;flex-wrap:wrap;gap:12px;padding:8px 0;"></div>
-        </div>
-
-        <!-- Remediation Guide -->
-        <div class="ti-panel" id="depsRemPanel" style="display:none;">
-          <div class="ti-panel-title">Remediation Guide</div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;">
-            <div style="background:var(--surface2);border-radius:8px;padding:14px;">
-              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">① Upgrade immediately</div>
-              Pin vulnerable packages to the fixed version shown in the findings table.
-              Run <code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">pip install -U package==fixed_ver</code> or equivalent for your ecosystem.
-            </div>
-            <div style="background:var(--surface2);border-radius:8px;padding:14px;">
-              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">② Pin all transitive deps</div>
-              Use lock files (<code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">pip freeze</code>, <code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">package-lock.json</code>, <code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">go.sum</code>) and commit them to source control.
-            </div>
-            <div style="background:var(--surface2);border-radius:8px;padding:14px;">
-              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">③ Enable Dependabot</div>
-              GitHub Dependabot automatically opens PRs for new CVEs. Enable it in your repo's Security settings — zero configuration required for public repos.
-            </div>
-            <div style="background:var(--surface2);border-radius:8px;padding:14px;">
-              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">④ Add to CI pipeline</div>
-              Run <code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">pip-audit</code>, <code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">npm audit</code>, or <code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">govulncheck</code> as a CI step so new CVEs block merges automatically.
-            </div>
-            <div style="background:var(--surface2);border-radius:8px;padding:14px;">
-              <div style="color:#e2e8f0;font-weight:600;margin-bottom:6px;">⑤ Review SBOM regularly</div>
-              Generate a Software Bill of Materials (<code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">syft</code>, <code style="background:var(--surface3);padding:1px 5px;border-radius:3px;">cyclonedx</code>) quarterly and cross-reference against OSV.dev and NVD for newly disclosed CVEs.
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /ti-grid -->
-    </div><!-- /deps-section -->
-
-    <!-- ── IaC Misconfiguration Scanner (v6.0.0) ──────────────────── -->
-    <div class="ti-section" id="iac-section">
-      <div class="ti-section-header">
-        <span class="ti-section-icon">🏗️</span>
-        <div>
-          <div class="ti-section-title">IaC Misconfiguration Scanner</div>
-          <div class="ti-section-sub">Terraform · Kubernetes · Dockerfile · GitHub Actions · CloudFormation · Ansible</div>
-        </div>
-      </div>
-
-      <!-- KPI strip -->
-      <div class="secrets-kpi-strip" id="iac-kpi" style="display:none">
-        <div class="secrets-kpi-card">
-          <div class="secrets-kpi-val" id="iac-kpi-frameworks">—</div>
-          <div class="secrets-kpi-lbl">Frameworks</div>
-        </div>
-        <div class="secrets-kpi-card">
-          <div class="secrets-kpi-val" id="iac-kpi-files">—</div>
-          <div class="secrets-kpi-lbl">Files Scanned</div>
-        </div>
-        <div class="secrets-kpi-card" style="border-color:var(--sev-critical,#ff4d4d)">
-          <div class="secrets-kpi-val" id="iac-kpi-critical" style="color:var(--sev-critical,#ff4d4d)">—</div>
-          <div class="secrets-kpi-lbl">Critical</div>
-        </div>
-        <div class="secrets-kpi-card" style="border-color:var(--sev-high,#ff8c00)">
-          <div class="secrets-kpi-val" id="iac-kpi-high" style="color:var(--sev-high,#ff8c00)">—</div>
-          <div class="secrets-kpi-lbl">High</div>
-        </div>
-        <div class="secrets-kpi-card" style="border-color:var(--sev-medium,#ffd700)">
-          <div class="secrets-kpi-val" id="iac-kpi-medium" style="color:var(--sev-medium,#ffd700)">—</div>
-          <div class="secrets-kpi-lbl">Medium</div>
-        </div>
-        <div class="secrets-kpi-card">
-          <div class="secrets-kpi-val" id="iac-kpi-scanner">—</div>
-          <div class="secrets-kpi-lbl">Engine</div>
-        </div>
-      </div>
-
-      <!-- Scan controls -->
-      <div class="deps-scan-bar" style="margin-bottom:1rem">
-        <input id="iac-repo-input" class="deps-repo-input" type="text"
-               placeholder="GitHub URL or local path (e.g. https://github.com/owner/repo)">
-        <button class="btn-primary" onclick="startIacScan()">Scan for Misconfigs</button>
-      </div>
-
-      <!-- Progress -->
-      <div id="iac-progress-wrap" style="display:none;margin-bottom:1rem">
-        <div class="scan-progress-bar-wrap">
-          <div class="scan-progress-bar" id="iac-progress-bar" style="width:0%"></div>
-        </div>
-        <div class="scan-progress-msg" id="iac-progress-msg"></div>
-      </div>
-
-      <div id="iac-results" style="display:none">
-
-        <!-- Framework breakdown cards -->
-        <div id="iac-frameworks-wrap" style="margin-bottom:1rem"></div>
-
-        <!-- Filter bar -->
-        <div class="secrets-filter-bar" style="margin-bottom:0.75rem">
-          <button class="secrets-filter-btn active" onclick="filterIac('ALL')">All</button>
-          <button class="secrets-filter-btn" onclick="filterIac('CRITICAL')" style="color:var(--sev-critical,#ff4d4d)">Critical</button>
-          <button class="secrets-filter-btn" onclick="filterIac('HIGH')" style="color:var(--sev-high,#ff8c00)">High</button>
-          <button class="secrets-filter-btn" onclick="filterIac('MEDIUM')" style="color:var(--sev-medium,#ffd700)">Medium</button>
-          <button class="secrets-filter-btn" onclick="filterIac('LOW')">Low</button>
-        </div>
-
-        <!-- Findings table -->
-        <div class="secrets-table-wrap">
-          <table class="secrets-table" id="iac-table">
-            <thead>
-              <tr>
-                <th>Severity</th>
-                <th>Framework</th>
-                <th>Check ID</th>
-                <th>Resource</th>
-                <th>File</th>
-                <th>Line</th>
-                <th>Description</th>
-                <th>Fix</th>
-              </tr>
-            </thead>
-            <tbody id="iac-tbody"></tbody>
-          </table>
-        </div>
-
-        <!-- Remediation steps -->
-        <div class="secrets-remediation" style="margin-top:1.5rem">
-          <div class="secrets-remediation-title">IaC Remediation Workflow</div>
-          <div class="secrets-remediation-steps">
-            <div class="secrets-remediation-step">
-              <div class="secrets-step-num">1</div>
-              <div><strong>Fix CRITICAL first</strong> — public S3 buckets, wildcard IAM, privileged containers, and hardcoded secrets are actively exploitable within minutes of discovery.</div>
-            </div>
-            <div class="secrets-remediation-step">
-              <div class="secrets-step-num">2</div>
-              <div><strong>Enable checkov in CI</strong> — <code>pip install checkov &amp;&amp; checkov -d .</code> blocks misconfigured IaC before it reaches production.</div>
-            </div>
-            <div class="secrets-remediation-step">
-              <div class="secrets-step-num">3</div>
-              <div><strong>Apply least-privilege IAM</strong> — remove all wildcard actions/resources. Use IAM Access Analyzer to identify overly-permissive policies in your AWS account.</div>
-            </div>
-            <div class="secrets-remediation-step">
-              <div class="secrets-step-num">4</div>
-              <div><strong>Enable encryption everywhere</strong> — RDS, S3, EBS, and Secrets Manager should all use KMS keys. Set encrypted = true and kms_key_id on every storage resource.</div>
-            </div>
-            <div class="secrets-remediation-step">
-              <div class="secrets-step-num">5</div>
-              <div><strong>Pin images and actions</strong> — use SHA digests for Docker images and commit SHAs for GitHub Actions. Floating tags (<code>:latest</code>, <code>@main</code>) are a live supply chain risk.</div>
-            </div>
-          </div>
-        </div>
-
-      </div><!-- /iac-results -->
-
-    </div><!-- /iac-section -->
 
   </div><!-- /wrap -->
 
@@ -2027,9 +1508,52 @@
     <div class="field-label">Branch</div>
     <input class="modal-input" id="scanBranch" type="text"
       placeholder="main" value="main" autocomplete="off" spellcheck="false" style="margin-bottom:4px">
+
+    <!-- Secret-scanner options (shown only for the Secret Detection card) -->
+    <div id="scanOptSecret" style="display:none;margin-top:6px">
+      <label class="toggle-row" style="cursor:pointer">
+        <div class="toggle-info">
+          <div class="toggle-name">Scan git history</div>
+          <div class="toggle-desc">Catches secrets that were committed and later deleted</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="scanOptHistory" checked><div class="toggle-track"></div></label>
+      </label>
+      <label class="toggle-row" style="cursor:pointer">
+        <div class="toggle-info">
+          <div class="toggle-name">Entropy analysis</div>
+          <div class="toggle-desc">Flags generic high-entropy strings with no known provider pattern</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="scanOptEntropy" checked><div class="toggle-track"></div></label>
+      </label>
+    </div>
+
     <div class="wizard-footer">
       <button class="btn-back" onclick="closeScan()">Cancel</button>
       <button class="btn-next accent" onclick="runFocusedScan()">Run Scan &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Centered Scan Progress Modal (wizard + targeted scanners) ──── -->
+<div class="modal-overlay" id="progressOverlay">
+  <div class="modal" role="dialog" aria-modal="true" style="max-width:560px">
+    <div class="step-ind" id="progEye">Scanning</div>
+    <div class="modal-title" id="progTitle">Running Security Scan</div>
+    <div class="modal-sub" id="progSub">Connecting to SecureScope&hellip;</div>
+    <div style="margin:18px 0 10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+        <span id="progMsg" style="font-size:13px;color:var(--sub)">Initializing&hellip;</span>
+        <span id="progPct" style="font-size:13px;font-weight:700;color:var(--accent);font-family:'Geist Mono',monospace">0%</span>
+      </div>
+      <div style="height:8px;background:var(--ink4,#1f242d);border-radius:99px;overflow:hidden">
+        <div id="progBar" style="height:100%;width:0%;background:var(--accent);border-radius:99px;transition:width .4s ease"></div>
+      </div>
+    </div>
+    <div id="progLog" style="max-height:150px;overflow-y:auto;font-family:'Geist Mono',monospace;font-size:11px;color:var(--dim);line-height:1.9;padding:4px 0"></div>
+    <div id="progResult" style="display:none;border-radius:10px;padding:14px 18px;font-size:13px;line-height:1.6;margin-top:6px"></div>
+    <div class="wizard-footer">
+      <button class="btn-back" id="progCancel" onclick="cancelProgress()">&larr; Back</button>
+      <a class="btn-next accent" id="progOpen" href="#" style="display:none;text-decoration:none">Open Dashboard &rarr;</a>
     </div>
   </div>
 </div>
@@ -2184,6 +1708,8 @@ function openScan(mode) {
   document.getElementById('scanModalKicker').textContent = m.kicker;
   document.getElementById('scanModalTitle').textContent = m.title;
   document.getElementById('scanModalSub').textContent = m.sub;
+  // Secret-specific options only for the Secret Detection card
+  document.getElementById('scanOptSecret').style.display = (mode === 'secret') ? 'block' : 'none';
   document.getElementById('scanModalOverlay').classList.add('open');
   setTimeout(() => document.getElementById('scanRepoUrl').focus(), 150);
 }
@@ -2194,16 +1720,20 @@ function handleScanOverlayClick(e) {
 function runFocusedScan() {
   const url = document.getElementById('scanRepoUrl').value.trim();
   if (!url) { document.getElementById('scanRepoUrl').focus(); return; }
+  const m = SCAN_META[_scanMode] || SCAN_META.secret;
   closeScan();
   launchScan({
     repo_url: url,
     branch: document.getElementById('scanBranch').value.trim() || 'main',
     sandbox: false, advisor: false, auto_commit: false,
     github_token: '', llm_provider: 'none', llm_api_key: '',
+    secret_include_history: document.getElementById('scanOptHistory').checked,
+    secret_entropy_check:   document.getElementById('scanOptEntropy').checked,
+    eye: m.kicker, title: m.title,
   });
 }
 
-// ── Start scan ────────────────────────────────────────────────────
+// ── Start scan (Analyze Repository wizard) ─────────────────────────
 function startScan() {
   const url = document.getElementById('wizRepoUrl').value.trim();
   if (!url) { toast('Enter a GitHub repository URL'); goStep(1); return; }
@@ -2219,28 +1749,27 @@ function startScan() {
     github_token: document.getElementById('wizGhToken').value.trim(),
     llm_provider: selectedProvider,
     llm_api_key:  document.getElementById('wizApiKey').value.trim(),
+    eye: 'Full Analysis', title: 'Analyzing Repository',
   });
 }
 
-// ── Shared scan launcher (wizard + focused scanners) ───────────────
+// ── Shared scan launcher → centered progress modal ─────────────────
 function launchScan(payload) {
   scanStartTime = Date.now();
-
-  // Hide marketing sections and surface the live pipeline
-  document.body.classList.add('scanning');
-  document.getElementById('scanArea').classList.add('visible');
-  window.scrollTo(0, 0);
-  document.querySelectorAll('.step-cell').forEach(c => c.className = 'step-cell');
-  document.getElementById('pbarFill').style.width = '0%';
-  document.getElementById('pbarPct').textContent = '0%';
-  document.getElementById('pbarPct').classList.remove('done');
-  document.getElementById('pulseDot').classList.remove('done');
-  document.getElementById('logPulseDot').classList.remove('done');
-
-  // Reset log
-  const logBody = document.getElementById('logBody');
-  logBody.innerHTML = '';
-  addLogEntry('clone', 'Connecting to scan pipeline...', 'running');
+  // Open the centered progress modal
+  document.getElementById('progEye').textContent   = payload.eye || 'Scanning';
+  document.getElementById('progTitle').textContent = payload.title || 'Running Security Scan';
+  document.getElementById('progSub').textContent   =
+    'Scanning ' + payload.repo_url.replace(/^https?:\/\//, '') + ' — this can take a minute.';
+  document.getElementById('progBar').style.width = '0%';
+  document.getElementById('progPct').textContent = '0%';
+  document.getElementById('progMsg').textContent = 'Connecting to SecureScope…';
+  document.getElementById('progLog').innerHTML = '';
+  const res = document.getElementById('progResult');
+  res.style.display = 'none';
+  document.getElementById('progOpen').style.display = 'none';
+  document.getElementById('progCancel').textContent = '✕ Cancel';
+  document.getElementById('progressOverlay').classList.add('open');
 
   socket.emit('start_scan', {
     repo_url:     payload.repo_url,
@@ -2251,86 +1780,64 @@ function launchScan(payload) {
     github_token: payload.github_token,
     llm_provider: payload.llm_provider,
     llm_api_key:  payload.llm_api_key,
+    secret_include_history: payload.secret_include_history,
+    secret_entropy_check:   payload.secret_entropy_check,
   });
+}
+
+function progAddLog(text) {
+  const log = document.getElementById('progLog');
+  const line = document.createElement('div');
+  line.textContent = '› ' + text;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+}
+function cancelProgress() {
+  document.getElementById('progressOverlay').classList.remove('open');
 }
 
 // ── Socket events ─────────────────────────────────────────────────
 socket.on('progress', d => {
-  if (activeStep) {
-    const prev = document.getElementById('s-' + activeStep);
-    if (prev) prev.className = 'step-cell done';
-  }
-  activeStep = d.step;
-  const el = document.getElementById('s-' + d.step);
-  if (el) el.className = 'step-cell live';
-
-  document.getElementById('pbarFill').style.width = d.pct + '%';
-  document.getElementById('pbarPct').textContent  = Math.round(d.pct) + '%';
-
-  // Strip emoji from message for log detail
-  const detail = d.message.replace(/[\u{1F000}-\u{1FFFF}]/gu, '').trim();
-  addLogEntry(d.step, detail, 'running');
+  document.getElementById('progBar').style.width = (d.pct || 0) + '%';
+  document.getElementById('progPct').textContent = Math.round(d.pct || 0) + '%';
+  const detail = (d.message || '').replace(/[\u{1F000}-\u{1FFFF}]/gu, '').trim();
+  document.getElementById('progMsg').textContent = detail;
+  progAddLog(detail);
 });
 
-socket.on('github_info', info => {
-  if (info.language) document.getElementById('statLang').textContent = info.language;
-});
+socket.on('github_info', info => { /* repo metadata — surfaced on the report page */ });
 
 socket.on('scan_complete', d => {
-  // All steps green
-  document.querySelectorAll('.step-cell').forEach(c => c.className = 'step-cell done');
-  document.getElementById('pbarFill').style.width = '100%';
-  document.getElementById('pbarPct').textContent  = '100%';
-  document.getElementById('pbarPct').classList.add('done');
-  document.getElementById('pulseDot').classList.add('done');
-  document.getElementById('logPulseDot').classList.add('done');
-
+  document.getElementById('progBar').style.width = '100%';
+  document.getElementById('progPct').textContent = '100%';
+  document.getElementById('progMsg').textContent = '✅ Scan complete — opening dashboard…';
   const sev = d.summary?.by_severity || {};
-  document.getElementById('statCrit').textContent = sev.ERROR   || 0;
-  document.getElementById('statWarn').textContent = sev.WARNING || 0;
-  document.getElementById('statCve').textContent  = d.summary?.dependency_vulns || 0;
-
-  // Final log entry with link
-  const logBody = document.getElementById('logBody');
-  logBody.querySelectorAll('.log-icon.running').forEach(ic => {
-    ic.classList.remove('running'); ic.classList.add('done'); ic.textContent = '✓';
-  });
-  const done = document.createElement('div');
-  done.className = 'log-entry';
-  done.innerHTML = `
-    <div class="log-icon done">✓</div>
-    <div class="log-text">
-      <div class="log-step-name">Report Ready</div>
-      <div class="log-step-detail">Opening dashboard&hellip; <a href="${d.report_url}" style="color:#4f8ef7">open now &rarr;</a></div>
-    </div>
-    <div class="log-time">${nowStr()}</div>
-  `;
-  logBody.appendChild(done);
-  logBody.scrollTop = logBody.scrollHeight;
-
+  const res = document.getElementById('progResult');
+  res.style.display = 'block';
+  res.style.background = 'rgba(79,142,247,.08)';
+  res.style.border = '1px solid rgba(79,142,247,.3)';
+  res.style.color = 'var(--body)';
+  res.innerHTML = `<strong>${(d.repo_slug || d.report_url || '').split('/').pop()}</strong> scanned successfully.`
+    + ` &nbsp;·&nbsp; 🔴 <strong>${sev.ERROR || 0}</strong> critical`
+    + ` &nbsp;·&nbsp; 🟡 <strong>${sev.WARNING || 0}</strong> warnings`
+    + ` &nbsp;·&nbsp; 📦 <strong>${d.summary?.dependency_vulns || 0}</strong> CVEs<br>Redirecting to the dashboard…`;
+  const open = document.getElementById('progOpen');
+  open.href = d.report_url; open.style.display = 'inline-flex';
+  document.getElementById('progCancel').textContent = '← Back';
   loadRecent();
   // Automatic dashboard redirect on completion
-  setTimeout(() => { window.location.href = d.report_url; }, 1000);
+  setTimeout(() => { window.location.href = d.report_url; }, 1200);
 });
 
 socket.on('error', d => {
-  const logBody = document.getElementById('logBody');
-  logBody.querySelectorAll('.log-icon.running').forEach(ic => {
-    ic.classList.remove('running'); ic.classList.add('error'); ic.textContent = '✗';
-  });
-  const errEntry = document.createElement('div');
-  errEntry.className = 'log-entry';
-  errEntry.innerHTML = `
-    <div class="log-icon error">✗</div>
-    <div class="log-text">
-      <div class="log-step-name">Scan Failed</div>
-      <div class="log-step-detail">${d.message}</div>
-    </div>
-    <div class="log-time">${nowStr()}</div>
-  `;
-  logBody.appendChild(errEntry);
-  logBody.scrollTop = logBody.scrollHeight;
-  document.body.classList.remove('scanning');  // restore page sections so the user can retry
+  document.getElementById('progMsg').textContent = '';
+  const res = document.getElementById('progResult');
+  res.style.display = 'block';
+  res.style.background = 'rgba(242,87,87,.08)';
+  res.style.border = '1px solid rgba(242,87,87,.3)';
+  res.style.color = '#fca5a5';
+  res.textContent = '⚠ ' + (d.message || 'Scan failed. Please check the repo URL and API key.');
+  document.getElementById('progCancel').textContent = '← Back';
   toast('Scan failed: ' + d.message);
 });
 

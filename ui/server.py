@@ -300,6 +300,9 @@ def handle_scan(data):
     llm_api_key = data.get("llm_api_key", "") or ""
     auto_fix = data.get("auto_fix", False)
     gh_token = data.get("gh_token", "") or os.environ.get("GITHUB_TOKEN", "")
+    # Secret-scanner options (from the Secret Detection modal); default on.
+    secret_include_history = data.get("secret_include_history", True)
+    secret_entropy_check = data.get("secret_entropy_check", True)
     sid = request.sid
 
     if not repo_url or not parse_repo_url(repo_url):
@@ -347,8 +350,8 @@ def handle_scan(data):
                         try:
                             secrets_result = secrets_scan_repo(
                                 repo_path=workdir,
-                                include_history=True,
-                                entropy_check=True,
+                                include_history=secret_include_history,
+                                entropy_check=secret_entropy_check,
                                 progress_cb=None,
                             )
                         except Exception as _sec_exc:
