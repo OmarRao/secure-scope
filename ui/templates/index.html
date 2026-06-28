@@ -868,6 +868,41 @@
     .step-dot.active { background: #4f8ef7; width: 18px; border-radius: 3px; }
     .step-dot.done   { background: #3ecf79; }
     .gh-token-wrap { margin-top: 12px; display: none; }
+    /* ── Targeted Scanners ── */
+    .scanners { margin-bottom: 72px; }
+    .scanner-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .scanner-card {
+      background: var(--ink2); border: 1px solid var(--rule); border-radius: 12px;
+      padding: 26px 24px 22px; display: flex; flex-direction: column;
+      transition: border-color .15s, background .15s;
+    }
+    .scanner-card:hover { border-color: var(--rule2); background: var(--ink3); }
+    .scanner-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: var(--ink3); border: 1px solid var(--rule2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; margin-bottom: 16px;
+    }
+    .scanner-card h3 { font-size: 16px; font-weight: 700; color: var(--head); margin-bottom: 8px; letter-spacing: -.3px; }
+    .scanner-card p { font-size: 13px; color: var(--sub); line-height: 1.6; margin-bottom: 20px; flex: 1; }
+    .scanner-btn {
+      background: var(--accent); color: #fff; border: none; border-radius: 9px;
+      padding: 11px 18px; font-family: 'Geist', sans-serif; font-size: 14px; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+      gap: 8px; width: 100%; transition: opacity .15s, transform .1s;
+    }
+    .scanner-btn:hover { opacity: .88; }
+    .scanner-btn:active { transform: scale(.98); }
+    @media (max-width: 768px) { .scanner-grid { grid-template-columns: 1fr; } }
+
+    /* ── Scanning state: focus on the live pipeline, hide marketing sections ── */
+    body.scanning .hero,
+    body.scanning .scanners,
+    body.scanning .features,
+    body.scanning .why,
+    body.scanning .recent,
+    body.scanning .ti-section,
+    body.scanning .footer-wrap { display: none !important; }
   </style>
 </head>
 <body>
@@ -969,6 +1004,31 @@
       </div>
 
     </div><!-- /scan-area -->
+
+    <!-- ── Targeted Scanners ──────────────────────────────────────── -->
+    <div class="scanners">
+      <div class="eye">Targeted Scanners</div>
+      <div class="scanner-grid">
+        <div class="scanner-card">
+          <div class="scanner-icon">&#x1F511;</div>
+          <h3>Secret Detection</h3>
+          <p>Scan a repository for hardcoded API keys, tokens, passwords and high-entropy strings — including the full commit history.</p>
+          <button class="scanner-btn" onclick="openScan('secret')">Scan for Secrets &nbsp;&#x2192;</button>
+        </div>
+        <div class="scanner-card">
+          <div class="scanner-icon">&#x1F4E6;</div>
+          <h3>Dependency Vulnerability Scanner</h3>
+          <p>Audit every dependency against OSV.dev across Python, npm, Go, Rust, Ruby, Java and PHP for known CVEs with CVSS scores.</p>
+          <button class="scanner-btn" onclick="openScan('dependency')">Scan Dependencies &nbsp;&#x2192;</button>
+        </div>
+        <div class="scanner-card">
+          <div class="scanner-icon">&#x1F3D7;&#xFE0F;</div>
+          <h3>IaC Misconfiguration Scanner</h3>
+          <p>Detect cloud misconfigurations in Terraform, CloudFormation, Kubernetes and Docker manifests before they ship to production.</p>
+          <button class="scanner-btn" onclick="openScan('iac')">Scan IaC &nbsp;&#x2192;</button>
+        </div>
+      </div>
+    </div>
 
     <!-- ── Capabilities ───────────────────────────────────────────── -->
     <div class="features">
@@ -1952,6 +2012,28 @@
   </div>
 </div>
 
+<!-- ── Focused Scanner Modal ─────────────────────────────────────── -->
+<div class="modal-overlay" id="scanModalOverlay" onclick="handleScanOverlayClick(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="scanModalTitle" style="max-width:520px">
+    <button class="modal-close" onclick="closeScan()" aria-label="Close">&times;</button>
+    <div class="step-ind" id="scanModalKicker">Secret Detection</div>
+    <div class="modal-title" id="scanModalTitle">Scan for Secrets</div>
+    <div class="modal-sub" id="scanModalSub">Enter the GitHub repository you want to scan.</div>
+    <div class="field-label">GitHub URL</div>
+    <input class="modal-input" id="scanRepoUrl" type="text"
+      placeholder="https://github.com/owner/repository"
+      value="https://github.com/OmarRao/analyzer"
+      autocomplete="off" spellcheck="false">
+    <div class="field-label">Branch</div>
+    <input class="modal-input" id="scanBranch" type="text"
+      placeholder="main" value="main" autocomplete="off" spellcheck="false" style="margin-bottom:4px">
+    <div class="wizard-footer">
+      <button class="btn-back" onclick="closeScan()">Cancel</button>
+      <button class="btn-next accent" onclick="runFocusedScan()">Run Scan &rarr;</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const socket = io();
 let activeStep = null;
@@ -1991,7 +2073,9 @@ function handleOverlayClick(e) {
   if (e.target === document.getElementById('modalOverlay')) closeModal();
 }
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
+  const scanOpen = document.getElementById('scanModalOverlay').classList.contains('open');
+  if (e.key === 'Escape') { closeModal(); closeScan(); }
+  if (e.key === 'Enter' && scanOpen) { runFocusedScan(); return; }
   if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('open')) {
     if (currentWizStep === 1) goStep(2);
     else if (currentWizStep === 2) goStep(3);
@@ -2087,23 +2171,65 @@ function addLogEntry(stepKey, detail, status) {
   body.scrollTop = body.scrollHeight;
 }
 
+// ── Focused scanner modal ─────────────────────────────────────────
+const SCAN_META = {
+  secret:     { kicker: 'Secret Detection',                 title: 'Scan for Secrets',    sub: 'Enter the GitHub repository to scan for hardcoded secrets and credentials.' },
+  dependency: { kicker: 'Dependency Vulnerability Scanner', title: 'Scan Dependencies',   sub: 'Enter the GitHub repository to audit its dependencies for known CVEs.' },
+  iac:        { kicker: 'IaC Misconfiguration Scanner',     title: 'Scan Infrastructure', sub: 'Enter the GitHub repository to scan its IaC for cloud misconfigurations.' },
+};
+let _scanMode = 'secret';
+function openScan(mode) {
+  _scanMode = mode;
+  const m = SCAN_META[mode] || SCAN_META.secret;
+  document.getElementById('scanModalKicker').textContent = m.kicker;
+  document.getElementById('scanModalTitle').textContent = m.title;
+  document.getElementById('scanModalSub').textContent = m.sub;
+  document.getElementById('scanModalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('scanRepoUrl').focus(), 150);
+}
+function closeScan() { document.getElementById('scanModalOverlay').classList.remove('open'); }
+function handleScanOverlayClick(e) {
+  if (e.target === document.getElementById('scanModalOverlay')) closeScan();
+}
+function runFocusedScan() {
+  const url = document.getElementById('scanRepoUrl').value.trim();
+  if (!url) { document.getElementById('scanRepoUrl').focus(); return; }
+  closeScan();
+  launchScan({
+    repo_url: url,
+    branch: document.getElementById('scanBranch').value.trim() || 'main',
+    sandbox: false, advisor: false, auto_commit: false,
+    github_token: '', llm_provider: 'none', llm_api_key: '',
+  });
+}
+
 // ── Start scan ────────────────────────────────────────────────────
 function startScan() {
   const url = document.getElementById('wizRepoUrl').value.trim();
   if (!url) { toast('Enter a GitHub repository URL'); goStep(1); return; }
 
   const selectedProvider = getSelectedProvider();
-  const apiKeyValue  = document.getElementById('wizApiKey').value.trim();
-  const runSandbox   = document.getElementById('wizSandbox').checked;
-  const runAutoCommit= document.getElementById('wizAutoCommit').checked;
-  const ghToken      = document.getElementById('wizGhToken').value.trim();
-  const runAdvisor   = selectedProvider !== 'none';
-
   closeModal();
+  launchScan({
+    repo_url:     url,
+    branch:       document.getElementById('wizBranch').value.trim() || 'main',
+    sandbox:      document.getElementById('wizSandbox').checked,
+    advisor:      selectedProvider !== 'none',
+    auto_commit:  document.getElementById('wizAutoCommit').checked,
+    github_token: document.getElementById('wizGhToken').value.trim(),
+    llm_provider: selectedProvider,
+    llm_api_key:  document.getElementById('wizApiKey').value.trim(),
+  });
+}
+
+// ── Shared scan launcher (wizard + focused scanners) ───────────────
+function launchScan(payload) {
   scanStartTime = Date.now();
 
-  // Show scan area
+  // Hide marketing sections and surface the live pipeline
+  document.body.classList.add('scanning');
   document.getElementById('scanArea').classList.add('visible');
+  window.scrollTo(0, 0);
   document.querySelectorAll('.step-cell').forEach(c => c.className = 'step-cell');
   document.getElementById('pbarFill').style.width = '0%';
   document.getElementById('pbarPct').textContent = '0%';
@@ -2117,14 +2243,14 @@ function startScan() {
   addLogEntry('clone', 'Connecting to scan pipeline...', 'running');
 
   socket.emit('start_scan', {
-    repo_url:     url,
-    branch:       document.getElementById('wizBranch').value.trim() || 'main',
-    sandbox:      runSandbox,
-    advisor:      runAdvisor,
-    auto_commit:  runAutoCommit,
-    github_token: ghToken,
-    llm_provider: selectedProvider,
-    llm_api_key:  apiKeyValue,
+    repo_url:     payload.repo_url,
+    branch:       payload.branch,
+    sandbox:      payload.sandbox,
+    advisor:      payload.advisor,
+    auto_commit:  payload.auto_commit,
+    github_token: payload.github_token,
+    llm_provider: payload.llm_provider,
+    llm_api_key:  payload.llm_api_key,
   });
 }
 
@@ -2175,7 +2301,7 @@ socket.on('scan_complete', d => {
     <div class="log-icon done">✓</div>
     <div class="log-text">
       <div class="log-step-name">Report Ready</div>
-      <div class="log-step-detail"><a href="${d.report_url}" target="_blank" style="color:#4f8ef7">Open full report &rarr;</a></div>
+      <div class="log-step-detail">Opening dashboard&hellip; <a href="${d.report_url}" style="color:#4f8ef7">open now &rarr;</a></div>
     </div>
     <div class="log-time">${nowStr()}</div>
   `;
@@ -2183,7 +2309,8 @@ socket.on('scan_complete', d => {
   logBody.scrollTop = logBody.scrollHeight;
 
   loadRecent();
-  setTimeout(() => window.open(d.report_url, '_blank'), 700);
+  // Automatic dashboard redirect on completion
+  setTimeout(() => { window.location.href = d.report_url; }, 1000);
 });
 
 socket.on('error', d => {
@@ -2203,6 +2330,7 @@ socket.on('error', d => {
   `;
   logBody.appendChild(errEntry);
   logBody.scrollTop = logBody.scrollHeight;
+  document.body.classList.remove('scanning');  // restore page sections so the user can retry
   toast('Scan failed: ' + d.message);
 });
 
