@@ -22,6 +22,25 @@ def esc(s) -> str:
     return (str(s) if s is not None else "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+def _format_date(value) -> str:
+    """Return a human date like 'June 28, 2026 at 09:59 UTC'.
+
+    Accepts an ISO-8601 string, an already-formatted string, or None.
+    """
+    fmt = "%B %d, %Y at %H:%M UTC"
+    if not value:
+        return datetime.now().strftime(fmt)
+    s = str(value)
+    # Already human-formatted (sample style) — pass through.
+    if " at " in s and "UTC" in s:
+        return s
+    try:
+        iso = s.replace("Z", "+00:00")
+        return datetime.fromisoformat(iso).strftime(fmt)
+    except Exception:
+        return s
+
+
 def build_html(data: dict) -> tuple:
     """Return (html, owner, repo_slug) for the given report data dict."""
     findings = data.get("findings", []) or []
@@ -31,7 +50,7 @@ def build_html(data: dict) -> tuple:
     repo_url = data.get("repo") or data.get("repo_url") or "https://github.com/OmarRao/analyzer"
     repo_slug = repo_url.rstrip("/").split("/")[-1]
     owner = repo_url.rstrip("/").split("/")[-2] if "/" in repo_url.rstrip("/") else "OmarRao"
-    gen_at = data.get("generated_at") or datetime.now().strftime("%B %d, %Y at %H:%M UTC")
+    gen_at = _format_date(data.get("generated_at"))
     branch = (data.get("gh_info") or {}).get("default_branch", "main")
 
     errors = [f for f in findings if f.get("severity") == "ERROR"]
