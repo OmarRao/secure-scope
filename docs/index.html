@@ -402,8 +402,96 @@
     .scan-result.error { background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.3); color: #fca5a5; }
     .scan-result strong { color: var(--ink); }
 
+    /* ── Targeted Scanners ── */
+    .scanners { margin-bottom: 72px; }
+    .scanner-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    }
+    .scanner-card {
+      background: var(--ink2);
+      border: 1px solid var(--rule); border-radius: 12px;
+      padding: 26px 24px 22px;
+      display: flex; flex-direction: column;
+      transition: border-color .15s, background .15s, transform .1s;
+    }
+    .scanner-card:hover { border-color: var(--rule2); background: var(--ink3); }
+    .scanner-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: var(--ink3); border: 1px solid var(--rule2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; margin-bottom: 16px;
+    }
+    .scanner-card h3 {
+      font-size: 16px; font-weight: 700; color: var(--head);
+      margin-bottom: 8px; letter-spacing: -.3px;
+    }
+    .scanner-card p {
+      font-size: 13px; color: var(--sub); line-height: 1.6;
+      margin-bottom: 20px; flex: 1;
+    }
+    .scanner-btn {
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 9px;
+      padding: 11px 18px;
+      font-family: 'Geist', sans-serif; font-size: 14px; font-weight: 600;
+      cursor: pointer; display: inline-flex; align-items: center;
+      justify-content: center; gap: 8px; width: 100%;
+      transition: opacity .15s, transform .1s;
+    }
+    .scanner-btn:hover { opacity: .88; }
+    .scanner-btn:active { transform: scale(.98); }
+
+    /* ── Scanning state: hide page content while a scan runs ── */
+    body.scanning .hero,
+    body.scanning .scanners,
+    body.scanning .features,
+    body.scanning .why,
+    body.scanning .install,
+    body.scanning .footer-wrap { display: none !important; }
+    .scan-stage {
+      display: none;
+      min-height: calc(100vh - 52px);
+      padding: 120px 0 80px;
+      align-items: flex-start; justify-content: center;
+    }
+    body.scanning .scan-stage { display: flex; }
+    .scan-stage-inner {
+      width: 100%; max-width: 620px;
+      background: var(--ink2); border: 1px solid var(--rule);
+      border-radius: 16px; padding: 40px 44px;
+    }
+    .scan-stage-eye {
+      font-size: 11px; font-weight: 600; letter-spacing: 1.2px;
+      text-transform: uppercase; color: var(--accent);
+      font-family: 'Geist Mono', monospace; margin-bottom: 14px;
+    }
+    .scan-stage-title {
+      font-size: 26px; font-weight: 800; color: var(--head);
+      letter-spacing: -.6px; margin-bottom: 8px;
+    }
+    .scan-stage-sub { font-size: 14px; color: var(--sub); margin-bottom: 30px; line-height: 1.6; }
+    .scan-stage .scan-progress-bar { height: 8px; background: var(--ink4); }
+    .scan-stage .scan-status-msg { color: var(--sub); font-size: 13px; }
+    .scan-stage-result {
+      background: rgba(79,142,247,.08); border: 1px solid rgba(79,142,247,.3);
+      border-radius: 10px; padding: 18px 22px; font-size: 14px;
+      color: var(--body); line-height: 1.7; margin-top: 22px; display: none;
+    }
+    .scan-stage-result.error { background: rgba(242,87,87,.08); border-color: rgba(242,87,87,.3); color: #fca5a5; }
+    .scan-stage-result strong { color: var(--head); }
+    .scan-stage-actions { display: flex; gap: 12px; margin-top: 26px; }
+    .scan-stage-cancel {
+      background: none; border: 1px solid var(--rule2); border-radius: 9px;
+      color: var(--sub); font-family: 'Geist', sans-serif;
+      font-size: 14px; font-weight: 500; padding: 11px 22px;
+      cursor: pointer; transition: background .15s, color .15s;
+    }
+    .scan-stage-cancel:hover { background: var(--ink4); color: var(--head); }
+
     /* ── Responsive ── */
     @media (max-width: 768px) {
+      .scanner-grid { grid-template-columns: 1fr; }
+      .scan-stage-inner { padding: 28px 24px; }
       :root { --gutter: 20px; }
       .hero { padding: 88px 0 48px; }
       .feat-grid { grid-template-columns: 1fr; }
@@ -444,6 +532,31 @@
       <button class="hero-cta" onclick="openModal()">
         Analyze Repository &nbsp;&#x2192;
       </button>
+    </div>
+
+    <!-- Targeted Scanners -->
+    <div class="scanners">
+      <div class="eye">Targeted Scanners</div>
+      <div class="scanner-grid">
+        <div class="scanner-card">
+          <div class="scanner-icon">&#x1F511;</div>
+          <h3>Secret Detection</h3>
+          <p>Scan a repository for hardcoded API keys, tokens, passwords and high-entropy strings — including the full commit history.</p>
+          <button class="scanner-btn" onclick="openScan('secret')">Scan for Secrets &nbsp;&#x2192;</button>
+        </div>
+        <div class="scanner-card">
+          <div class="scanner-icon">&#x1F4E6;</div>
+          <h3>Dependency Vulnerability Scanner</h3>
+          <p>Audit every dependency against OSV.dev across Python, npm, Go, Rust, Ruby, Java and PHP for known CVEs with CVSS scores.</p>
+          <button class="scanner-btn" onclick="openScan('dependency')">Scan Dependencies &nbsp;&#x2192;</button>
+        </div>
+        <div class="scanner-card">
+          <div class="scanner-icon">&#x1F3D7;&#xFE0F;</div>
+          <h3>IaC Misconfiguration Scanner</h3>
+          <p>Detect cloud misconfigurations in Terraform, CloudFormation, Kubernetes and Docker manifests before they ship to production.</p>
+          <button class="scanner-btn" onclick="openScan('iac')">Scan IaC &nbsp;&#x2192;</button>
+        </div>
+      </div>
     </div>
 
     <!-- Capabilities -->
@@ -533,6 +646,23 @@
           <div><span class="cmt"># Or CLI — full scan with persistence, SLA tracking, Jira</span></div>
           <div>python main.py <span class="flag">--repo</span> <span class="url">https://github.com/org/repo</span> <span class="flag">\</span></div>
           <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="flag">--use-db --sla-check --jira --pdf</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Full-page scan stage (shown while a scan runs) -->
+    <div class="scan-stage" id="scanStage">
+      <div class="scan-stage-inner">
+        <div class="scan-stage-eye" id="stageEye">Scanning</div>
+        <div class="scan-stage-title" id="stageTitle">Running Security Scan</div>
+        <div class="scan-stage-sub" id="stageSub">Connecting to SecureScope&hellip;</div>
+        <div class="scan-progress-wrap">
+          <div class="scan-progress-bar"><div class="scan-progress-fill" id="stageFill"></div></div>
+          <div class="scan-status-msg" id="stageMsg">Initializing&hellip;</div>
+        </div>
+        <div class="scan-stage-result" id="stageResult"></div>
+        <div class="scan-stage-actions">
+          <button class="scan-stage-cancel" id="stageCancel" onclick="cancelStageScan()">&larr; Cancel</button>
         </div>
       </div>
     </div>
@@ -676,27 +806,29 @@
       </div>
     </div>
 
-    <!-- Step 4: Live scan progress -->
-    <div class="wizard-step" id="step4">
-      <div class="step-ind" id="scanStepInd">Scanning</div>
-      <div class="modal-title" id="scanTitle">Running Security Scan</div>
-      <div class="modal-sub" id="scanSub">Connecting to SecureScope&hellip;</div>
-      <div class="scan-progress-wrap">
-        <div class="scan-progress-bar"><div class="scan-progress-fill" id="scanFill"></div></div>
-        <div class="scan-status-msg" id="scanMsg">Initializing&hellip;</div>
-      </div>
-      <div class="scan-result" id="scanResult" style="display:none"></div>
-      <div class="wizard-footer">
-        <button class="btn-back" id="scanBack" onclick="cancelScan()">&larr; Back</button>
-        <div class="step-dots">
-          <div class="step-dot done"></div>
-          <div class="step-dot done"></div>
-          <div class="step-dot done"></div>
-        </div>
-        <a class="btn-next accent" id="scanReportBtn" href="#" target="_blank" style="display:none;text-decoration:none">View Report &rarr;</a>
-      </div>
-    </div>
+  </div>
+</div>
 
+<!-- Focused Scanner Modal -->
+<div class="modal-overlay" id="scanModalOverlay" onclick="handleScanOverlayClick(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="scanModalTitle" style="max-width:520px">
+    <button class="modal-close" onclick="closeScan()" aria-label="Close">&times;</button>
+    <div class="step-ind" id="scanModalKicker">Secret Detection</div>
+    <div class="modal-title" id="scanModalTitle">Scan for Secrets</div>
+    <div class="modal-sub" id="scanModalSub">Enter the GitHub repository you want to scan.</div>
+    <div class="field-label">GitHub URL</div>
+    <input class="modal-input" id="scanRepoUrl" type="text"
+      placeholder="https://github.com/owner/repository"
+      value="https://github.com/OmarRao/analyzer"
+      autocomplete="off" spellcheck="false">
+    <div class="field-label">Branch</div>
+    <input class="modal-input" id="scanBranch" type="text"
+      placeholder="main" value="main"
+      autocomplete="off" spellcheck="false" style="margin-bottom:4px">
+    <div class="wizard-footer">
+      <button class="btn-back" onclick="closeScan()">Cancel</button>
+      <button class="btn-next accent" id="scanModalRun" onclick="runFocusedScan()">Run Scan &rarr;</button>
+    </div>
   </div>
 </div>
 </main>
@@ -771,7 +903,9 @@
     if (e.target === document.getElementById('modalOverlay')) closeModal();
   }
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeModal();
+    const scanOpen = document.getElementById('scanModalOverlay').classList.contains('open');
+    if (e.key === 'Escape') { closeModal(); closeScan(); }
+    if (e.key === 'Enter' && scanOpen) { runFocusedScan(); return; }
     if (e.key === 'Enter' && document.getElementById('modalOverlay').classList.contains('open')) {
       if (currentWizStep === 1) goStep(2);
       else if (currentWizStep === 2) goStep(3);
@@ -786,91 +920,121 @@
   const BACKEND = 'https://secure-scope.onrender.com';
   let _socket = null;
 
+  // ── Focused scanner modal ──────────────────────────────────────────────
+  const SCAN_META = {
+    secret:     { kicker: 'Secret Detection',                 title: 'Scan for Secrets',       sub: 'Enter the GitHub repository to scan for hardcoded secrets and credentials.' },
+    dependency: { kicker: 'Dependency Vulnerability Scanner', title: 'Scan Dependencies',      sub: 'Enter the GitHub repository to audit its dependencies for known CVEs.' },
+    iac:        { kicker: 'IaC Misconfiguration Scanner',     title: 'Scan Infrastructure',    sub: 'Enter the GitHub repository to scan its IaC for cloud misconfigurations.' },
+  };
+  let _scanMode = 'secret';
+
+  function openScan(mode) {
+    _scanMode = mode;
+    const m = SCAN_META[mode] || SCAN_META.secret;
+    document.getElementById('scanModalKicker').textContent = m.kicker;
+    document.getElementById('scanModalTitle').textContent = m.title;
+    document.getElementById('scanModalSub').textContent = m.sub;
+    document.getElementById('scanModalOverlay').classList.add('open');
+    setTimeout(() => document.getElementById('scanRepoUrl').focus(), 200);
+  }
+  function closeScan() {
+    document.getElementById('scanModalOverlay').classList.remove('open');
+  }
+  function handleScanOverlayClick(e) {
+    if (e.target === document.getElementById('scanModalOverlay')) closeScan();
+  }
+  function runFocusedScan() {
+    const repoUrl = document.getElementById('scanRepoUrl').value.trim();
+    if (!repoUrl) { document.getElementById('scanRepoUrl').focus(); return; }
+    const m = SCAN_META[_scanMode] || SCAN_META.secret;
+    closeScan();
+    startScanStage({ repoUrl, provider: 'none', apiKey: '', sandbox: false,
+                     eye: m.kicker, title: m.title });
+  }
+
+  // ── Main analyzer wizard "Run Scan" ─────────────────────────────────────
   function showSetup() {
-    goStep(4);
-    // Reset UI
-    document.getElementById('scanFill').style.width = '0%';
-    document.getElementById('scanMsg').textContent = 'Connecting to SecureScope…';
-    document.getElementById('scanTitle').textContent = 'Running Security Scan';
-    document.getElementById('scanStepInd').textContent = 'Scanning';
-    document.getElementById('scanResult').style.display = 'none';
-    document.getElementById('scanReportBtn').style.display = 'none';
-    document.getElementById('scanBack').textContent = '✕ Cancel';
-
-    // Collect inputs
-    const repoUrl = document.getElementById('wizRepoUrl').value.trim();
+    const repoUrl  = document.getElementById('wizRepoUrl').value.trim();
+    if (!repoUrl) { goStep(1); document.getElementById('wizRepoUrl').focus(); return; }
     const provider = document.querySelector('.provider-card.selected')?.dataset.provider || 'none';
-    const apiKey = document.getElementById('wizApiKey').value.trim();
-    const sandbox = document.getElementById('wizSandbox').checked;
+    const apiKey   = document.getElementById('wizApiKey').value.trim();
+    const sandbox  = document.getElementById('wizSandbox').checked;
+    closeModal();
+    startScanStage({ repoUrl, provider, apiKey, sandbox,
+                     eye: 'Full Analysis', title: 'Analyzing Repository' });
+  }
 
-    // Connect via Socket.IO
+  // ── Unified full-page scan stage ────────────────────────────────────────
+  function startScanStage(opts) {
+    // Hide all page sections, show the dedicated scan stage
+    document.body.classList.add('scanning');
+    window.scrollTo(0, 0);
+
+    document.getElementById('stageEye').textContent = opts.eye || 'Scanning';
+    document.getElementById('stageTitle').textContent = opts.title || 'Running Security Scan';
+    document.getElementById('stageSub').textContent =
+      'Scanning ' + opts.repoUrl.replace(/^https?:\/\//, '') + ' — this can take a minute.';
+    document.getElementById('stageFill').style.width = '0%';
+    document.getElementById('stageMsg').textContent = 'Connecting to SecureScope…';
+    const result = document.getElementById('stageResult');
+    result.style.display = 'none';
+    result.className = 'scan-stage-result';
+    document.getElementById('stageCancel').textContent = '✕ Cancel';
+
     if (_socket) { _socket.disconnect(); }
     _socket = io(BACKEND, { transports: ['websocket', 'polling'] });
 
     _socket.on('connect', () => {
-      document.getElementById('scanMsg').textContent = 'Connected — starting scan…';
+      document.getElementById('stageMsg').textContent = 'Connected — starting scan…';
       _socket.emit('start_scan', {
-        repo_url: repoUrl,
-        llm_provider: provider,
-        llm_api_key: apiKey,
-        sandbox: sandbox,
-        advisor: provider !== 'none'
+        repo_url: opts.repoUrl,
+        llm_provider: opts.provider,
+        llm_api_key: opts.apiKey,
+        sandbox: opts.sandbox,
+        advisor: opts.provider !== 'none'
       });
     });
 
     _socket.on('progress', (data) => {
-      document.getElementById('scanFill').style.width = (data.pct || 0) + '%';
-      document.getElementById('scanMsg').textContent = data.message || '';
+      document.getElementById('stageFill').style.width = (data.pct || 0) + '%';
+      document.getElementById('stageMsg').textContent = data.message || '';
     });
 
     _socket.on('scan_complete', (data) => {
       _socket.disconnect();
-      document.getElementById('scanFill').style.width = '100%';
-      document.getElementById('scanTitle').textContent = 'Scan Complete';
-      document.getElementById('scanStepInd').textContent = 'Done ✓';
+      document.getElementById('stageFill').style.width = '100%';
+      document.getElementById('stageMsg').textContent = '✅ Scan complete — opening dashboard…';
       const summary = data.summary || {};
-      const result = document.getElementById('scanResult');
       result.style.display = 'block';
-      result.className = 'scan-result';
-      const gistLine = data.gist_url
-        ? `<br>☁️ <a href="${data.gist_url}" target="_blank" style="color:var(--accent)">Permanent Gist link</a>`
-        : '';
-      const prLine = data.fix_pr_url
-        ? `<br>🔧 <a href="${data.fix_pr_url}" target="_blank" style="color:var(--accent)">Fix PR opened</a>`
-        : '';
-      result.innerHTML = `<strong>${repoUrl.split('/').pop()}</strong> scanned successfully.<br>
-        ${summary.total_findings !== undefined ? `<br>🔍 <strong>${summary.total_findings}</strong> findings &nbsp;|&nbsp; ` : ''}
-        ${summary.critical !== undefined ? `🔴 <strong>${summary.critical}</strong> critical` : ''}
-        ${gistLine}${prLine}`;
-      const btn = document.getElementById('scanReportBtn');
-      btn.href = BACKEND + data.report_url;
-      btn.style.display = 'inline-flex';
-      document.getElementById('scanBack').textContent = '← Back';
+      result.innerHTML = `<strong>${opts.repoUrl.split('/').pop()}</strong> scanned successfully.
+        ${summary.total_findings !== undefined ? `&nbsp;·&nbsp; 🔍 <strong>${summary.total_findings}</strong> findings` : ''}
+        ${summary.critical !== undefined ? `&nbsp;·&nbsp; 🔴 <strong>${summary.critical}</strong> critical` : ''}
+        <br>Redirecting to the dashboard…`;
+      // Automatic dashboard redirect
+      setTimeout(() => { window.location.href = BACKEND + data.report_url; }, 1200);
     });
 
     _socket.on('error', (data) => {
       _socket.disconnect();
-      document.getElementById('scanMsg').textContent = '';
-      const result = document.getElementById('scanResult');
+      document.getElementById('stageMsg').textContent = '';
       result.style.display = 'block';
-      result.className = 'scan-result error';
+      result.className = 'scan-stage-result error';
       result.textContent = '⚠ ' + (data.message || 'Scan failed. Please check the repo URL and API key.');
-      document.getElementById('scanBack').textContent = '← Back';
+      document.getElementById('stageCancel').textContent = '← Back to home';
     });
 
     _socket.on('connect_error', () => {
-      document.getElementById('scanMsg').textContent = '';
-      const result = document.getElementById('scanResult');
+      document.getElementById('stageMsg').textContent = '';
       result.style.display = 'block';
-      result.className = 'scan-result error';
+      result.className = 'scan-stage-result error';
       result.textContent = '⚠ Could not connect to the scan server. It may be waking up — please try again in 30 seconds.';
-      document.getElementById('scanBack').textContent = '← Back';
+      document.getElementById('stageCancel').textContent = '← Back to home';
     });
   }
 
-  function cancelScan() {
+  function cancelStageScan() {
     if (_socket) { _socket.disconnect(); _socket = null; }
-    goStep(3);
+    document.body.classList.remove('scanning');
   }
 
   const KEY_LABELS = { anthropic:'API Key — Anthropic', openai:'API Key — OpenAI', gemini:'API Key — Google AI', groq:'API Key — Groq', ollama:'', none:'' };

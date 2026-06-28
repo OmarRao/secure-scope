@@ -465,7 +465,7 @@ def handle_scan(data):
 
             except Exception as e:
                 logger.exception("Scan pipeline error for sid %s", sid)
-            _emit(sid, "error", {"message": f"Scan failed: {type(e).__name__}: {e}"})
+                _emit(sid, "error", {"message": f"Scan failed: {type(e).__name__}: {e}"})
 
     t = threading.Thread(target=run, daemon=True)
     t.start()
