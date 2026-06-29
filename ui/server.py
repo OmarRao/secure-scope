@@ -150,6 +150,23 @@ def api_threat_feed():
         return jsonify({"error": "Failed to build threat feed"}), 500
 
 
+@app.route("/api/live-intel")
+def api_live_intel():
+    """
+    GET /api/live-intel
+
+    Returns live threat intelligence pulled from external public sources
+    (CISA KEV + ransomware.live), cached server-side. Best-effort — degrades
+    gracefully and returns an empty item list if upstreams are unavailable.
+    """
+    try:
+        from live_intel import get_live_feed
+        return jsonify(get_live_feed())
+    except Exception:
+        logger.exception("Error fetching live intel")
+        return jsonify({"generated_at": "", "sources": [], "items": [], "live": False})
+
+
 @app.route("/api/threat/<threat_id>")
 def api_threat_detail(threat_id: str):
     """

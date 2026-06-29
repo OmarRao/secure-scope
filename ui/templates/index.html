@@ -444,6 +444,19 @@
     /* Panel grid: 2-column layout at wide screens */
     .ti-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     .ti-grid-full { grid-column: 1 / -1; }
+    .live-dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#ef4444; margin-right:6px; box-shadow:0 0 0 0 rgba(239,68,68,.6); animation:livePulse 1.6s infinite; vertical-align:middle; }
+    @keyframes livePulse { 0%{box-shadow:0 0 0 0 rgba(239,68,68,.55)} 70%{box-shadow:0 0 0 7px rgba(239,68,68,0)} 100%{box-shadow:0 0 0 0 rgba(239,68,68,0)} }
+    .live-item { display:flex; gap:12px; align-items:flex-start; padding:11px 16px; border-bottom:1px solid var(--rule); }
+    .live-item:last-child { border-bottom:none; }
+    .live-sev { font-size:9px; font-weight:700; font-family:'Geist Mono',monospace; padding:2px 7px; border-radius:4px; flex-shrink:0; margin-top:2px; }
+    .live-sev.crit { background:rgba(242,87,87,.14); color:var(--danger); }
+    .live-sev.high { background:rgba(230,168,23,.14); color:var(--warn); }
+    .live-title { font-size:13px; font-weight:600; color:var(--head); line-height:1.35; }
+    .live-title a { color:inherit; text-decoration:none; }
+    .live-title a:hover { color:var(--accent); }
+    .live-detail { font-size:11.5px; color:var(--sub); margin-top:2px; }
+    .live-src { font-size:10px; color:var(--muted); font-family:'Geist Mono',monospace; margin-top:3px; }
+    .live-src .tag-rw { color:var(--danger); }
 
     /* Base panel card */
     .ti-panel {
@@ -1059,6 +1072,34 @@
           <div class="ti-section-sub">
             Real-time tracking of 20+ ransomware groups and APT actors — ranked by activity, enriched with TTPs, IOCs, and prevention guidance.
           </div>
+        </div>
+      </div>
+
+      <!-- ── LIVE external intel (CISA KEV + ransomware.live) ───────────── -->
+      <div class="ti-panel ti-grid-full" style="margin-bottom:20px">
+        <div class="ti-panel-head">
+          <span class="ti-panel-title">
+            <span class="live-dot"></span> Live Threat Feed
+          </span>
+          <span id="liveSources" style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace"></span>
+        </div>
+        <div class="ti-panel-body" id="liveFeed" style="max-height:340px;overflow-y:auto">
+          <div style="padding:18px;color:var(--dim);font-size:13px">Fetching live threat intelligence…</div>
+        </div>
+      </div>
+
+      <!-- ── Kaspersky real-time cyberthreat map ────────────────────────── -->
+      <div class="ti-panel ti-grid-full" style="margin-bottom:20px">
+        <div class="ti-panel-head">
+          <span class="ti-panel-title">Global Cyberthreat Map</span>
+          <a href="https://cybermap.kaspersky.com/" target="_blank" rel="noopener"
+             style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace;text-decoration:none">cybermap.kaspersky.com ↗</a>
+        </div>
+        <div class="ti-panel-body" style="padding:0">
+          <iframe src="https://cybermap.kaspersky.com/en/widget/dynamic/dark"
+                  title="Kaspersky Cyberthreat Real-Time Map" loading="lazy"
+                  style="width:100%;height:480px;border:0;display:block;border-radius:0 0 12px 12px"
+                  referrerpolicy="no-referrer"></iframe>
         </div>
       </div>
 
@@ -2015,6 +2056,39 @@ let _feedData = null;  // cache of last fetched feed
  * Fetch the threat feed from /api/threat-feed and render Panel A and Panel B.
  * Auto-called on page load and every 60 seconds.
  */
+// ── Live external threat intel (CISA KEV + ransomware.live) ──────────────────
+function _liveEsc(s){return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function _liveSafeUrl(u){u=(u==null?'':String(u));return /^https?:\/\//i.test(u)?u.replace(/"/g,'%22'):'';}
+async function loadLiveIntel() {
+  const box = document.getElementById('liveFeed');
+  if (!box) return;
+  try {
+    const r = await fetch('/api/live-intel');
+    const d = await r.json();
+    const items = d.items || [];
+    document.getElementById('liveSources').textContent =
+      (d.sources && d.sources.length) ? ('sources: ' + d.sources.join(' · ') + (d.generated_at ? '  ·  ' + d.generated_at : '')) : '';
+    if (!items.length) { box.innerHTML = '<div style="padding:18px;color:var(--dim);font-size:13px">Live sources are temporarily unavailable. Showing curated intelligence below.</div>'; return; }
+    box.innerHTML = items.map(it => {
+      const sevCls = it.severity === 'CRITICAL' ? 'crit' : 'high';
+      const url = _liveSafeUrl(it.url);
+      const title = _liveEsc(it.title);
+      const titleHtml = url ? `<a href="${url}" target="_blank" rel="noopener">${title}</a>` : title;
+      const rw = it.ransomware ? ' · <span class="tag-rw">ransomware-linked</span>' : '';
+      return `<div class="live-item">
+        <span class="live-sev ${sevCls}">${_liveEsc(it.severity)}</span>
+        <div style="min-width:0;flex:1">
+          <div class="live-title">${titleHtml}</div>
+          <div class="live-detail">${_liveEsc(it.detail)}</div>
+          <div class="live-src">${_liveEsc(it.source)} · ${_liveEsc(it.type)}${it.date ? ' · ' + _liveEsc(it.date) : ''}${rw}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    box.innerHTML = '<div style="padding:18px;color:var(--dim);font-size:13px">Could not load live threat intelligence.</div>';
+  }
+}
+
 async function loadThreatFeed() {
   try {
     // Update pulse dot to indicate loading
@@ -2321,6 +2395,9 @@ socket.on('yara_error', d => {
 loadThreatFeed();
 // Auto-refresh threat feed every 60 seconds
 setInterval(loadThreatFeed, 60000);
+// Live external intel (CISA KEV + ransomware.live), refreshed every 5 min
+loadLiveIntel();
+setInterval(loadLiveIntel, 300000);
 // Load YARA rule list
 loadYaraRules();
 // Restore DR checklist state from localStorage
