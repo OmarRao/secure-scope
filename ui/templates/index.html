@@ -1835,7 +1835,17 @@ function progSetStage(step) {
 function progAddLog(text) {
   const log = document.getElementById('progLog');
   const line = document.createElement('div');
-  line.textContent = '› ' + text;
+  line.style.display = 'flex';
+  line.style.alignItems = 'center';
+  line.style.gap = '7px';
+  const tick = document.createElement('span');
+  tick.textContent = '✓';
+  tick.style.color = 'var(--ok)';
+  tick.style.fontWeight = '700';
+  const label = document.createElement('span');
+  label.textContent = text;
+  line.appendChild(tick);
+  line.appendChild(label);
   log.appendChild(line);
   log.scrollTop = log.scrollHeight;
 }
