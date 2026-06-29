@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureScope — Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;900&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#0a0c0f;--ink2:#111419;--ink3:#181c23;--rule:#252b35;--rule2:#2e3540;--muted:#6b7785;--dim:#6b7785;--sub:#a0aec0;--body:#e2e8f0;--head:#fff;--accent:#4f8ef7;--danger:#f25757;--warn:#e6a817;--ok:#3ecf79}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--ink);color:var(--body);font-family:'Geist',sans-serif;min-height:100vh;line-height:1.6}
+    .top{height:52px;border-bottom:1px solid var(--rule);display:flex;align-items:center;padding:0 24px;gap:12px}
+    .wm{font-size:15px;font-weight:700;color:var(--head)} .wm sup{font-size:9px;color:var(--accent);vertical-align:top}
+    .badge{font-size:10px;font-family:'Geist Mono',monospace;color:var(--warn);border:1px solid var(--warn);border-radius:6px;padding:3px 8px;text-transform:uppercase;letter-spacing:.6px}
+    .spacer{flex:1}
+    .btn{background:transparent;border:1px solid var(--rule2);color:var(--sub);border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit}
+    .wrap{max-width:1100px;margin:0 auto;padding:36px 24px}
+    h1{font-size:24px;font-weight:900;color:var(--head);margin-bottom:20px;letter-spacing:-.4px}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+    .stat{background:var(--ink2);border:1px solid var(--rule);border-radius:12px;padding:20px}
+    .stat .n{font-size:30px;font-weight:800;font-family:'Geist Mono',monospace;color:var(--head);line-height:1}
+    .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:6px}
+    .sec{font-size:11px;font-family:'Geist Mono',monospace;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin:24px 0 10px}
+    table{width:100%;border-collapse:collapse;background:var(--ink2);border:1px solid var(--rule);border-radius:12px;overflow:hidden}
+    th{text-align:left;font-size:10px;font-family:'Geist Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:10px 14px;background:var(--ink3);border-bottom:1px solid var(--rule)}
+    td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--rule);color:var(--body)}
+    tr:last-child td{border-bottom:none}
+    .mono{font-family:'Geist Mono',monospace;font-size:12px}
+    .gate{max-width:420px;margin:80px auto;text-align:center}
+    .gate h2{color:var(--head);font-size:20px;margin-bottom:8px}
+    .gate p{color:var(--sub);font-size:14px;margin-bottom:18px}
+    .gate .btn{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+    .hidden{display:none}
+    a{color:var(--accent)}
+  </style>
+</head>
+<body>
+  <div class="top">
+    <span class="wm">SecureScope<sup>BETA</sup></span>
+    <span class="badge">Admin</span>
+    <div class="spacer"></div>
+    <span class="mono" id="who" style="color:var(--sub)"></span>
+    <button class="btn hidden" id="signout">Sign out</button>
+  </div>
+
+  <div class="wrap">
+    <div class="gate" id="gate">
+      <h2>Admin access required</h2>
+      <p id="gateMsg">Sign in with an authorised admin account to view all user activity.</p>
+      <button class="btn" id="signin">Sign in with Google</button>
+    </div>
+
+    <div id="panel" class="hidden">
+      <h1>User Activity &amp; Statistics</h1>
+      <div class="stats" id="stats"></div>
+      <div class="sec">Users</div>
+      <table id="usersTbl"><thead><tr><th>Email</th><th>UID</th><th>Last active</th></tr></thead><tbody></tbody></table>
+      <div class="sec">Recent Scan Activity</div>
+      <table id="actTbl"><thead><tr><th>When</th><th>User</th><th>Repository</th><th>Type</th><th>Findings</th></tr></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, orderBy, limit }
+      from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+    import { firebaseConfig, ADMIN_EMAILS } from "./firebase-config.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+    $("signin").onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => $("gateMsg").textContent = e.message);
+    $("signout").onclick = () => signOut(auth);
+
+    onAuthStateChanged(auth, async (u) => {
+      const isAdmin = u && ADMIN_EMAILS.includes((u.email||"").toLowerCase());
+      $("who").textContent = u ? u.email : "";
+      $("signout").classList.toggle("hidden", !u);
+      if (!u) { $("gate").classList.remove("hidden"); $("panel").classList.add("hidden"); return; }
+      if (!isAdmin) {
+        $("gate").classList.remove("hidden"); $("panel").classList.add("hidden");
+        $("gateMsg").textContent = "This account (" + u.email + ") is not an admin. Sign out and use an authorised account.";
+        return;
+      }
+      $("gate").classList.add("hidden"); $("panel").classList.remove("hidden");
+      await load();
+    });
+
+    async function load() {
+      // Users
+      let users = [];
+      try { const snap = await getDocs(collection(db, "users")); users = snap.docs.map(d => d.data()); }
+      catch (e) { $("usersTbl").querySelector("tbody").innerHTML = `<tr><td colspan="3" style="color:#fca5a5">Cannot read users — check Firestore admin rules. (${esc(e.code||e.message)})</td></tr>`; }
+
+      // Activity
+      let acts = [];
+      try {
+        const snap = await getDocs(query(collection(db, "activity"), orderBy("createdAt", "desc"), limit(200)));
+        acts = snap.docs.map(d => d.data());
+      } catch (e) {
+        $("actTbl").querySelector("tbody").innerHTML = `<tr><td colspan="5" style="color:#fca5a5">Cannot read activity — ${esc(e.code||e.message)}</td></tr>`;
+      }
+
+      const scans = acts.filter(a => a.type === "scan");
+      const totalFindings = scans.reduce((n, a) => n + (a.findings || 0), 0);
+      $("stats").innerHTML = [
+        ["Users", users.length],
+        ["Total scans", scans.length],
+        ["Findings surfaced", totalFindings],
+        ["Active (24h)", new Set(scans.filter(a => a.createdAt && a.createdAt.toDate && (Date.now()-a.createdAt.toDate().getTime()<864e5)).map(a=>a.email)).size],
+      ].map(([l,n]) => `<div class="stat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+
+      $("usersTbl").querySelector("tbody").innerHTML = users.length ? users.map(u => {
+        const la = u.lastActive && u.lastActive.toDate ? u.lastActive.toDate().toLocaleString() : "—";
+        return `<tr><td>${esc(u.email)}</td><td class="mono">${esc(u.uid||"")}</td><td>${esc(la)}</td></tr>`;
+      }).join("") : `<tr><td colspan="3" style="color:var(--dim)">No users yet.</td></tr>`;
+
+      $("actTbl").querySelector("tbody").innerHTML = scans.length ? scans.map(a => {
+        const w = a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().toLocaleString() : "—";
+        return `<tr><td>${esc(w)}</td><td>${esc(a.email)}</td><td class="mono">${esc((a.repo||"").replace(/^https?:\/\//,""))}</td><td>${esc(a.scanType||"full")}</td><td>${esc(a.findings||0)}</td></tr>`;
+      }).join("") : `<tr><td colspan="5" style="color:var(--dim)">No scan activity yet.</td></tr>`;
+    }
+  </script>
+</body>
+</html>

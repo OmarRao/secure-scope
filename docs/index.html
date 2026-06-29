@@ -967,7 +967,12 @@
   }
 
   // ── Unified full-page scan stage ────────────────────────────────────────
-  function startScanStage(opts) {
+  async function startScanStage(opts) {
+    // Require a free account before scanning — sign-up/login gate.
+    if (window.SS) {
+      await window.SS.requireSignIn();
+      if (!window.SS.user) return;  // dismissed without signing in
+    }
     // Hide all page sections, show the dedicated scan stage
     document.body.classList.add('scanning');
     window.scrollTo(0, 0);
@@ -1005,6 +1010,15 @@
 
     _socket.on('scan_complete', (data) => {
       _socket.disconnect();
+      // Persist to the signed-in user's report history (Firestore).
+      if (window.SS && window.SS.user) {
+        window.SS.saveReport({
+          repo: opts.repoUrl,
+          report_url: data.report_url ? (BACKEND + data.report_url) : '',
+          gist_url: data.gist_url || '',
+          summary: data.summary || {},
+        });
+      }
       document.getElementById('stageFill').style.width = '100%';
       document.getElementById('stageMsg').textContent = 'Your detailed dashboard & report are ready.';
       const summary = data.summary || {};
@@ -1093,6 +1107,9 @@
       document.getElementById('wizAutoCommit').checked ? 'block' : 'none';
   }
 </script>
+
+<!-- SecureScope accounts: Firebase auth + per-user history + sharing -->
+<script type="module" src="./securescope-auth.js"></script>
 
 </body>
 </html>

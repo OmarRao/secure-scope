@@ -1766,7 +1766,14 @@ function startScan() {
 }
 
 // ── Shared scan launcher → centered progress modal ─────────────────
-function launchScan(payload) {
+let _lastScanRepo = '';
+async function launchScan(payload) {
+  // Require a free account before scanning — sign-up/login gate.
+  if (window.SS) {
+    await window.SS.requireSignIn();
+    if (!window.SS.user) return;  // user dismissed without signing in
+  }
+  _lastScanRepo = payload.repo_url;
   scanStartTime = Date.now();
   // Open the centered progress modal
   document.getElementById('progEye').textContent   = payload.eye || 'Scanning';
@@ -1879,6 +1886,15 @@ socket.on('github_info', info => {
 
 socket.on('scan_complete', d => {
   progSetStage('done');
+  // Persist to the signed-in user's report history (Firestore).
+  if (window.SS && window.SS.user) {
+    window.SS.saveReport({
+      repo: _lastScanRepo,
+      report_url: d.report_url ? (location.origin + d.report_url) : '',
+      gist_url: d.gist_url || '',
+      summary: d.summary || {},
+    });
+  }
   document.getElementById('progBar').style.width = '100%';
   document.getElementById('progPct').textContent = '100%';
   document.getElementById('progMsg').textContent = 'Your detailed dashboard & report are ready.';
@@ -2749,5 +2765,7 @@ function filterIac(severity, framework) {
   renderIacTable(filtered);
 }
 </script>
+<!-- SecureScope accounts: Firebase auth + per-user history + sharing -->
+<script type="module" src="/static/securescope-auth.js"></script>
 </body>
 </html>
