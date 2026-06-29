@@ -24,8 +24,13 @@ const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.send";
 
 // ── Styles (reuse the page's theme variables; fall back for view/admin pages) ──
 const css = `
-.ss-chip{position:fixed;top:10px;right:14px;z-index:10000;display:flex;align-items:center;gap:8px;font-family:'Geist',sans-serif}
-.ss-banner{position:fixed;top:0;left:0;right:0;z-index:9999;display:none;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:10px 16px;background:linear-gradient(90deg,rgba(79,142,247,.16),rgba(167,139,250,.16));border-bottom:1px solid var(--rule2,#2e3540);font-family:'Geist',sans-serif;font-size:13px;color:var(--body,#e2e8f0)}
+.ss-chip{position:fixed;top:9px;right:60px;z-index:10000;display:flex;align-items:center;gap:8px;font-family:'Geist',sans-serif}
+.ss-slot{display:flex;align-items:center;gap:10px}
+.ss-mini{background:none;border:none;color:var(--sub,#a0aec0);font-size:13px;font-family:'Geist',sans-serif;cursor:pointer;padding:0}
+.ss-mini:hover{color:var(--head,#fff)}
+.ss-mini.pri{color:var(--accent,#4f8ef7);font-weight:600}
+.ss-mini-email{font-size:12px;color:var(--sub,#a0aec0);font-family:'Geist Mono',monospace;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ss-banner{position:fixed;top:52px;left:0;right:0;z-index:9990;display:none;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:9px 44px 9px 16px;background:linear-gradient(90deg,rgba(79,142,247,.16),rgba(167,139,250,.16));border-bottom:1px solid var(--rule2,#2e3540);font-family:'Geist',sans-serif;font-size:13px;color:var(--body,#e2e8f0)}
 .ss-banner.show{display:flex}
 .ss-banner b{color:var(--head,#fff)}
 .ss-banner .ss-bx{background:none;border:none;color:var(--muted,#6b7785);cursor:pointer;font-size:16px;line-height:1;position:absolute;right:12px}
@@ -71,13 +76,21 @@ function el(html) {
   return t.content.firstChild;
 }
 
-let chip, overlay, drawer, banner;
+let chip, overlay, drawer, banner, authSlot;
 
 function buildUI() {
   injectStyles();
 
-  chip = el(`<div class="ss-chip"></div>`);
-  document.body.appendChild(chip);
+  // Prefer a topbar slot the page provides (#ssauth) so the auth control sits
+  // inside the existing nav instead of floating over it. Fall back to a fixed
+  // chip only when no slot exists (e.g. minimal pages).
+  authSlot = document.getElementById("ssauth");
+  if (authSlot) {
+    authSlot.classList.add("ss-slot");
+  } else {
+    chip = el(`<div class="ss-chip"></div>`);
+    document.body.appendChild(chip);
+  }
 
   banner = el(`
     <div class="ss-banner" id="ssBanner">
@@ -127,19 +140,19 @@ function buildUI() {
 }
 
 function renderChip() {
-  if (!chip) return;
-  if (_user) {
-    const isAdmin = ADMIN_EMAILS.includes((_user.email || "").toLowerCase());
-    chip.innerHTML = `
-      <span class="ss-email" title="${_user.email}">${_user.email}</span>
-      <button class="ss-btn ghost" id="ssReports">My Reports</button>
-      ${isAdmin ? `<a class="ss-btn ghost" href="https://omarrao.github.io/secure-scope/admin.html">Admin</a>` : ""}
-      <button class="ss-btn ghost" id="ssOut">Sign out</button>`;
-    chip.querySelector("#ssReports").onclick = openReports;
-    chip.querySelector("#ssOut").onclick = () => signOut(auth);
-  } else {
-    chip.innerHTML = `<button class="ss-btn" id="ssIn">Sign in</button>`;
-    chip.querySelector("#ssIn").onclick = () => openAuth();
+  const host = authSlot || chip;
+  if (host) {
+    if (_user) {
+      const isAdmin = ADMIN_EMAILS.includes((_user.email || "").toLowerCase());
+      host.innerHTML = `
+        <span class="ss-mini-email" title="${_user.email}">${_user.email}</span>
+        ${isAdmin ? `<a class="ss-mini pri" href="https://omarrao.github.io/secure-scope/admin.html">Admin</a>` : ""}
+        <button class="ss-mini" id="ssOut">Sign out</button>`;
+      host.querySelector("#ssOut").onclick = () => signOut(auth);
+    } else {
+      host.innerHTML = `<button class="ss-mini pri" id="ssIn">Sign in</button>`;
+      host.querySelector("#ssIn").onclick = () => openAuth();
+    }
   }
   // First-visit banner: only when signed out and not previously dismissed.
   if (banner) {
@@ -340,6 +353,8 @@ async function shareReport(rec, mode) {
 // Expose for pages that want to trigger the drawer / share directly.
 window.SS.openReports = openReports;
 window.SS.shareReport = shareReport;
+// Topbar "History": ensure signed in, then open the My Reports drawer.
+window.SS.openHistory = () => window.SS.requireSignIn().then(() => openReports());
 
 buildUI();
 renderChip();
