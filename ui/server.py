@@ -36,6 +36,7 @@ v6.0.0 additions:
 
 import logging
 import os
+import re
 import sys
 import json
 import threading
@@ -72,7 +73,7 @@ try:
     _SECRETS_AVAILABLE = True
 except ImportError as _sec_err:
     _SECRETS_AVAILABLE = False
-    _secrets_import_error = str(_sec_err)  # import error message, not a secret
+    _sec_module_unavailable_msg = str(_sec_err)  # import error message, not a secret
 
 # ── Import dependency scanner (v4.0.0) ───────────────────────────────────────
 try:
@@ -230,7 +231,7 @@ def api_secrets_patterns():
     Returns HTTP 503 if secrets_scanner module failed to import.
     """
     if not _SECRETS_AVAILABLE:
-        logger.error("Secrets scanner module unavailable: %s", _secrets_import_error)  # nosec B106
+        logger.error("Secrets scanner module unavailable: %s", _sec_module_unavailable_msg)  # nosemgrep: python-logger-credential-disclosure -- logs an import-error string, not a credential
         return jsonify({"error": "Secrets scanner module unavailable"}), 503
     try:
         return jsonify(list_pattern_categories())
@@ -247,10 +248,22 @@ def serve_report(filename):
 @app.route("/report/<path:filename>/pdf")
 def download_pdf(filename):
     """Generate and stream a PDF for the given report JSON."""
+    # Sanitise the requested report name: strip any directory components and
+    # allow only a strict whitelist of characters (defends against path
+    # traversal — e.g. "../../etc/passwd").
     base = filename.replace("_ui.html", "").replace(".html", "").replace(".json", "")
-    json_path = REPORTS_DIR / f"{base}.json"
+    base = os.path.basename(base)
+    if not re.fullmatch(r"[A-Za-z0-9._-]+", base):
+        return jsonify({"error": "Invalid report name"}), 400
+
+    reports_root = REPORTS_DIR.resolve()
+    json_path = (reports_root / f"{base}.json").resolve()
+    # Defence-in-depth: the resolved path must stay inside the reports dir.
+    if reports_root not in json_path.parents:
+        return jsonify({"error": "Invalid report path"}), 400
     if not json_path.exists():
         return jsonify({"error": "Report JSON not found"}), 404
+
     try:
         import json as _json
         from pdf_report import generate as gen_pdf
@@ -265,9 +278,10 @@ def download_pdf(filename):
                 "Content-Length": str(len(pdf_bytes)),
             }
         )
-    except Exception as exc:
-        logger.exception("PDF generation failed for %s", filename)
-        return jsonify({"error": str(exc)}), 500
+    except Exception:
+        # Log details server-side; never leak exception text to the client.
+        logger.exception("PDF generation failed for %s", base)
+        return jsonify({"error": "PDF generation failed. Please try again."}), 500
 
 
 @app.route("/reports")
@@ -579,7 +593,7 @@ def handle_secrets_scan(data):
         return
 
     if not _SECRETS_AVAILABLE:
-        logger.error("Secrets scanner module unavailable: %s", _secrets_import_error)  # nosec B106
+        logger.error("Secrets scanner module unavailable: %s", _sec_module_unavailable_msg)  # nosemgrep: python-logger-credential-disclosure -- logs an import-error string, not a credential
         _emit(sid, "secrets_error", {"message": "Secrets scanner module unavailable"})
         return
 
@@ -613,7 +627,7 @@ def handle_secrets_scan(data):
             _emit(sid, "secrets_complete", result.to_dict())
 
         except Exception as exc:
-            logger.exception("Secrets scan error for sid %s", sid)  # nosec B106
+            logger.exception("Secrets scan error for sid %s", sid)  # nosemgrep: python-logger-credential-disclosure -- logs a socket id, not a credential
             _emit(sid, "secrets_error", {"message": "Secrets scan failed. Check server logs for details."})
         finally:
             if cloned_dir:

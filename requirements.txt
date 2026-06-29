@@ -8,6 +8,7 @@ google-generativeai>=0.7.0
 groq>=0.9.0
 PyGithub>=2.3.0
 reportlab>=4.2.0
+defusedxml>=0.7.1 # secure XML parsing (XXE-safe) for Maven pom.xml dependency parsing
 docker>=7.0.0
 semgrep>=1.70.0
 pip-audit>=2.7.0
