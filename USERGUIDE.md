@@ -155,7 +155,7 @@ pip install pip-licenses            # Richer license compliance data
 | Package | Feature unlocked |
 |---------|-----------------|
 | `openai` | `--advisor-model gpt-4o` |
-| `google-generativeai` | `--advisor-model gemini-1.5-flash` |
+| `google-generativeai` | `--advisor-model gemini-2.0-flash` |
 | `groq` | `--advisor-model llama-3.1-70b-versatile` |
 | `yara-python` | YARA rule evaluation (degrades gracefully without it) |
 | `checkov` | Full IaC policy engine (50+ built-in patterns used as fallback) |
@@ -338,7 +338,7 @@ python main.py --repo https://github.com/owner/repo --advisor-model gpt-4o
 
 # Google Gemini (free tier available)
 $env:GEMINI_API_KEY = "AIza..."
-python main.py --repo https://github.com/owner/repo --advisor-model gemini-1.5-flash
+python main.py --repo https://github.com/owner/repo --advisor-model gemini-2.0-flash
 
 # Groq Llama (free tier, very fast)
 $env:GROQ_API_KEY = "gsk_..."
@@ -357,7 +357,7 @@ python main.py --repo https://github.com/owner/repo --no-advisor
 |----------|-------|-----------|---------|
 | Anthropic Claude | claude-sonnet-4-6 | No | `ANTHROPIC_API_KEY` |
 | OpenAI | gpt-4o | Limited | `OPENAI_API_KEY` |
-| Google Gemini | gemini-1.5-flash | Yes | `GEMINI_API_KEY` |
+| Google Gemini | gemini-2.0-flash | Yes | `GEMINI_API_KEY` |
 | Groq | llama-3.1-70b-versatile | Yes | `GROQ_API_KEY` |
 | Ollama (local) | llama3 (configurable) | Yes | None |
 | None | — | — | — |

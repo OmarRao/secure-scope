@@ -54,8 +54,10 @@ RUN pip install --no-cache-dir \
         jinja2 \
         playwright
 
-# Install Playwright browser binaries needed by gen_pdf_report.py
-# (Chromium only — minimises image size)
+# Install Playwright browser binaries used to render the PDF report.
+# Install into a shared, world-readable path (NOT /root/.cache) so the non-root
+# runtime user can read them. Chromium only — minimises image size.
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 RUN playwright install chromium && \
     playwright install-deps chromium
 
@@ -99,8 +101,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy the virtual environment from the builder stage
 COPY --from=builder /opt/venv /opt/venv
 
-# Copy Playwright browser binaries from builder
-COPY --from=builder /root/.cache/ms-playwright /root/.cache/ms-playwright
+# Copy Playwright browser binaries from builder into a shared, world-readable
+# location and point Playwright at it (used by the non-root runtime user).
+COPY --from=builder /ms-playwright /ms-playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN chmod -R a+rX /ms-playwright
 
 # Activate the virtual environment for all subsequent commands
 ENV PATH="/opt/venv/bin:$PATH"
@@ -119,16 +124,12 @@ WORKDIR /app
 # Ordered from least-to-most frequently changed to maximise layer cache hits.
 COPY yara_rules/          ./yara_rules/
 COPY ui/                  ./ui/
-COPY analyzer.py          .
-COPY advisor.py           .
-COPY github_agent.py      .
-COPY main.py              .
-COPY ransomware.py        .
-COPY report.py            .
-COPY sandbox.py           .
-COPY threat_intel.py      .
-COPY yara_scanner.py      .
 COPY requirements.txt     .
+# Copy every root-level Python module. Using a glob (rather than an explicit
+# per-file list) ensures new modules — pdf_report, secret/dependency/iac
+# scanners, gist_storage, autofix, etc. — are always included in the image.
+# .dockerignore already excludes dev-only generators and scan output.
+COPY *.py                 .
 
 # Create the reports directory that the server writes scan results to.
 # Owned by the non-root user so the server can write without sudo.

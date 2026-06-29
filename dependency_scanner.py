@@ -12,10 +12,9 @@ from typing import Callable, Optional
 import urllib.request
 import urllib.error
 
-try:
-    import defusedxml.ElementTree as ET
-except ImportError:
-    import xml.etree.ElementTree as ET  # fallback; XXE mitigated by not resolving entities
+# XXE-safe XML parsing. defusedxml is a hard dependency (see requirements.txt);
+# we never fall back to the stdlib parser, which is vulnerable to XML attacks.
+import defusedxml.ElementTree as ET
 
 
 # ── Data Models ────────────────────────────────────────────────────────────────
@@ -92,6 +91,8 @@ class DepScanResult:
 
     def to_dict(self) -> dict:
         return {
+            # Total CVE findings — the report template reads `deps.total_findings`
+            "total_findings": len(self.vulnerabilities),
             "total_packages": self.total_packages,
             "vulnerable_packages": self.vulnerable_packages,
             "critical_count": self.critical_count,

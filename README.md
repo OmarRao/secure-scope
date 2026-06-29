@@ -46,9 +46,27 @@
 
 ## Landing Page
 
-Click **Analyze Repository** to open the scan wizard. The landing page lists all capabilities and recent scans, and supports both dark and light themes via the toggle in the top-right corner.
+Click **Analyze Repository** to open the full 3-step scan wizard. The landing page also surfaces three **Targeted Scanners** at the top — single-click entry points for the most common checks — followed by the full capability grid, and supports both dark and light themes via the toggle in the top-right corner.
 
 ![SecureScope Landing Page](docs/screenshots/01_hero.png)
+
+### Targeted Scanners
+
+A three-column row above the capabilities grid lets you launch a focused scan without stepping through the full wizard. Each card opens a streamlined modal — styled identically to the Analyze Repository wizard — that takes a GitHub URL and branch, then runs the scan.
+
+| Scanner | What it checks |
+|---------|----------------|
+| **Secret Detection** | Hardcoded API keys, tokens, passwords and high-entropy strings, including the full commit history |
+| **Dependency Vulnerability Scanner** | Every dependency audited against OSV.dev across Python, npm, Go, Rust, Ruby, Java and PHP for known CVEs |
+| **IaC Misconfiguration Scanner** | Cloud misconfigurations in Terraform, CloudFormation, Kubernetes and Docker manifests |
+
+Each focused scanner opens the same streamlined modal — a GitHub URL and branch, then **Run Scan**:
+
+![Targeted Scanner Modal](docs/screenshots/12_scanner_modal.png)
+
+While any scan runs, the landing-page sections collapse into a single full-page progress stage. On completion the browser **redirects automatically to the interactive dashboard** — no extra click required.
+
+![Full-Page Scan Stage](docs/screenshots/13_scan_stage.png)
 
 ---
 
@@ -70,7 +88,7 @@ Choose which LLM to use for fix generation. All major providers are supported wi
 |----------|-------|-------|
 | Anthropic Claude | claude-sonnet-4-5 | Best quality |
 | OpenAI GPT-4o | gpt-4o | Fast and capable |
-| Google Gemini | gemini-1.5-flash | Free tier |
+| Google Gemini | gemini-2.0-flash | Free tier |
 | Groq Llama 3.1 | llama-3.1-70b-versatile | Ultra fast |
 | Ollama (local) | llama3 | No API key required |
 | None | N/A | Skip advisor |
@@ -543,7 +561,7 @@ Every scan automatically appends a record to `{out-dir}/trend.jsonl`. The HTML r
 |----------|-------|-----------|-----------------|
 | Anthropic Claude | claude-sonnet-4-5 | No | `ANTHROPIC_API_KEY` |
 | OpenAI | gpt-4o | Limited | `OPENAI_API_KEY` |
-| Google Gemini | gemini-1.5-flash | Yes | `GEMINI_API_KEY` |
+| Google Gemini | gemini-2.0-flash | Yes | `GEMINI_API_KEY` |
 | Groq | llama-3.1-70b-versatile | Yes | `GROQ_API_KEY` |
 | Ollama (local) | llama3 | Yes (local) | None required |
 | None | N/A | N/A | N/A |
