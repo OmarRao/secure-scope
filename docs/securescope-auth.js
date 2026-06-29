@@ -168,12 +168,12 @@ function closeAuth() { overlay.classList.remove("open"); }
 
 async function doGoogle() {
   setErr("");
+  // Basic profile/email only — no sensitive scopes, so Google shows no
+  // "unverified app" warning and the app can be published without review.
+  // Email sharing sends from the user's own address via their mail client.
   const provider = new GoogleAuthProvider();
-  provider.addScope(GMAIL_SCOPE);
   try {
-    const res = await signInWithPopup(auth, provider);
-    const cred = GoogleAuthProvider.credentialFromResult(res);
-    _gmailToken = cred?.accessToken || null;
+    await signInWithPopup(auth, provider);
   } catch (e) {
     setErr(e.code === "auth/popup-closed-by-user" ? "Sign-in cancelled." : (e.message || "Google sign-in failed."));
   }
