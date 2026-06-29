@@ -34,7 +34,7 @@ service cloud.firestore {
     function isSignedIn() { return request.auth != null; }
     function isAdmin() {
       return isSignedIn() && request.auth.token.email in [
-        'omarsrao@gmail.com', 'omar.rao@veeam.com'
+        'omarsrao@gmail.com'
       ];
     }
     function isOwner(uid) { return isSignedIn() && request.auth.uid == uid; }

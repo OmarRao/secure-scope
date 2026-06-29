@@ -71,9 +71,9 @@ LABEL org.opencontainers.image.title="SecureScope"
 LABEL org.opencontainers.image.description="AI-powered security analysis for any GitHub repository. MITRE ATT&CK mapping, ransomware detection, YARA scanning, and multi-LLM fix advisor."
 LABEL org.opencontainers.image.url="https://github.com/OmarRao/secure-scope"
 LABEL org.opencontainers.image.source="https://github.com/OmarRao/secure-scope"
-LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.licenses="LicenseRef-Proprietary-AllRightsReserved"
 LABEL org.opencontainers.image.vendor="Omar Rao"
-LABEL org.opencontainers.image.authors="Omar Rao — Engineer, Data Resilience, Cybersecurity and Privacy <https://www.linkedin.com/in/omarrao/>"
+LABEL org.opencontainers.image.authors="Omar Rao — Cybersecurity, Privacy and Resilience Expert <https://www.linkedin.com/in/omarrao/>"
 
 # Install only the OS runtime libraries needed (no build tools)
 RUN apt-get update && apt-get install -y --no-install-recommends \

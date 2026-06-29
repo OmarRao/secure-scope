@@ -11,7 +11,7 @@ export const firebaseConfig = {
 };
 
 // Accounts that may open the admin dashboard (enforced again by Firestore rules).
-export const ADMIN_EMAILS = ["omarsrao@gmail.com", "omar.rao@veeam.com"];
+export const ADMIN_EMAILS = ["omarsrao@gmail.com"];
 
 // Where shared report links resolve (stable GitHub Pages origin).
 export const VIEW_BASE = "https://omarrao.github.io/secure-scope/view.html";

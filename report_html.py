@@ -360,7 +360,7 @@ def build_html(data: dict) -> tuple:
 
   <div class="cover-footer-strip">
     <div><strong>SecureScope</strong> · Open Source Security Analysis Platform<br>Findings mapped to MITRE ATT&amp;CK v14 · CWE Top 25 · OWASP Top 10</div>
-    <div class="founder-line"><strong>Omar Rao</strong><br>Engineer — Data Resilience, Cybersecurity and Privacy<br>Founder, SecureScope</div>
+    <div class="founder-line"><strong>Omar Rao</strong><br>Cybersecurity, Privacy and Resilience Expert<br>&copy; 2026 Omar Rao. All rights reserved.</div>
   </div>
 </div>
 

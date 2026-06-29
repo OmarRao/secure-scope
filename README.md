@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-v10.0.0-blue)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-v14-red)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Firebase](https://img.shields.io/badge/telemetry-Firebase-orange)
 ![Platforms](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
@@ -148,7 +148,7 @@ The 3-2-1-1-0 backup rule visualised with an interactive DR testing checklist (s
 | `blackcat_alphv.yar` | BlackCat/ALPHV: Rust binary markers, config JSON, ESXi targeting |
 | `apt_lateral_movement.yar` | Mimikatz, LSASS dump, WMI lateral movement, AD recon, scheduled task persistence |
 | `data_exfiltration.yar` | Rclone cloud exfil, cURL upload, FTP staging, 7-Zip data archiving |
-| `backup_tampering.yar` | Veeam service stop, Windows Backup deletion, agent process kill, NAS share deletion |
+| `backup_tampering.yar` | Backup service stop, Windows Backup deletion, agent process kill, NAS share deletion |
 | `clop.yar` | Cl0p ransomware: ransom notes, MOVEit/GoAnywhere exploitation (CVE-2023-34362, CVE-2023-0669), defence evasion |
 | `emerging_ransomware.yar` | Play, Akira, RansomHub, Black Basta, Hunters International: latest 2024–2025 ransomware families |
 | `lotl_techniques.yar` | Living-off-the-Land: certutil, mshta, regsvr32 Squiblydoo, wscript/cscript, bitsadmin, PowerShell download cradles, rundll32 |
@@ -835,5 +835,7 @@ Each triggered scan produces JSON, HTML, SARIF, SBOM, and compliance reports aut
 ---
 
 **Built by [Omar Rao](https://github.com/OmarRao)**  
-Engineer — Data Resilience, Cybersecurity and Privacy  
+Cybersecurity, Privacy and Resilience Expert  
 [LinkedIn](https://www.linkedin.com/in/omarrao/) &nbsp;·&nbsp; [Substack](https://omarrao.substack.com/)
+
+> SecureScope is a **private application built and owned solely by Omar Rao**. It is not an official product of, affiliated with, or endorsed by any employer or organization. **© 2026 Omar Rao. All rights reserved.**

@@ -1402,7 +1402,7 @@ def get_resilience_recommendations() -> list[dict]:
             "priority": "Critical",
             "details": {
                 "cloud": "Enable S3 Object Lock in Compliance mode with 30-day minimum retention",
-                "on_prem": "Use Veeam Hardened Repository (Linux XFS) or NetApp SnapLock",
+                "on_prem": "Use an immutable hardened backup repository (Linux XFS with immutability) or WORM/SnapLock storage",
                 "tape": "Physical offline tapes cannot be reached by ransomware — maintain monthly tape rotation",
                 "verification": "Test immutability by attempting to delete a backup file — confirm it is rejected",
             },
@@ -1419,7 +1419,7 @@ def get_resilience_recommendations() -> list[dict]:
             "priority": "High",
             "details": {
                 "tape_rotation": "Daily LTO tape backups taken offsite by courier — industry standard for air-gap",
-                "offline_repo": "Veeam rotated media or disconnected disk repository powered off when not backing up",
+                "offline_repo": "Rotated removable media or a disconnected disk repository, powered off when not backing up",
                 "cloud_vault": "AWS S3 Glacier Vault Lock or Azure immutable blob storage with no delete permissions",
                 "schedule": "Air-gapped copy should be no more than 24 hours old for critical systems",
             },
