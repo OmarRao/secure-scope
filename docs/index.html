@@ -1022,7 +1022,8 @@
       document.getElementById('stageFill').style.width = '100%';
       document.getElementById('stageMsg').textContent = 'Your detailed dashboard & report are ready.';
       const summary = data.summary || {};
-      const slug = opts.repoUrl.split('/').pop();
+      const escHtml = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+      const slug = escHtml(opts.repoUrl.split('/').pop());
       const sev = summary.by_severity || {};
       const crit = (summary.critical != null) ? summary.critical : (sev.ERROR || 0);
       const warn = (summary.warnings != null) ? summary.warnings : (sev.WARNING || 0);

@@ -25,6 +25,10 @@ const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.send";
 // ── Styles (reuse the page's theme variables; fall back for view/admin pages) ──
 const css = `
 .ss-chip{position:fixed;top:10px;right:14px;z-index:10000;display:flex;align-items:center;gap:8px;font-family:'Geist',sans-serif}
+.ss-banner{position:fixed;top:0;left:0;right:0;z-index:9999;display:none;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:10px 16px;background:linear-gradient(90deg,rgba(79,142,247,.16),rgba(167,139,250,.16));border-bottom:1px solid var(--rule2,#2e3540);font-family:'Geist',sans-serif;font-size:13px;color:var(--body,#e2e8f0)}
+.ss-banner.show{display:flex}
+.ss-banner b{color:var(--head,#fff)}
+.ss-banner .ss-bx{background:none;border:none;color:var(--muted,#6b7785);cursor:pointer;font-size:16px;line-height:1;position:absolute;right:12px}
 .ss-btn{background:var(--accent,#4f8ef7);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
 .ss-btn.ghost{background:transparent;border:1px solid var(--rule2,#2e3540);color:var(--sub,#a0aec0)}
 .ss-btn.ghost:hover{color:var(--head,#fff)}
@@ -67,13 +71,23 @@ function el(html) {
   return t.content.firstChild;
 }
 
-let chip, overlay, drawer;
+let chip, overlay, drawer, banner;
 
 function buildUI() {
   injectStyles();
 
   chip = el(`<div class="ss-chip"></div>`);
   document.body.appendChild(chip);
+
+  banner = el(`
+    <div class="ss-banner" id="ssBanner">
+      <span>🔐 <b>Create a free SecureScope account</b> to run scans and keep your full report history.</span>
+      <button class="ss-btn" id="ssBannerIn">Sign up / Sign in</button>
+      <button class="ss-bx" id="ssBannerX" title="Dismiss">&times;</button>
+    </div>`);
+  document.body.appendChild(banner);
+  banner.querySelector("#ssBannerIn").onclick = () => openAuth();
+  banner.querySelector("#ssBannerX").onclick = () => { banner.classList.remove("show"); try { localStorage.setItem("ss-banner-dismissed", "1"); } catch (e) {} };
 
   overlay = el(`
     <div class="ss-overlay" id="ssOverlay">
@@ -126,6 +140,12 @@ function renderChip() {
   } else {
     chip.innerHTML = `<button class="ss-btn" id="ssIn">Sign in</button>`;
     chip.querySelector("#ssIn").onclick = () => openAuth();
+  }
+  // First-visit banner: only when signed out and not previously dismissed.
+  if (banner) {
+    let dismissed = false;
+    try { dismissed = localStorage.getItem("ss-banner-dismissed") === "1"; } catch (e) {}
+    banner.classList.toggle("show", !_user && !dismissed);
   }
 }
 
@@ -246,7 +266,7 @@ window.SS = {
 
   // Send an email FROM the signed-in user's Gmail (if gmail.send was granted),
   // otherwise fall back to opening their local mail client.
-  async sendEmail(to, subject, htmlBody) {
+  async sendEmail(to, subject, htmlBody, textBody) {
     if (_gmailToken) {
       const mime =
         `To: ${to}\r\nSubject: ${subject}\r\n` +
@@ -260,8 +280,8 @@ window.SS = {
       });
       if (r.ok) return "sent";
     }
-    // Fallback: open the user's own mail client with a plain-text body.
-    const text = htmlBody.replace(/<[^>]+>/g, "");
+    // Fallback: open the user's own mail client with a caller-supplied plain-text body.
+    const text = textBody || subject;
     window.open(`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(text)}`);
     return "mailto";
   },
@@ -311,7 +331,8 @@ async function shareReport(rec, mode) {
     const body = `<p>${_user.email} shared a SecureScope security report with you.</p>
       <p><strong>Repository:</strong> ${repo}</p>
       <p><a href="${url}">Open the view-only report dashboard →</a></p>`;
-    const res = await window.SS.sendEmail(to, `SecureScope report — ${repo}`, body);
+    const text = `${_user.email} shared a SecureScope security report with you.\n\nRepository: ${repo}\n\nOpen the view-only report dashboard:\n${url}`;
+    const res = await window.SS.sendEmail(to, `SecureScope report — ${repo}`, body, text);
     alert(res === "sent" ? "Email sent from your Gmail." : "Opened your mail app to send the report.");
   }
 }

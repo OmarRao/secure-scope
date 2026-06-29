@@ -39,7 +39,9 @@
     const id = new URLSearchParams(location.search).get("id");
     const wrap = document.getElementById("wrap");
 
-    function esc(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+    function esc(s){return (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");}
+    // Only allow http(s) links; block javascript:/data: and neutralise quotes for attribute use.
+    function safeUrl(u){u=(u==null?"":String(u));return /^https?:\/\//i.test(u)?u.replace(/"/g,"%22").replace(/'/g,"%27"):"#";}
 
     (async () => {
       if (!id) { wrap.innerHTML = '<div class="msg">No report id in this link.</div>'; return; }
@@ -64,7 +66,7 @@
           <div class="card"><div class="num" style="color:var(--accent)">${cve}</div><div class="lbl">Dep. CVEs</div></div>
           <div class="card"><div class="num" style="color:var(--head)">${total}</div><div class="lbl">Total Findings</div></div>
         </div>
-        ${link?`<a class="cta" href="${esc(link)}" target="_blank" rel="noopener">Open full report →</a>`:'<div class="msg">The full report link is unavailable.</div>'}
+        ${link?`<a class="cta" href="${safeUrl(link)}" target="_blank" rel="noopener">Open full report →</a>`:'<div class="msg">The full report link is unavailable.</div>'}
       `;
     })();
   </script>
