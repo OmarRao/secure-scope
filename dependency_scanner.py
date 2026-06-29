@@ -12,10 +12,9 @@ from typing import Callable, Optional
 import urllib.request
 import urllib.error
 
-try:
-    import defusedxml.ElementTree as ET
-except ImportError:
-    import xml.etree.ElementTree as ET  # fallback; XXE mitigated by not resolving entities
+# XXE-safe XML parsing. defusedxml is a hard dependency (see requirements.txt);
+# we never fall back to the stdlib parser, which is vulnerable to XML attacks.
+import defusedxml.ElementTree as ET
 
 
 # ── Data Models ────────────────────────────────────────────────────────────────

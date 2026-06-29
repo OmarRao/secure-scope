@@ -248,18 +248,19 @@ def serve_report(filename):
 @app.route("/report/<path:filename>/pdf")
 def download_pdf(filename):
     """Generate and stream a PDF for the given report JSON."""
-    # Sanitise the requested report name: strip any directory components and
-    # allow only a strict whitelist of characters (defends against path
-    # traversal — e.g. "../../etc/passwd").
-    base = filename.replace("_ui.html", "").replace(".html", "").replace(".json", "")
-    base = os.path.basename(base)
-    if not re.fullmatch(r"[A-Za-z0-9._-]+", base):
+    # Sanitise the requested report name. secure_filename() strips every path
+    # separator and traversal sequence, leaving a safe basename — this is the
+    # primary defence against path injection (e.g. "../../etc/passwd").
+    from werkzeug.utils import secure_filename
+    stripped = filename.replace("_ui.html", "").replace(".html", "").replace(".json", "")
+    base = secure_filename(stripped)
+    if not base or not re.fullmatch(r"[A-Za-z0-9._-]+", base):
         return jsonify({"error": "Invalid report name"}), 400
 
     reports_root = REPORTS_DIR.resolve()
     json_path = (reports_root / f"{base}.json").resolve()
     # Defence-in-depth: the resolved path must stay inside the reports dir.
-    if reports_root not in json_path.parents:
+    if reports_root != json_path.parent:
         return jsonify({"error": "Invalid report path"}), 400
     if not json_path.exists():
         return jsonify({"error": "Report JSON not found"}), 404
