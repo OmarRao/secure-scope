@@ -96,17 +96,21 @@ def run_semgrep(repo_path: str, fast: bool = True) -> list[Finding]:
     excludes; fast=False (Deep scan) also adds the heavier supply-chain pack.
     """
     print("[*] Running Semgrep security scan...")
-    # Core packs cover OWASP/CWE/secrets. supply-chain overlaps the OSV
-    # dependency scanner and is the slowest pack, so it's Deep-scan only.
-    rulesets = ["p/owasp-top-ten", "p/cwe-top-25", "p/secrets"]
-    if not fast:
-        rulesets.append("p/supply-chain")
+    # Fast mode: two focused, high-signal packs (CWE Top 25 + secrets) — far
+    # fewer rules to download/compile/run, which is the dominant cost on small
+    # CPUs. Deep mode adds the broader OWASP and supply-chain packs.
+    # (owasp-top-ten overlaps cwe-top-25 heavily, so it's Deep-only.)
+    if fast:
+        rulesets = ["p/cwe-top-25", "p/secrets"]
+    else:
+        rulesets = ["p/owasp-top-ten", "p/cwe-top-25", "p/secrets", "p/supply-chain"]
 
-    # Performance flags: parallel jobs, no telemetry round-trip, per-rule
+    # Performance flags: parallel jobs, no telemetry/version round-trips, per-rule
     # timeout, skip huge files, and exclude vendored/build directories.
     cmd = [
         "semgrep", "scan", "--json", "--quiet",
         "--metrics=off",
+        "--disable-version-check",
         "--jobs", str(os.cpu_count() or 2),
         "--timeout", "30",
         "--timeout-threshold", "3",

@@ -138,6 +138,17 @@ RUN mkdir -p /app/reports && chown -R securescope:securescope /app
 # Switch to the non-root user for all runtime commands
 USER securescope
 
+# Pre-warm the Semgrep rule-pack cache into the image (as the runtime user) so
+# scans don't download/compile rule packs on every run — the biggest scan cost
+# on small CPUs. Covers both Fast (cwe-top-25, secrets) and Deep (owasp,
+# supply-chain) rule sets. Best-effort: never fail the build on a registry hiccup.
+ENV SEMGREP_ENABLE_VERSION_CHECK=0
+RUN mkdir -p /tmp/warm && \
+    semgrep scan --quiet --metrics=off --disable-version-check \
+      --config p/cwe-top-25 --config p/secrets \
+      --config p/owasp-top-ten --config p/supply-chain \
+      /tmp/warm >/dev/null 2>&1 || true
+
 # ── Runtime configuration ─────────────────────────────────────────────────────
 
 # Port the Flask + Socket.IO server listens on
