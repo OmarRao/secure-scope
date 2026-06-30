@@ -1727,6 +1727,13 @@ new Chart(document.getElementById('cTactic'),{
   const regions = {{ (ransomware.primary_family.family.impact_regions if ransomware and ransomware.primary_family else []) | tojson }};
   if (!regions.length) return;
 
+  // Convert a #rrggbb hex colour to an rgba() string (the old code did a broken
+  // string replace that produced an invalid colour and aborted all drawing).
+  function hexToRgba(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+  }
+
   // Approximate Mercator projection for A4-ish viewport
   function project(lat, lon, W, H) {
     const x = (lon + 180) / 360 * W;
@@ -1778,7 +1785,7 @@ new Chart(document.getElementById('cTactic'),{
 
     // Outer glow
     const grad = ctx.createRadialGradient(x, y, 0, x, y, radius * 1.8);
-    grad.addColorStop(0, color.replace('#', 'rgba(') + ',0.3)');
+    grad.addColorStop(0, hexToRgba(color, 0.3));
     grad.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.beginPath(); ctx.arc(x, y, radius * 1.8, 0, Math.PI * 2);
     ctx.fillStyle = grad; ctx.fill();

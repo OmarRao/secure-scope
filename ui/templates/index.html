@@ -1825,6 +1825,7 @@ async function launchScan(payload) {
   document.getElementById('progStageTitle').textContent = 'Initializing';
   document.getElementById('progStageDesc').textContent = 'Connecting to the scan pipeline…';
   _lastStep = null;
+  progStopTimer(); _curLine = null;   // reset per-step timers for a fresh scan
   const res = document.getElementById('progResult');
   res.style.display = 'none';
   document.getElementById('progOpen').style.display = 'none';
@@ -1877,24 +1878,40 @@ function progSetStage(step) {
   document.getElementById('progStageTitle').textContent = s.title;
   document.getElementById('progStageDesc').textContent = s.desc;
 }
-function progAddLog(text) {
+// ── Per-step live timers ──────────────────────────────────────────
+// The in-progress step shows a ticking timer (↻). When the next step starts
+// (or the scan completes) that line freezes with a ✓ and its final duration,
+// and a fresh timer begins for the next step.
+let _curLine = null, _curStart = 0, _timerIv = null;
+function fmtDur(ms) {
+  const s = ms / 1000;
+  return s >= 60 ? `${Math.floor(s / 60)}m ${Math.round(s % 60)}s` : `${s.toFixed(1)}s`;
+}
+function progStopTimer() { if (_timerIv) { clearInterval(_timerIv); _timerIv = null; } }
+function progFinalizeLine() {
+  if (!_curLine) return;
+  const t = _curLine.querySelector('.ss-t'); if (t) t.textContent = fmtDur(Date.now() - _curStart);
+  const ic = _curLine.querySelector('.ss-ic'); if (ic) { ic.textContent = '✓'; ic.style.color = 'var(--ok)'; }
+  _curLine = null;
+}
+function progStartLine(text) {
+  progFinalizeLine();
   const log = document.getElementById('progLog');
   const line = document.createElement('div');
-  line.style.display = 'flex';
-  line.style.alignItems = 'center';
-  line.style.gap = '7px';
-  const tick = document.createElement('span');
-  tick.textContent = '✓';
-  tick.style.color = 'var(--ok)';
-  tick.style.fontWeight = '700';
-  const label = document.createElement('span');
-  label.textContent = text;
-  line.appendChild(tick);
-  line.appendChild(label);
-  log.appendChild(line);
-  log.scrollTop = log.scrollHeight;
+  line.style.cssText = 'display:flex;align-items:center;gap:8px';
+  line.innerHTML =
+    '<span class="ss-ic" style="color:var(--accent);font-weight:700;width:12px">↻</span>' +
+    '<span class="ss-l" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>' +
+    '<span class="ss-t" style="color:var(--dim);font-family:\'Geist Mono\',monospace;font-size:10px">0.0s</span>';
+  line.querySelector('.ss-l').textContent = text;
+  log.appendChild(line); log.scrollTop = log.scrollHeight;
+  _curLine = line; _curStart = Date.now();
+  if (!_timerIv) _timerIv = setInterval(() => {
+    if (_curLine) { const t = _curLine.querySelector('.ss-t'); if (t) t.textContent = fmtDur(Date.now() - _curStart); }
+  }, 200);
 }
 function cancelProgress() {
+  progStopTimer();
   document.getElementById('progressOverlay').classList.remove('open');
 }
 
@@ -1906,11 +1923,11 @@ socket.on('progress', d => {
   // Live detail line (the server message tells exactly what is being scanned)
   const detail = (d.message || '').replace(/[\u{1F000}-\u{1FFFF}]/gu, '').trim();
   document.getElementById('progMsg').textContent = detail;
-  // Update the stage card + log one line per stage transition
+  // Update the stage card + start a fresh timed log line per stage transition
   if (d.step && d.step !== _lastStep) {
     progSetStage(d.step);
     const s = STAGE_INFO[d.step];
-    progAddLog((s ? s.title : detail));
+    progStartLine((s ? s.title : detail));
     _lastStep = d.step;
   }
 });
@@ -1924,6 +1941,11 @@ socket.on('github_info', info => {
 
 socket.on('scan_complete', d => {
   progSetStage('done');
+  // Freeze the final step's timer and capture total elapsed time.
+  progFinalizeLine();
+  progStopTimer();
+  const totalMs = scanStartTime ? (Date.now() - scanStartTime) : 0;
+  const totalStr = fmtDur(totalMs);
   // Persist to the signed-in user's report history (Firestore).
   if (window.SS && window.SS.user) {
     window.SS.saveReport({
@@ -1951,8 +1973,8 @@ socket.on('scan_complete', d => {
     <div style="display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--rule);background:rgba(62,207,121,.08)">
       <span style="font-size:20px">✅</span>
       <div>
-        <div style="font-size:14px;font-weight:700;color:var(--head)">Scan complete — <span style="font-family:'Geist Mono',monospace">${slug}</span></div>
-        <div style="font-size:12px;color:var(--sub)">${total} findings analysed &amp; mapped to MITRE ATT&amp;CK · CWE</div>
+        <div style="font-size:14px;font-weight:700;color:var(--head)">Scan complete — <span style="font-family:'Geist Mono',monospace">${slug}</span> <span style="color:var(--ok);font-weight:600">· ${totalStr}</span></div>
+        <div style="font-size:12px;color:var(--sub)">${total} findings analysed &amp; mapped to MITRE ATT&amp;CK · CWE &nbsp;·&nbsp; total scan time ${totalStr}</div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule)">
@@ -1978,6 +2000,8 @@ socket.on('scan_complete', d => {
 });
 
 socket.on('error', d => {
+  progStopTimer();
+  if (_curLine) { const ic = _curLine.querySelector('.ss-ic'); if (ic) { ic.textContent = '✗'; ic.style.color = 'var(--danger)'; } _curLine = null; }
   document.getElementById('progMsg').textContent = '';
   const res = document.getElementById('progResult');
   res.style.display = 'block';
