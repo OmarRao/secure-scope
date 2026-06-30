@@ -97,9 +97,25 @@ Choose which LLM to use for fix generation. All major providers are supported wi
 
 ### Step 3 — Scan Options
 
-Configure Docker sandbox execution and optional auto-commit of AI-generated fixes to GitHub.
+Configure the **Deep scan** toggle, Docker sandbox execution, and optional auto-commit of AI-generated fixes to GitHub.
+
+- **Fast scan (default)** — core Semgrep packs (OWASP / CWE Top 25 / secrets), working-tree secret scan, and all scanners run **in parallel**. Much quicker; ideal for the common case.
+- **Deep scan** — additionally runs the heavier Semgrep `supply-chain` pack and the **full git-history** secret scan.
 
 ![Wizard Step 3 - Options](docs/screenshots/04_wizard_step3.png)
+
+---
+
+## Scan Performance
+
+The scan pipeline runs the independent scanners — Semgrep, dependency CVEs, secret
+detection, OSV dependency vulnerabilities and IaC — **concurrently**, so total scan
+time is roughly the *slowest* scanner rather than the sum of all of them. Semgrep
+runs with parallel jobs (`--jobs`), telemetry disabled, per-rule timeouts, large-file
+skips and vendored-directory excludes. **Fast scan** (the default) keeps the core rule
+packs and a working-tree secret scan; **Deep scan** adds the supply-chain pack and a
+full git-history secret sweep. The first scan after the service has been idle also
+pays a one-time cold-start while the host wakes.
 
 ---
 

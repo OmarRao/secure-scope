@@ -333,8 +333,13 @@ def handle_scan(data):
     auto_fix = data.get("auto_fix", False)
     gh_token = data.get("gh_token", "") or os.environ.get("GITHUB_TOKEN", "")
     # Secret-scanner options (from the Secret Detection modal); default on.
-    secret_include_history = data.get("secret_include_history", True)
+    secret_include_history = data.get("secret_include_history", False)
     secret_entropy_check = data.get("secret_entropy_check", True)
+    # Deep scan adds the heavier Semgrep supply-chain pack + full git-history
+    # secret scan. Fast (default) keeps the core packs and working-tree secrets.
+    deep_scan = data.get("deep_scan", False)
+    if deep_scan:
+        secret_include_history = True
     sid = request.sid
 
     if not repo_url or not parse_repo_url(repo_url):
@@ -356,61 +361,76 @@ def handle_scan(data):
                 workdir = tempfile.mkdtemp(prefix="secreview_")
                 try:
                     clone_repo(repo_url, workdir)
-                    _emit(sid, "progress", {"step": "semgrep", "message": "🔍 Running Semgrep security scan...", "pct": 35})
-
                     result = AnalysisResult(repo_url=repo_url, repo_path=workdir)
-                    result.findings = run_semgrep(workdir)
-                    _emit(sid, "progress", {"step": "deps", "message": "📦 Checking dependency CVEs...", "pct": 50})
-                    result.dependency_vulns = check_dependency_vulns(workdir)
 
+                    # ── Run the independent scanners CONCURRENTLY ─────────────────
+                    # Semgrep, dependency CVEs, secrets, OSV deps and IaC don't
+                    # depend on each other, so total time ≈ the slowest one instead
+                    # of the sum. Each is a subprocess/network call (releases the
+                    # GIL), so threads parallelise effectively. Progress is emitted
+                    # only from this thread as futures complete (single emitter).
+                    import concurrent.futures
+                    fast_mode = not deep_scan
+                    _emit(sid, "progress", {"step": "semgrep",
+                        "message": "🔍 Running scanners in parallel (Semgrep · secrets · dependencies · IaC)...",
+                        "pct": 30})
+
+                    tasks = {}
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as _ex:
+                        tasks["semgrep"] = _ex.submit(run_semgrep, workdir, fast_mode)
+                        tasks["depcve"]  = _ex.submit(check_dependency_vulns, workdir)
+                        if _SECRETS_AVAILABLE:
+                            tasks["secrets"] = _ex.submit(
+                                secrets_scan_repo, repo_path=workdir,
+                                include_history=secret_include_history,
+                                entropy_check=secret_entropy_check, progress_cb=None)
+                        if _DEPS_AVAILABLE:
+                            tasks["deps"] = _ex.submit(deps_scan_repo, repo_path=workdir, progress_cb=None)
+                        if _IAC_AVAILABLE:
+                            tasks["iac"] = _ex.submit(iac_scan_repo, repo_path=workdir, progress_cb=None)
+
+                        _labels = {"semgrep": "Semgrep static analysis", "depcve": "dependency CVEs",
+                                   "secrets": "secret detection", "deps": "dependency vulnerabilities (OSV)",
+                                   "iac": "IaC misconfigurations"}
+                        _step_for = {"semgrep": "semgrep", "depcve": "deps", "secrets": "secrets",
+                                     "deps": "deps", "iac": "iac"}
+                        _fut_name = {fut: nm for nm, fut in tasks.items()}
+                        _res = {}
+                        _done, _total = 0, len(tasks)
+                        for fut in concurrent.futures.as_completed(list(tasks.values())):
+                            nm = _fut_name[fut]
+                            try:
+                                _res[nm] = fut.result()
+                            except Exception:
+                                logger.exception("Scanner '%s' failed", nm)
+                                _res[nm] = None
+                            _done += 1
+                            _emit(sid, "progress", {
+                                "step": _step_for.get(nm, "report"),
+                                "message": f"✓ {_labels.get(nm, nm)} complete  ({_done}/{_total})",
+                                "pct": 30 + int(50 * _done / _total)})
+
+                    result.findings = _res.get("semgrep") or []
+                    result.dependency_vulns = _res.get("depcve") or []
+                    secrets_result = _res.get("secrets")
+                    deps_result = _res.get("deps")
+                    iac_result = _res.get("iac")
+
+                    # ── Optional Docker sandbox (heavy; off by default) ──────────
                     obs = None
                     if run_sandbox:
-                        _emit(sid, "progress", {"step": "sandbox", "message": "🐳 Running Docker sandbox...", "pct": 60})
+                        _emit(sid, "progress", {"step": "sandbox", "message": "🐳 Running Docker sandbox...", "pct": 82})
                         from sandbox import run_in_sandbox
                         obs = run_in_sandbox(workdir)
 
+                    # ── AI fix advisor (needs Semgrep findings) ──────────────────
                     enriched = None
                     if run_advisor and (llm_api_key or os.environ.get("ANTHROPIC_API_KEY") or llm_provider == "ollama" or llm_provider == "none"):
-                        _emit(sid, "progress", {"step": "advisor", "message": f"🤖 Generating AI fix advisories for {min(len(result.findings),20)} findings...", "pct": 75})
+                        _emit(sid, "progress", {"step": "advisor", "message": f"🤖 Generating AI fix advisories for {min(len(result.findings),20)} findings...", "pct": 85})
                         from advisor import enrich_findings
                         enriched = enrich_findings(result, obs, provider=llm_provider, api_key=llm_api_key, max_findings=20)
 
-                    # ── Secrets Detection (v3.0.0) ────────────────────────────────
-                    _emit(sid, "progress", {"step": "secrets", "message": "🔑 Scanning for hardcoded secrets and credentials...", "pct": 78})
-                    secrets_result = None
-                    if _SECRETS_AVAILABLE:
-                        try:
-                            secrets_result = secrets_scan_repo(
-                                repo_path=workdir,
-                                include_history=secret_include_history,
-                                entropy_check=secret_entropy_check,
-                                progress_cb=None,
-                            )
-                        except Exception as _sec_exc:
-                            pass
-
-                    # ── Dependency Vulnerability Scan (v4.0.0) ───────────────────
-                    _emit(sid, "progress", {"step": "deps", "message": "📦 Scanning dependencies for CVEs via OSV.dev...", "pct": 80})
-                    deps_result = None
-                    if _DEPS_AVAILABLE:
-                        try:
-                            deps_result = deps_scan_repo(
-                                repo_path=workdir,
-                                progress_cb=None,
-                            )
-                        except Exception as _dep_exc:
-                            pass  # non-fatal
-
-                    # ── IaC Misconfiguration Scan (v6.0.0) ───────────────────────
-                    _emit(sid, "progress", {"step": "iac", "message": "🏗️ Scanning IaC for cloud misconfigurations...", "pct": 83})
-                    iac_result = None
-                    if _IAC_AVAILABLE:
-                        try:
-                            iac_result = iac_scan_repo(repo_path=workdir, progress_cb=None)
-                        except Exception as _iac_exc:
-                            pass  # non-fatal
-
-                    _emit(sid, "progress", {"step": "report", "message": "Analysing ransomware indicators...", "pct": 87})
+                    _emit(sid, "progress", {"step": "report", "message": "Analysing ransomware indicators...", "pct": 88})
 
                     from ransomware import detect as ransomware_detect
                     findings_dicts = enriched or [f.to_dict() for f in result.findings]

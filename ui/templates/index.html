@@ -1429,6 +1429,16 @@
       <div class="modal-sub">Configure additional scan behaviors.</div>
       <div class="toggle-row">
         <div class="toggle-info">
+          <div class="toggle-name">Deep scan</div>
+          <div class="toggle-desc">Off = Fast (core rules + working-tree secrets, much quicker). On = adds the supply-chain rule pack &amp; full git-history secret scan.</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="wizDeepScan">
+          <div class="toggle-track"></div>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">
           <div class="toggle-name">Docker Sandbox</div>
           <div class="toggle-desc">Execute code in isolated container &mdash; captures file writes, processes &amp; network calls</div>
         </div>
@@ -1782,6 +1792,7 @@ function startScan() {
     repo_url:     url,
     branch:       document.getElementById('wizBranch').value.trim() || 'main',
     sandbox:      document.getElementById('wizSandbox').checked,
+    deep_scan:    document.getElementById('wizDeepScan').checked,
     advisor:      selectedProvider !== 'none',
     auto_commit:  document.getElementById('wizAutoCommit').checked,
     github_token: document.getElementById('wizGhToken').value.trim(),
@@ -1824,6 +1835,7 @@ async function launchScan(payload) {
     repo_url:     payload.repo_url,
     branch:       payload.branch,
     sandbox:      payload.sandbox,
+    deep_scan:    payload.deep_scan,
     advisor:      payload.advisor,
     auto_commit:  payload.auto_commit,
     github_token: payload.github_token,

@@ -769,6 +769,13 @@
       <div class="modal-sub">Configure additional scan behaviors.</div>
       <div class="toggle-row">
         <div class="toggle-info">
+          <div class="toggle-name">Deep scan</div>
+          <div class="toggle-desc">Off = Fast (core rules + working-tree secrets, much quicker). On = adds the supply-chain rule pack &amp; full git-history secret scan.</div>
+        </div>
+        <label class="toggle"><input type="checkbox" id="wizDeepScan"><div class="toggle-track"></div></label>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle-info">
           <div class="toggle-name">Docker Sandbox</div>
           <div class="toggle-desc">Execute code in isolated container &mdash; captures file writes, processes &amp; network calls</div>
         </div>
@@ -963,8 +970,9 @@
     const provider = document.querySelector('.provider-card.selected')?.dataset.provider || 'none';
     const apiKey   = document.getElementById('wizApiKey').value.trim();
     const sandbox  = document.getElementById('wizSandbox').checked;
+    const deepScan = document.getElementById('wizDeepScan').checked;
     closeModal();
-    startScanStage({ repoUrl, provider, apiKey, sandbox,
+    startScanStage({ repoUrl, provider, apiKey, sandbox, deepScan,
                      eye: 'Full Analysis', title: 'Analyzing Repository' });
   }
 
@@ -1001,6 +1009,7 @@
         llm_provider: opts.provider,
         llm_api_key: opts.apiKey,
         sandbox: opts.sandbox,
+        deep_scan: !!opts.deepScan,
         advisor: opts.provider !== 'none'
       });
     });

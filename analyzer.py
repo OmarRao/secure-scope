@@ -3,6 +3,7 @@ Static analysis engine: clones repo, runs Semgrep, maps findings to MITRE CWE/AT
 """
 
 import json
+import os
 import subprocess
 import tempfile
 import shutil
@@ -88,24 +89,31 @@ def clone_repo(repo_url: str, dest: Optional[str] = None) -> str:
     return dest
 
 
-def run_semgrep(repo_path: str) -> list[Finding]:
-    """Run Semgrep with security rulesets and return parsed findings."""
+def run_semgrep(repo_path: str, fast: bool = True) -> list[Finding]:
+    """Run Semgrep with security rulesets and return parsed findings.
+
+    fast=True (default) runs the core security packs with parallelism and
+    excludes; fast=False (Deep scan) also adds the heavier supply-chain pack.
+    """
     print("[*] Running Semgrep security scan...")
-    rulesets = [
-        "p/owasp-top-ten",
-        "p/cwe-top-25",
-        "p/secrets",
-        "p/supply-chain",
-    ]
+    # Core packs cover OWASP/CWE/secrets. supply-chain overlaps the OSV
+    # dependency scanner and is the slowest pack, so it's Deep-scan only.
+    rulesets = ["p/owasp-top-ten", "p/cwe-top-25", "p/secrets"]
+    if not fast:
+        rulesets.append("p/supply-chain")
+
+    # Performance flags: parallel jobs, no telemetry round-trip, per-rule
+    # timeout, skip huge files, and exclude vendored/build directories.
     cmd = [
-        "semgrep", "scan",
-        "--config", " ".join(rulesets),
-        "--json",
-        "--quiet",
-        repo_path,
+        "semgrep", "scan", "--json", "--quiet",
+        "--metrics=off",
+        "--jobs", str(os.cpu_count() or 2),
+        "--timeout", "30",
+        "--timeout-threshold", "3",
+        "--max-target-bytes", "2000000",
     ]
-    # semgrep needs configs passed individually
-    cmd = ["semgrep", "scan", "--json", "--quiet"]
+    for ex in ("node_modules", "vendor", "dist", "build", ".git", ".venv", "venv"):
+        cmd += ["--exclude", ex]
     for rs in rulesets:
         cmd += ["--config", rs]
     cmd.append(repo_path)
