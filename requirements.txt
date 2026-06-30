@@ -1,6 +1,6 @@
-flask>=3.0.0
+flask>=3.1.3            # CVE fix: GHSA-68rp-wp8r-4726
 flask-socketio>=5.3.0
-eventlet>=0.35.0
+eventlet>=0.40.3        # CVE fix: GHSA-3rq5-2g8h-59hc, GHSA-hw6f-rjfj-j7j7
 gunicorn>=22.0.0
 anthropic>=0.40.0
 openai>=1.30.0
@@ -12,10 +12,10 @@ defusedxml>=0.7.1 # secure XML parsing (XXE-safe) for Maven pom.xml dependency p
 docker>=7.0.0
 semgrep>=1.70.0
 pip-audit>=2.7.0
-urllib3>=1.26.19 # not directly required, pinned by Snyk to avoid a vulnerability
-pyjwt>=2.11.0 # not directly required, pinned by Snyk to avoid a vulnerability
-requests>=2.32.2 # not directly required, pinned by Snyk to avoid a vulnerability
-idna>=3.15 # not directly required, pinned by Snyk to avoid a vulnerability
+urllib3>=2.7.0  # CVE fix: GHSA-pq67-6m6q-mj2v et al. (was 1.26.19)
+pyjwt>=2.13.0   # CVE fix: GHSA-w7vc-732c-9m39 et al. (was 2.11.0)
+requests>=2.33.0 # CVE fix: GHSA-9hjg-9r4m-mvj7, GHSA-gc5v-m9x4-r6x2 (was 2.32.2)
+idna>=3.15 # not directly required, pinned to avoid a vulnerability
 
 # Optional — install for additional scan capabilities
 # detect-secrets>=1.4.0    # secret scanning (--secret-scan)
