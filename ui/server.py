@@ -374,10 +374,36 @@ def handle_scan(data):
                     _emit(sid, "progress", {"step": "semgrep", "message": "🔍 Running Semgrep static analysis...", "pct": 35})
                     result.findings = run_semgrep(workdir, fast_mode)
 
-                    _emit(sid, "progress", {"step": "deps", "message": "📦 Checking dependency CVEs...", "pct": 55})
-                    result.dependency_vulns = check_dependency_vulns(workdir)
+                    # Dependency CVEs — prefer the fast OSV scanner and derive the
+                    # basic dependency_vulns list from it (same keys the report
+                    # expects). Only fall back to the slower pip-audit/npm-audit
+                    # path when the OSV scanner is unavailable. This removes a
+                    # redundant, slow dependency resolution pass.
+                    _emit(sid, "progress", {"step": "deps", "message": "📦 Scanning dependencies for CVEs via OSV.dev...", "pct": 60})
+                    deps_result = None
+                    if _DEPS_AVAILABLE:
+                        try:
+                            deps_result = deps_scan_repo(repo_path=workdir, progress_cb=None)
+                        except Exception:
+                            logger.exception("dependency scan failed")
+                    if deps_result is not None:
+                        try:
+                            result.dependency_vulns = [
+                                {"ecosystem": v.get("ecosystem", ""),
+                                 "package": v.get("package_name", ""),
+                                 "version": v.get("package_version", ""),
+                                 "vuln_id": v.get("vuln_id", "") or v.get("primary_cve", ""),
+                                 "description": v.get("summary", ""),
+                                 "fix_versions": v.get("fixed_versions", []) or []}
+                                for v in deps_result.to_dict().get("vulnerabilities", [])
+                            ]
+                        except Exception:
+                            logger.exception("mapping OSV deps to dependency_vulns failed")
+                            result.dependency_vulns = []
+                    else:
+                        result.dependency_vulns = check_dependency_vulns(workdir)
 
-                    _emit(sid, "progress", {"step": "secrets", "message": "🔑 Scanning for hardcoded secrets and credentials...", "pct": 65})
+                    _emit(sid, "progress", {"step": "secrets", "message": "🔑 Scanning for hardcoded secrets and credentials...", "pct": 70})
                     secrets_result = None
                     if _SECRETS_AVAILABLE:
                         try:
@@ -386,14 +412,6 @@ def handle_scan(data):
                                 entropy_check=secret_entropy_check, progress_cb=None)
                         except Exception:
                             logger.exception("secrets scan failed")
-
-                    _emit(sid, "progress", {"step": "deps", "message": "📦 Scanning dependencies for CVEs via OSV.dev...", "pct": 72})
-                    deps_result = None
-                    if _DEPS_AVAILABLE:
-                        try:
-                            deps_result = deps_scan_repo(repo_path=workdir, progress_cb=None)
-                        except Exception:
-                            logger.exception("dependency scan failed")
 
                     _emit(sid, "progress", {"step": "iac", "message": "🏗️ Scanning IaC for cloud misconfigurations...", "pct": 78})
                     iac_result = None
