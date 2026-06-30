@@ -363,58 +363,45 @@ def handle_scan(data):
                     clone_repo(repo_url, workdir)
                     result = AnalysisResult(repo_url=repo_url, repo_path=workdir)
 
-                    # ── Run the independent scanners CONCURRENTLY ─────────────────
-                    # Semgrep, dependency CVEs, secrets, OSV deps and IaC don't
-                    # depend on each other, so total time ≈ the slowest one instead
-                    # of the sum. Each is a subprocess/network call (releases the
-                    # GIL), so threads parallelise effectively. Progress is emitted
-                    # only from this thread as futures complete (single emitter).
-                    import concurrent.futures
+                    # ── Run scanners SEQUENTIALLY ────────────────────────────────
+                    # On a small (≈0.5 CPU / 512 MB) host, running the CPU/memory-
+                    # heavy scanners concurrently starves them and is *slower*, so
+                    # each step runs in turn with the full instance. Speed comes
+                    # from doing less work in Fast mode (fewer Semgrep packs, no
+                    # git-history secret scan) — see run_semgrep / secret options.
                     fast_mode = not deep_scan
-                    _emit(sid, "progress", {"step": "semgrep",
-                        "message": "🔍 Running scanners in parallel (Semgrep · secrets · dependencies · IaC)...",
-                        "pct": 30})
 
-                    tasks = {}
-                    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as _ex:
-                        tasks["semgrep"] = _ex.submit(run_semgrep, workdir, fast_mode)
-                        tasks["depcve"]  = _ex.submit(check_dependency_vulns, workdir)
-                        if _SECRETS_AVAILABLE:
-                            tasks["secrets"] = _ex.submit(
-                                secrets_scan_repo, repo_path=workdir,
-                                include_history=secret_include_history,
+                    _emit(sid, "progress", {"step": "semgrep", "message": "🔍 Running Semgrep static analysis...", "pct": 35})
+                    result.findings = run_semgrep(workdir, fast_mode)
+
+                    _emit(sid, "progress", {"step": "deps", "message": "📦 Checking dependency CVEs...", "pct": 55})
+                    result.dependency_vulns = check_dependency_vulns(workdir)
+
+                    _emit(sid, "progress", {"step": "secrets", "message": "🔑 Scanning for hardcoded secrets and credentials...", "pct": 65})
+                    secrets_result = None
+                    if _SECRETS_AVAILABLE:
+                        try:
+                            secrets_result = secrets_scan_repo(
+                                repo_path=workdir, include_history=secret_include_history,
                                 entropy_check=secret_entropy_check, progress_cb=None)
-                        if _DEPS_AVAILABLE:
-                            tasks["deps"] = _ex.submit(deps_scan_repo, repo_path=workdir, progress_cb=None)
-                        if _IAC_AVAILABLE:
-                            tasks["iac"] = _ex.submit(iac_scan_repo, repo_path=workdir, progress_cb=None)
+                        except Exception:
+                            logger.exception("secrets scan failed")
 
-                        _labels = {"semgrep": "Semgrep static analysis", "depcve": "dependency CVEs",
-                                   "secrets": "secret detection", "deps": "dependency vulnerabilities (OSV)",
-                                   "iac": "IaC misconfigurations"}
-                        _step_for = {"semgrep": "semgrep", "depcve": "deps", "secrets": "secrets",
-                                     "deps": "deps", "iac": "iac"}
-                        _fut_name = {fut: nm for nm, fut in tasks.items()}
-                        _res = {}
-                        _done, _total = 0, len(tasks)
-                        for fut in concurrent.futures.as_completed(list(tasks.values())):
-                            nm = _fut_name[fut]
-                            try:
-                                _res[nm] = fut.result()
-                            except Exception:
-                                logger.exception("Scanner '%s' failed", nm)
-                                _res[nm] = None
-                            _done += 1
-                            _emit(sid, "progress", {
-                                "step": _step_for.get(nm, "report"),
-                                "message": f"✓ {_labels.get(nm, nm)} complete  ({_done}/{_total})",
-                                "pct": 30 + int(50 * _done / _total)})
+                    _emit(sid, "progress", {"step": "deps", "message": "📦 Scanning dependencies for CVEs via OSV.dev...", "pct": 72})
+                    deps_result = None
+                    if _DEPS_AVAILABLE:
+                        try:
+                            deps_result = deps_scan_repo(repo_path=workdir, progress_cb=None)
+                        except Exception:
+                            logger.exception("dependency scan failed")
 
-                    result.findings = _res.get("semgrep") or []
-                    result.dependency_vulns = _res.get("depcve") or []
-                    secrets_result = _res.get("secrets")
-                    deps_result = _res.get("deps")
-                    iac_result = _res.get("iac")
+                    _emit(sid, "progress", {"step": "iac", "message": "🏗️ Scanning IaC for cloud misconfigurations...", "pct": 78})
+                    iac_result = None
+                    if _IAC_AVAILABLE:
+                        try:
+                            iac_result = iac_scan_repo(repo_path=workdir, progress_cb=None)
+                        except Exception:
+                            logger.exception("IaC scan failed")
 
                     # ── Optional Docker sandbox (heavy; off by default) ──────────
                     obs = None

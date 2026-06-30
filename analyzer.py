@@ -118,7 +118,11 @@ def run_semgrep(repo_path: str, fast: bool = True) -> list[Finding]:
         cmd += ["--config", rs]
     cmd.append(repo_path)
 
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=240)
+    except subprocess.TimeoutExpired:
+        print("[!] Semgrep timed out; returning no findings")
+        return []
 
     findings: list[Finding] = []
     try:
