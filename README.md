@@ -108,14 +108,24 @@ Configure the **Deep scan** toggle, Docker sandbox execution, and optional auto-
 
 ## Scan Performance
 
-The scan pipeline runs the independent scanners — Semgrep, dependency CVEs, secret
-detection, OSV dependency vulnerabilities and IaC — **concurrently**, so total scan
-time is roughly the *slowest* scanner rather than the sum of all of them. Semgrep
-runs with parallel jobs (`--jobs`), telemetry disabled, per-rule timeouts, large-file
-skips and vendored-directory excludes. **Fast scan** (the default) keeps the core rule
-packs and a working-tree secret scan; **Deep scan** adds the supply-chain pack and a
-full git-history secret sweep. The first scan after the service has been idle also
-pays a one-time cold-start while the host wakes.
+Scans are tuned for speed without sacrificing depth:
+
+- **Fast scan (default)** runs two high-signal Semgrep packs (CWE Top 25 + secrets)
+  with telemetry disabled, parallel jobs (`--jobs`), per-rule timeouts, large-file
+  skips and vendored-directory excludes, plus a working-tree-only secret scan.
+- **Deep scan** adds the broader OWASP and supply-chain packs and a full
+  git-history secret sweep.
+- The Semgrep rule packs are **pre-baked into the Docker image**, so scans don't
+  download/compile rules on every run.
+- Dependency CVEs come from the fast **OSV.dev** scanner (a redundant, slow
+  pip-audit/npm-audit pass was removed).
+
+Scanners run sequentially so each gets the host's full CPU (on small instances,
+running them concurrently starves the CPU-bound Semgrep step and is *slower*).
+**Semgrep static analysis is the dominant cost and is CPU-bound** — the most
+effective way to make scans dramatically faster is to run on an instance with more
+CPU. The first scan after the service has been idle also pays a one-time cold-start
+while the host wakes.
 
 ---
 
