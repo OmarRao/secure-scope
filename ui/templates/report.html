@@ -1777,7 +1777,7 @@ new Chart(document.getElementById('cTactic'),{
   }
 
   // Draw impact circles
-  regions.forEach(r => {
+  regions.forEach((r, i) => {
     const [x, y] = project(r.coords[0], r.coords[1], W, H);
     const inc = r.incidents || 10;
     const radius = Math.min(6 + Math.log(inc) * 2.5, 28);
@@ -1795,12 +1795,17 @@ new Chart(document.getElementById('cTactic'),{
     ctx.fillStyle = color + 'cc'; ctx.fill();
     ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
 
-    // Country label
-    ctx.fillStyle = isDark ? '#e2e8f0' : '#1f2937';
+    // Country label — alternate above/below and add a halo so labels stay
+    // legible when impact points cluster together.
     ctx.font = 'bold 10px Geist, sans-serif';
     ctx.textAlign = 'center';
     const shortName = r.country.replace('United States','USA').replace('United Kingdom','UK').replace('Australia','AUS');
-    ctx.fillText(shortName, x, y - radius - 4);
+    const ly = (i % 2 === 0) ? (y - radius - 5) : (y + radius + 11);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = isDark ? 'rgba(17,20,25,0.85)' : 'rgba(241,245,249,0.9)';
+    ctx.strokeText(shortName, x, ly);
+    ctx.fillStyle = isDark ? '#e2e8f0' : '#1f2937';
+    ctx.fillText(shortName, x, ly);
   });
 })();
 

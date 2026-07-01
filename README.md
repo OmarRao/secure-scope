@@ -831,6 +831,24 @@ Each triggered scan produces JSON, HTML, SARIF, SBOM, and compliance reports aut
 
 ---
 
+## Testing / QA
+
+Fast, network-free smoke tests live in `tests/` and run in CI on every push
+(`.github/workflows/tests.yml`). They cover module imports, the Flask app
+initialisation, the secrets engine (detection + output shape + placeholder
+filtering), the CWE→ATT&CK map, and the shared PDF/report HTML builder
+(including untrusted-input escaping).
+
+```bash
+pip install -r requirements.txt pytest
+python -m pytest -q
+```
+
+All GitHub Actions are pinned to immutable commit SHAs, and the live scan
+progress modal shows a per-step timer plus the total scan time on completion.
+
+---
+
 ## Releases
 
 | Version | Date | Highlights |
