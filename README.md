@@ -874,6 +874,25 @@ progress modal shows a per-step timer plus the total scan time on completion.
 - Cloned repositories are deleted from temp storage after each scan
 - API keys entered in the wizard are used only for the current scan and are never stored
 
+### Application hardening
+
+- **Security headers** on every response: `Content-Security-Policy` (source allowlist for scripts/styles/connections), `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`, and HSTS.
+- **Session key** is loaded from `SECRET_KEY` (env) or a per-process random key — never hardcoded.
+- **Flask debug is disabled** in production, so tracebacks/source are never exposed to clients.
+- **No source-file routes**: report downloads are constrained to the reports directory via `secure_filename` + `send_from_directory` (path-traversal safe).
+- **Report persistence** uses **secret** GitHub Gists (`public=False`); per-user history is isolated by Firestore security rules.
+- Firebase **web** config in client code is a public project identifier (not a secret); no server secrets ship to the browser.
+
+### Protecting this solution's source / IP
+
+SecureScope is a **private application, © Omar Rao, all rights reserved** (see `LICENSE`).
+Because it is a web app, the client-side HTML/JS is delivered to browsers and is
+therefore inherently viewable; the server-side engine and any keys stay on the
+host. For maximum source protection, keep the GitHub repository **private**
+(note: GitHub Pages for the landing page and free code scanning have trade-offs
+on private repos) and rotate the `SECRET_KEY` and any provider keys via the host's
+environment variables.
+
 ---
 
 ---

@@ -87,6 +87,20 @@ def test_report_html_builder():
     assert "OmarRao/analyzer" in html
 
 
+def test_security_headers_and_secret_key():
+    import ui.server as server
+    # No hardcoded secret key in source
+    assert server.app.secret_key != "secreview-ui-key"
+    assert server.app.secret_key  # some key is set
+    client = server.app.test_client()
+    r = client.get("/")
+    for h in ("X-Content-Type-Options", "X-Frame-Options",
+              "Content-Security-Policy", "Referrer-Policy", "Permissions-Policy"):
+        assert h in r.headers, f"missing security header: {h}"
+    assert r.headers["X-Content-Type-Options"] == "nosniff"
+    assert "default-src" in r.headers["Content-Security-Policy"]
+
+
 def test_report_html_escapes_untrusted_repo():
     from report_html import build_html
     html, _, _ = build_html({"repo": "https://github.com/x/<script>", "findings": [], "dependency_vulns": []})

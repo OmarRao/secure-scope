@@ -94,8 +94,42 @@ except ImportError as _iac_err:
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
-app.secret_key = "secreview-ui-key"
+# Session signing key — from the environment, else a per-process random key.
+# Never hardcode a secret in source.
+import secrets as _secrets
+app.secret_key = os.environ.get("SECRET_KEY") or _secrets.token_hex(32)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+
+
+# ── Security response headers (defence-in-depth / anti-disclosure) ─────────────
+@app.after_request
+def _security_headers(resp):
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    resp.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+    resp.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin-allow-popups")
+    resp.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    # Content-Security-Policy: restrict where scripts/styles/data may load from
+    # and where the page may connect, limiting injection & data-exfiltration.
+    # 'unsafe-inline'/'unsafe-eval' are required by the inline app scripts and
+    # the Firebase SDK; the source allowlist still constrains third parties.
+    resp.headers.setdefault("Content-Security-Policy", "; ".join([
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.socket.io https://www.gstatic.com https://apis.google.com",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' data: https://fonts.gstatic.com",
+        "img-src 'self' data: https:",
+        "connect-src 'self' wss: https://cdn.socket.io https://*.googleapis.com "
+        "https://*.firebaseio.com https://*.firebaseapp.com https://securetoken.googleapis.com "
+        "https://identitytoolkit.googleapis.com https://firestore.googleapis.com "
+        "https://www.googleapis.com https://api.ransomware.live https://www.cisa.gov",
+        "frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "frame-ancestors 'self'",
+    ]))
+    return resp
 
 # Log key tool availability at startup so Render logs show exactly what's present
 import shutil as _shutil
