@@ -356,7 +356,7 @@ def main():
     parser.add_argument("--image", default="", help="Container image for Trivy scan")
     parser.add_argument("--compliance", action="store_true", help="Include compliance posture section")
 
-    # v8.0.0 feature flags
+    # v1.8.0 feature flags
     parser.add_argument("--slack-webhook", default="", metavar="URL",
                         help="Post scan results to this Slack incoming webhook URL")
     parser.add_argument("--teams-webhook", default="", metavar="URL",
@@ -378,7 +378,7 @@ def main():
     parser.add_argument("--suppress-fp", nargs=3, metavar=("RULE_ID", "FILE", "REASON"),
                         help="Add a false positive suppression to .secscope-suppressions.json")
 
-    # v9.0.0 feature flags
+    # v1.9.0 feature flags
     parser.add_argument("--secret-scan", action="store_true",
                         help="Scan for hardcoded secrets using detect-secrets")
     parser.add_argument("--iac-scan", action="store_true",
@@ -388,7 +388,7 @@ def main():
     parser.add_argument("--pr-number", type=int, default=None,
                         help="PR number for --pr-comment (auto-detects latest open PR if omitted)")
 
-    # v10.0.0 feature flags
+    # v1.10.0 feature flags
     parser.add_argument("--polyglot", action="store_true",
                         help="Run polyglot dependency scan (npm, cargo, go, bundler, maven)")
     parser.add_argument("--sbom-diff", default="", metavar="OLD_SBOM",

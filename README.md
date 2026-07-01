@@ -1,6 +1,6 @@
 # SecureScope / GitHub Security Review Tool
 
-![Version](https://img.shields.io/badge/version-v10.0.0-blue)
+![Version](https://img.shields.io/badge/version-v1.10.0-blue)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-v14-red)
 ![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
@@ -19,9 +19,9 @@
 | [.github/workflows/secscope.yml](.github/workflows/secscope.yml) | CI/CD self-scan pipeline |
 
 > AI-powered security analysis for any GitHub repository. Paste a URL, get a full threat report mapped to MITRE ATT&CK and CWE, with optional Docker sandbox execution and AI-generated fix diffs from your choice of LLM.
-> **v10.0.0** adds polyglot scanning, SQLite persistence, SLA tracking, Jira integration, PDF export, job queue, GitHub App auth, custom Semgrep rules, Kubernetes manifests, Helm chart, and anonymous Firebase telemetry. **v8.0.0** adds Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard integration, DAST (Nuclei + ZAP), license compliance scanning, supply-chain/typosquatting detection, PR diff mode, historical trend tracking, and false-positive suppression. **v7.0.0** added SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture (PCI DSS / NIST / OWASP / SANS Top 25), multi-repo scanning, and a GitHub webhook server. **v6.2.0** completed the security report — Secrets Detection and Dependency Vulnerability sections. **v6.0.0** added IaC Misconfiguration Scanner. **v5.0.0** expanded YARA to 11 rule sets. **v4.0.0** added OSV.dev dependency scanning. **v3.0.0** added Secrets Detection.
+> **v1.10.0** adds polyglot scanning, SQLite persistence, SLA tracking, Jira integration, PDF export, job queue, GitHub App auth, custom Semgrep rules, Kubernetes manifests, Helm chart, and anonymous Firebase telemetry. **v1.8.0** adds Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard integration, DAST (Nuclei + ZAP), license compliance scanning, supply-chain/typosquatting detection, PR diff mode, historical trend tracking, and false-positive suppression. **v1.7.0** added SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture (PCI DSS / NIST / OWASP / SANS Top 25), multi-repo scanning, and a GitHub webhook server. **v1.6.2** completed the security report — Secrets Detection and Dependency Vulnerability sections. **v1.6.0** added IaC Misconfiguration Scanner. **v1.5.0** expanded YARA to 11 rule sets. **v1.4.0** added OSV.dev dependency scanning. **v1.3.0** added Secrets Detection.
 
-## What's New in v10.0.0
+## What's New in v1.10.0
 
 | Feature | Description |
 |---------|-------------|
@@ -99,8 +99,8 @@ Choose which LLM to use for fix generation. All major providers are supported wi
 
 Configure the **Deep scan** toggle, Docker sandbox execution, and optional auto-commit of AI-generated fixes to GitHub.
 
-- **Fast scan (default)** — core Semgrep packs (OWASP / CWE Top 25 / secrets), working-tree secret scan, and all scanners run **in parallel**. Much quicker; ideal for the common case.
-- **Deep scan** — additionally runs the heavier Semgrep `supply-chain` pack and the **full git-history** secret scan.
+- **Fast scan (default)** — two high-signal Semgrep packs (CWE Top 25 + secrets), a working-tree secret scan, and rule packs pre-baked into the image. Much quicker; ideal for the common case.
+- **Deep scan** — additionally runs the broader OWASP and `supply-chain` Semgrep packs and the **full git-history** secret scan.
 
 ![Wizard Step 3 - Options](docs/screenshots/04_wizard_step3.png)
 
@@ -129,7 +129,7 @@ while the host wakes.
 
 ---
 
-## Threat Intelligence Dashboard (v2.0.0)
+## Threat Intelligence Dashboard (v1.2.0)
 
 A live threat intelligence panel sits below the scan wizard on the main dashboard. No scan is required — it loads automatically on page visit and auto-refreshes every 60 seconds.
 
@@ -349,31 +349,31 @@ python main.py --repos-file repos.txt --sarif --sbom --no-advisor
 # Webhook server — auto-trigger scans on GitHub push/PR events
 python main.py --webhook --port 8080 --webhook-secret <secret>
 
-# v8.0.0 — Slack/Teams notifications
+# v1.8.0 — Slack/Teams notifications
 python main.py --repo https://github.com/owner/repo --no-advisor \
   --slack-webhook https://hooks.slack.com/services/... \
   --teams-webhook https://your-org.webhook.office.com/...
 
-# v8.0.0 — Auto-create GitHub Issues for ERROR findings
+# v1.8.0 — Auto-create GitHub Issues for ERROR findings
 python main.py --repo https://github.com/owner/repo --no-advisor \
   --create-issues --github-token ghp_...
 
-# v8.0.0 — OpenSSF Scorecard
+# v1.8.0 — OpenSSF Scorecard
 python main.py --repo https://github.com/owner/repo --no-advisor --scorecard
 
-# v8.0.0 — DAST (Nuclei/ZAP)
+# v1.8.0 — DAST (Nuclei/ZAP)
 python main.py --repo https://github.com/owner/repo --no-advisor \
   --dast-url https://staging.myapp.com
 
-# v8.0.0 — License scan + supply chain
+# v1.8.0 — License scan + supply chain
 python main.py --repo https://github.com/owner/repo --no-advisor \
   --license-scan --supply-chain
 
-# v8.0.0 — PR diff mode (only scan changed files)
+# v1.8.0 — PR diff mode (only scan changed files)
 python main.py --repo https://github.com/owner/repo --no-advisor \
   --pr-diff --base-branch main
 
-# v8.0.0 — Suppress a false positive
+# v1.8.0 — Suppress a false positive
 python main.py --repo https://github.com/owner/repo --no-advisor \
   --suppress-fp semgrep.sql-injection src/db.py "Parameterised query — confirmed safe"
 ```
@@ -634,7 +634,7 @@ score = min(
 
 ---
 
-## Secrets Detection Engine (v3.0.0)
+## Secrets Detection Engine (v1.3.0)
 
 The most critical capability for any organisation — a hardcoded secret **is** the breach.
 
@@ -671,7 +671,7 @@ The panel includes a 5-step remediation guide: rotate immediately, purge git his
 
 ---
 
-## Dependency Vulnerability Scanner (v4.0.0)
+## Dependency Vulnerability Scanner (v1.4.0)
 
 Every third-party package is a potential supply chain risk. SecureScope now queries **[OSV.dev](https://osv.dev)** — Google's open vulnerability database — for every dependency found in your repository.
 
@@ -700,7 +700,7 @@ Dependency results are automatically included in every repo scan report alongsid
 
 ---
 
-## IaC Misconfiguration Scanner (v6.0.0)
+## IaC Misconfiguration Scanner (v1.6.0)
 
 Every cloud misconfiguration is a potential breach waiting to happen. SecureScope now scans your infrastructure-as-code for dangerous misconfigurations before they reach production — integrated into every repo scan and available as a standalone panel.
 
@@ -732,7 +732,7 @@ Without checkov, the scanner uses 50+ built-in pattern checks across all 6 frame
 
 ---
 
-## v8.0.0 New Features
+## v1.8.0 New Features
 
 ### Slack & Microsoft Teams Notifications
 Post scan completion summaries (finding counts by severity, top 3 criticals, link to report) to Slack incoming webhooks or Microsoft Teams webhook cards.
@@ -780,7 +780,7 @@ python main.py --repo URL --suppress-fp semgrep.rule-id src/file.py "Confirmed s
 
 ---
 
-## v7.0.0 New Features
+## v1.7.0 New Features
 
 ### SARIF 2.1.0 Export
 Use `--sarif` to produce a SARIF file that can be uploaded to the GitHub Code Scanning API or committed to `.github/code-scanning/` — findings appear natively in the repository's **Security → Code Scanning** tab with ATT&CK and CWE tags.
@@ -853,16 +853,21 @@ progress modal shows a per-step timer plus the total scan time on completion.
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| [v10.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v10.0.0) | 2026-06-26 | Polyglot scanning, SQLite persistence, SLA tracking, Jira integration, PDF export, job queue, GitHub App auth, custom Semgrep rules, K8s manifests, Helm chart, Firebase anonymous telemetry |
-| [v8.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v8.0.0) | 2026-06-24 | Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard, DAST (Nuclei + ZAP), license compliance, supply chain/typosquatting detection, PR diff mode, historical trend tracking, false-positive suppression, GitHub Actions CI workflow |
-| [v7.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v7.0.0) | 2026-06-23 | SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture report (PCI DSS/NIST/OWASP/SANS Top 25), multi-repo scanning, GitHub webhook trigger server |
-| [v6.2.0](https://github.com/OmarRao/secure-scope/releases/tag/v6.2.0) | 2026-06-22 | Report completeness — added Secrets Detection and Dependency Vulnerability sections to report.html; fixed nav sidebar; removed broken screenshot reference |
-| [v6.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v6.0.0) | 2026-06-18 | IaC Misconfiguration Scanner — Terraform, Kubernetes, Dockerfile, GitHub Actions, CloudFormation, Ansible; checkov integration + 50+ built-in pattern checks; integrated into main scan pipeline |
-| [v5.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v5.0.0) | 2026-06-17 | Expanded YARA Threat Library — 5 new rule sets: Cl0p, emerging ransomware (Play/Akira/RansomHub/Black Basta), LotL techniques, credential harvesting, supply chain attacks. 11 rule sets / 50+ rules total |
-| [v4.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v4.0.0) | 2026-06-17 | Dependency Vulnerability Scanner — OSV.dev integration, 7 ecosystems, CVE lookup, CVSS scoring, integrated into main pipeline |
-| [v3.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v3.0.0) | 2026-06-16 | Secrets Detection Engine — 60+ patterns, git history scan, entropy analysis, blast radius, integrated into main scan pipeline |
-| [v2.0.0](https://github.com/OmarRao/secure-scope/releases/tag/v2.0.0) | 2026-06-12 | Threat Intelligence Dashboard, YARA scanner, enterprise prevention guide, DR checklist, collapsible report sections |
+| [v1.10.0](https://github.com/OmarRao/secure-scope/releases/tag/v1.10.0) | 2026-06-26 | Polyglot scanning, SQLite persistence, SLA tracking, Jira integration, PDF export, job queue, GitHub App auth, custom Semgrep rules, K8s manifests, Helm chart, Firebase anonymous telemetry |
+| [v1.8.0](https://github.com/OmarRao/secure-scope/releases/tag/v1.8.0) | 2026-06-24 | Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard, DAST (Nuclei + ZAP), license compliance, supply chain/typosquatting detection, PR diff mode, historical trend tracking, false-positive suppression, GitHub Actions CI workflow |
+| [v1.7.0](https://github.com/OmarRao/secure-scope/releases/tag/v1.7.0) | 2026-06-23 | SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture report (PCI DSS/NIST/OWASP/SANS Top 25), multi-repo scanning, GitHub webhook trigger server |
+| [v1.6.2](https://github.com/OmarRao/secure-scope/releases/tag/v1.6.2) | 2026-06-22 | Report completeness — added Secrets Detection and Dependency Vulnerability sections to report.html; fixed nav sidebar; removed broken screenshot reference |
+| [v1.6.0](https://github.com/OmarRao/secure-scope/releases/tag/v1.6.0) | 2026-06-18 | IaC Misconfiguration Scanner — Terraform, Kubernetes, Dockerfile, GitHub Actions, CloudFormation, Ansible; checkov integration + 50+ built-in pattern checks; integrated into main scan pipeline |
+| [v1.5.0](https://github.com/OmarRao/secure-scope/releases/tag/v1.5.0) | 2026-06-17 | Expanded YARA Threat Library — 5 new rule sets: Cl0p, emerging ransomware (Play/Akira/RansomHub/Black Basta), LotL techniques, credential harvesting, supply chain attacks. 11 rule sets / 50+ rules total |
+| [v1.4.0](https://github.com/OmarRao/secure-scope/releases/tag/v1.4.0) | 2026-06-17 | Dependency Vulnerability Scanner — OSV.dev integration, 7 ecosystems, CVE lookup, CVSS scoring, integrated into main pipeline |
+| [v1.3.0](https://github.com/OmarRao/secure-scope/releases/tag/v1.3.0) | 2026-06-16 | Secrets Detection Engine — 60+ patterns, git history scan, entropy analysis, blast radius, integrated into main scan pipeline |
+| [v1.2.0](https://github.com/OmarRao/secure-scope/releases/tag/v1.2.0) | 2026-06-12 | Threat Intelligence Dashboard, YARA scanner, enterprise prevention guide, DR checklist, collapsible report sections |
 | v1.0.0 | 2026-06-09 | Initial release: Semgrep scan, Docker sandbox, multi-LLM advisor, ransomware engine, visual report |
+
+> **Versioning.** SecureScope follows semantic versioning on the **1.x line**, with
+> **v1.10.0** as the current release. The next feature release will begin the
+> **v2.0** cycle. (Earlier development milestones were renormalised into the 1.x
+> line for consistency.)
 
 ---
 

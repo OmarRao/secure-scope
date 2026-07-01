@@ -1,6 +1,6 @@
 # SecureScope Technical User Guide
 
-> **Version:** v10.0.0 | **Last Updated:** 2026-06-26 | **Maintained with each release**
+> **Version:** v1.10.0 | **Last Updated:** 2026-06-26 | **Maintained with each release**
 
 ---
 
@@ -1173,8 +1173,8 @@ python main.py --repo https://github.com/owner/repo --no-advisor
 | `semgrep: command not found` | Semgrep not installed | `pip install semgrep` |
 | `GITHUB_TOKEN not set` | Missing GitHub PAT | `$env:GITHUB_TOKEN = (gh auth token)` |
 | `ANTHROPIC_API_KEY required` | Advisor enabled without key | `--no-advisor` or `$env:ANTHROPIC_API_KEY = "sk-ant-..."` |
-| `f-string backslash error` | Python < 3.12 | Already fixed in v9.0.0 — upgrade Python or update SecureScope |
-| `Optional not defined` | Missing import | Already fixed in v9.0.0 — pull latest |
+| `f-string backslash error` | Python < 3.12 | Already fixed in v1.9.0 — upgrade Python or update SecureScope |
+| `Optional not defined` | Missing import | Already fixed in v1.9.0 — pull latest |
 | Trivy scan returns empty | Image not pulled locally | `docker pull <image>` first |
 | Trivy not found | Trivy not installed | Install from [aquasecurity.github.io/trivy](https://aquasecurity.github.io/trivy/) |
 | SARIF upload fails in GHA | Missing `security-events: write` | Add `permissions: security-events: write` to workflow |
@@ -1200,16 +1200,16 @@ python main.py --repo https://github.com/owner/repo --no-advisor --no-sandbox
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| v10.0.0 | 2026-06-26 | Polyglot dependency scan (npm/cargo/go/gem/maven), SQLite persistence (`--use-db`), SLA breach tracking (`--sla-check`), Jira Cloud integration, PDF export (`--pdf`), SBOM diffing (`--sbom-diff`), Kubernetes + Helm deployment, custom Semgrep rules directory, GitHub App auth, telemetry opt-out |
-| v9.0.0 | 2026-06 | Secret scanning (`--secret-scan`), IaC scanning (`--iac-scan`), markdown PR comments (`--pr-comment`), `requirements.txt` overhaul, Python 3.12 f-string fix |
-| v8.0.0 | 2026-06-24 | Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard, DAST (Nuclei + ZAP), license compliance scan, supply-chain/typosquatting detection, PR diff mode, historical trend tracking, false-positive suppression, GitHub Actions CI self-scan |
-| v7.0.0 | 2026-06-23 | SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture report (PCI DSS/NIST/OWASP/SANS Top 25), multi-repo scanning, GitHub webhook trigger server |
-| v6.2.0 | 2026-06-22 | Report completeness — Secrets Detection and Dependency Vulnerability sections added to HTML report |
-| v6.0.0 | 2026-06-18 | IaC Misconfiguration Scanner — Terraform, Kubernetes, Dockerfile, GitHub Actions, CloudFormation, Ansible; checkov + 50+ built-in patterns |
-| v5.0.0 | 2026-06-17 | Expanded YARA Threat Library to 11 rule sets: Cl0p, emerging ransomware, LotL techniques, credential harvesting, supply chain attacks |
-| v4.0.0 | 2026-06-17 | OSV.dev dependency vulnerability scanning — 7 ecosystems, CVE lookup, CVSS scoring |
-| v3.0.0 | 2026-06-16 | Secrets Detection Engine — 60+ patterns, git history scan, entropy analysis, blast radius |
-| v2.0.0 | 2026-06-12 | Threat Intelligence Dashboard, YARA scanner, enterprise prevention guide, DR checklist |
+| v1.10.0 | 2026-06-26 | Polyglot dependency scan (npm/cargo/go/gem/maven), SQLite persistence (`--use-db`), SLA breach tracking (`--sla-check`), Jira Cloud integration, PDF export (`--pdf`), SBOM diffing (`--sbom-diff`), Kubernetes + Helm deployment, custom Semgrep rules directory, GitHub App auth, telemetry opt-out |
+| v1.9.0 | 2026-06 | Secret scanning (`--secret-scan`), IaC scanning (`--iac-scan`), markdown PR comments (`--pr-comment`), `requirements.txt` overhaul, Python 3.12 f-string fix |
+| v1.8.0 | 2026-06-24 | Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard, DAST (Nuclei + ZAP), license compliance scan, supply-chain/typosquatting detection, PR diff mode, historical trend tracking, false-positive suppression, GitHub Actions CI self-scan |
+| v1.7.0 | 2026-06-23 | SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture report (PCI DSS/NIST/OWASP/SANS Top 25), multi-repo scanning, GitHub webhook trigger server |
+| v1.6.2 | 2026-06-22 | Report completeness — Secrets Detection and Dependency Vulnerability sections added to HTML report |
+| v1.6.0 | 2026-06-18 | IaC Misconfiguration Scanner — Terraform, Kubernetes, Dockerfile, GitHub Actions, CloudFormation, Ansible; checkov + 50+ built-in patterns |
+| v1.5.0 | 2026-06-17 | Expanded YARA Threat Library to 11 rule sets: Cl0p, emerging ransomware, LotL techniques, credential harvesting, supply chain attacks |
+| v1.4.0 | 2026-06-17 | OSV.dev dependency vulnerability scanning — 7 ecosystems, CVE lookup, CVSS scoring |
+| v1.3.0 | 2026-06-16 | Secrets Detection Engine — 60+ patterns, git history scan, entropy analysis, blast radius |
+| v1.2.0 | 2026-06-12 | Threat Intelligence Dashboard, YARA scanner, enterprise prevention guide, DR checklist |
 | v1.0.0 | 2026-06-09 | Initial release: Semgrep scan, Docker sandbox, multi-LLM advisor, ransomware engine, visual report |
 
 ---

@@ -101,7 +101,7 @@ def track_scan_start(features: list[str]) -> float:
         "python_version": f"{sys.version_info.major}.{sys.version_info.minor}",
         "os_type": platform.system(),
         "feature_flags": ",".join(sorted(features)),
-        "version": "10.0.0",
+        "version": "1.10.0",
     })
     return time.monotonic()
 
@@ -117,7 +117,7 @@ def track_scan_complete(start_ts: float, finding_counts: dict, features: list[st
         "low": finding_counts.get("LOW", 0),
         "dep_vulns": finding_counts.get("dep_vulns", 0),
         "feature_flags": ",".join(sorted(features)),
-        "version": "10.0.0",
+        "version": "1.10.0",
     })
 
 
@@ -126,5 +126,5 @@ def track_error(error_type: str, features: list[str]) -> None:
     _send("scan_error", {
         "error_type": error_type,
         "feature_flags": ",".join(sorted(features)),
-        "version": "10.0.0",
+        "version": "1.10.0",
     })

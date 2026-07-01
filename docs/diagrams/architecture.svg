@@ -7,7 +7,7 @@
       <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#00000022"/>
     </filter>
   </defs>
-  <text x="450" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a237e">SecureScope — System Architecture v10.0.0</text>
+  <text x="450" y="30" text-anchor="middle" font-size="18" font-weight="bold" fill="#1a237e">SecureScope — System Architecture v1.10.0</text>
   <rect x="30" y="55" width="840" height="60" rx="8" fill="#e3f2fd" stroke="#1565c0" stroke-width="1.5" filter="url(#shadow)"/>
   <text x="450" y="78" text-anchor="middle" font-size="12" font-weight="bold" fill="#0d47a1">INPUT LAYER</text>
   <rect x="50" y="70" width="180" height="30" rx="5" fill="#1565c0"/>
@@ -127,5 +127,5 @@
   <text x="533" y="568" font-size="10" fill="#555">Orchestrator</text>
   <rect x="620" y="558" width="12" height="12" fill="#1b5e20"/>
   <text x="638" y="568" font-size="10" fill="#555">AI Advisor</text>
-  <text x="50" y="598" font-size="9" fill="#777">SecureScope v10.0.0 — github.com/OmarRao/secure-scope</text>
+  <text x="50" y="598" font-size="9" fill="#777">SecureScope v1.10.0 — github.com/OmarRao/secure-scope</text>
 </svg>
