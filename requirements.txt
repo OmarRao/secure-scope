@@ -25,3 +25,4 @@ idna>=3.15 # not directly required, pinned to avoid a vulnerability
 # weasyprint>=60.0         # PDF report export (--pdf)
 # rq>=1.16.0               # Redis job queue (optional upgrade from threading queue)
 # redis>=5.0.0             # Redis backend for rq
+pillow>=10.2.0 # not directly required, pinned by Snyk to avoid a vulnerability
