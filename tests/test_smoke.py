@@ -105,3 +105,34 @@ def test_report_html_escapes_untrusted_repo():
     from report_html import build_html
     html, _, _ = build_html({"repo": "https://github.com/x/<script>", "findings": [], "dependency_vulns": []})
     assert "<script>" not in html.split("</head>")[-1]  # repo name is escaped in body
+
+
+def test_exploit_intel_enrich_offline():
+    """EPSS/KEV enrichment shapes vulns correctly, with feeds stubbed out."""
+    import exploit_intel as ei
+    ei.epss_scores = lambda cves: {
+        "CVE-2021-44228": {"epss": 0.99999, "pct": 1.0},
+        "CVE-2020-8203": {"epss": 0.05, "pct": 0.91},
+    }
+    ei.kev_set = lambda: {"CVE-2021-44228"}
+    deps = {"vulnerabilities": [
+        {"package_name": "lodash", "aliases": ["CVE-2020-8203"], "vuln_id": "",
+         "severity": "HIGH", "cvss_score": 7.4},
+        {"package_name": "log4j", "aliases": ["CVE-2021-44228"], "vuln_id": "GHSA-x",
+         "severity": "CRITICAL", "cvss_score": 10.0},
+    ]}
+    out = ei.enrich_deps(deps)
+    assert out["kev_count"] == 1
+    assert abs(out["max_epss"] - 0.99999) < 1e-6
+    # KEV + highest EPSS must sort first
+    top = out["vulnerabilities"][0]
+    assert top["package_name"] == "log4j"
+    assert top["kev"] is True
+    assert top["epss"] == 0.99999
+
+
+def test_exploit_intel_graceful_on_empty():
+    import exploit_intel as ei
+    out = ei.enrich_deps({"vulnerabilities": []})
+    assert out["kev_count"] == 0 and out["max_epss"] == 0.0
+    assert ei.enrich_deps(None) is None

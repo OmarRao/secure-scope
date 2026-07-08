@@ -698,6 +698,15 @@ Every third-party package is a potential supply chain risk. SecureScope now quer
 
 Dependency results are automatically included in every repo scan report alongside SAST findings, secrets, and ransomware analysis — no extra steps required. The standalone panel also lets you scan any repo or local path independently.
 
+### Exploitability prioritisation — EPSS + CISA KEV (v2.0)
+
+Severity and CVSS tell you how *bad* a CVE is in theory; they don't tell you which to fix **first**. SecureScope enriches every dependency CVE with two free, no-key exploitability signals via [`exploit_intel.py`](exploit_intel.py):
+
+- **EPSS** — [FIRST.org Exploit Prediction Scoring System](https://www.first.org/epss/): the probability (0–100%) a CVE will be exploited in the wild in the next 30 days.
+- **CISA KEV** — whether the CVE is on the [Known Exploited Vulnerabilities](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) catalogue: confirmed exploited, not just theoretically vulnerable.
+
+The dependency table is re-sorted so **KEV-listed and high-EPSS CVEs surface at the top**, each row shows a `KEV` badge and EPSS percentage, and a banner flags any confirmed-exploited CVEs. Both feeds are cached in-memory (6 h) and best-effort — if a feed is unreachable the scan still completes, simply without the exploitability column. This is pure SCA intelligence: it only reads public advisory data about CVEs already found in your manifests, and performs no active testing.
+
 ---
 
 ## IaC Misconfiguration Scanner (v1.6.0)

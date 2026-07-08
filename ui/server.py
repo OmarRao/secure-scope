@@ -437,6 +437,19 @@ def handle_scan(data):
                     else:
                         result.dependency_vulns = check_dependency_vulns(workdir)
 
+                    # Exploitability enrichment (EPSS + CISA KEV) — prioritise the
+                    # dependency CVEs by real-world exploit likelihood. Best-effort:
+                    # never blocks or fails the scan if the feeds are unreachable.
+                    deps_dict = None
+                    if deps_result is not None:
+                        _emit(sid, "progress", {"step": "exploit", "message": "🎯 Enriching CVEs with EPSS & CISA KEV exploitability...", "pct": 66})
+                        try:
+                            from exploit_intel import enrich_deps
+                            deps_dict = enrich_deps(deps_result.to_dict())
+                        except Exception:
+                            logger.exception("EPSS/KEV enrichment failed")
+                            deps_dict = deps_result.to_dict()
+
                     _emit(sid, "progress", {"step": "secrets", "message": "🔑 Scanning for hardcoded secrets and credentials...", "pct": 70})
                     secrets_result = None
                     if _SECRETS_AVAILABLE:
@@ -498,7 +511,7 @@ def handle_scan(data):
                         "dependency_vulns": result.dependency_vulns,
                         "ransomware": rw_report,
                         "secrets": secrets_result.to_dict() if secrets_result else None,
-                        "deps": deps_result.to_dict() if deps_result else None,
+                        "deps": deps_dict if deps_dict is not None else (deps_result.to_dict() if deps_result else None),
                         "iac": iac_result.to_dict() if iac_result else None,
                         "runtime": {
                             "exit_code": obs.exit_code if obs else None,

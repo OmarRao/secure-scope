@@ -1409,31 +1409,45 @@
           </div>
         </div>
 
-        {# Findings table #}
+        {% if deps.kev_count and deps.kev_count > 0 %}
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:var(--danger)14;border:1px solid var(--danger);border-radius:8px">
+          <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:4px;background:var(--danger);color:#fff;font-family:'Geist Mono',monospace">CISA KEV</span>
+          <span style="font-size:12px;color:var(--body)"><strong>{{ deps.kev_count }}</strong> of these CVEs {{ 'is' if deps.kev_count == 1 else 'are' }} on CISA's Known Exploited Vulnerabilities catalogue — confirmed exploited in the wild. Prioritise {{ 'it' if deps.kev_count == 1 else 'them' }} first.</span>
+        </div>
+        {% endif %}
+
+        {# Findings table — prioritised by exploitability (KEV, then EPSS) #}
         <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden">
-          <div style="display:grid;grid-template-columns:90px 100px 120px 1fr 100px 90px;gap:10px;padding:8px 14px;background:var(--ink3);border-bottom:2px solid var(--rule)">
-            {% for hdr in ['Severity','Ecosystem','Package','Vulnerability','Version','Fixed In'] %}
+          <div style="display:grid;grid-template-columns:84px 88px 120px 1fr 90px 82px 128px;gap:10px;padding:8px 14px;background:var(--ink3);border-bottom:2px solid var(--rule)">
+            {% for hdr in ['Severity','Ecosystem','Package','Vulnerability','Version','Fixed In','Exploitability'] %}
             <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">{{ hdr }}</span>
             {% endfor %}
           </div>
-          {% for f in deps.findings %}
+          {% for f in deps.vulnerabilities %}
           {% set sev_color = {'CRITICAL':'var(--danger)','HIGH':'var(--warn)','MEDIUM':'#a78bfa','LOW':'var(--teal)','UNKNOWN':'var(--sub)'}.get(f.severity | upper,'var(--sub)') %}
+          {% set epss_pct = ((f.epss | default(0)) * 100) %}
+          {% set epss_color = 'var(--danger)' if epss_pct >= 50 else ('var(--warn)' if epss_pct >= 10 else 'var(--sub)') %}
           <div onclick="this.querySelector('.dep-detail').style.display=this.querySelector('.dep-detail').style.display==='none'?'block':'none'"
-               style="display:grid;grid-template-columns:90px 100px 120px 1fr 100px 90px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .15s"
+               style="display:grid;grid-template-columns:84px 88px 120px 1fr 90px 82px 128px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .15s"
                onmouseenter="this.style.background='var(--ink3)'" onmouseleave="this.style.background=''">
             <div><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;border:1px solid {{ sev_color }};color:{{ sev_color }};background:{{ sev_color }}18">{{ f.severity | upper }}</span></div>
             <div style="font-size:11px;color:var(--sub)">{{ f.ecosystem | default('—') }}</div>
-            <div style="font-size:11px;color:var(--body);font-weight:600;word-break:break-all">{{ f.package | default('—') }}</div>
+            <div style="font-size:11px;color:var(--body);font-weight:600;word-break:break-all">{{ f.package_name | default('—') }}</div>
             <div>
-              <div style="font-size:12px;color:var(--body);font-weight:500">{{ f.vuln_id | default('') }} {{ f.summary | default('') | truncate(80) }}</div>
+              <div style="font-size:12px;color:var(--body);font-weight:500">{{ f.primary_cve | default(f.vuln_id) | default('') }} {{ f.summary | default('') | truncate(80) }}</div>
               <div class="dep-detail" style="display:none;margin-top:8px;padding:8px;background:var(--ink);border-radius:6px;border-left:3px solid {{ sev_color }}">
                 {% if f.summary %}<div style="font-size:11px;color:var(--sub);margin-bottom:4px">{{ f.summary }}</div>{% endif %}
-                {% if f.cvss_score %}<div style="font-size:10px;color:var(--muted)">CVSS: <strong style="color:{{ sev_color }}">{{ f.cvss_score }}</strong></div>{% endif %}
+                {% if f.cvss_score %}<div style="font-size:10px;color:var(--muted)">CVSS: <strong style="color:{{ sev_color }}">{{ f.cvss_score }}</strong>{% if f.epss %} · EPSS: <strong style="color:{{ epss_color }}">{{ '%.1f' | format(epss_pct) }}%</strong>{% if f.epss_pct %} (top {{ '%.0f' | format((1 - f.epss_pct) * 100) }}%){% endif %}{% endif %}</div>{% endif %}
+                {% if f.kev %}<div style="font-size:10px;color:var(--danger);margin-top:2px;font-weight:700">⚠ On CISA Known Exploited Vulnerabilities catalogue</div>{% endif %}
                 {% if f.aliases %}<div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">{{ f.aliases | join(', ') }}</div>{% endif %}
               </div>
             </div>
-            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">{{ f.installed_version | default('—') }}</div>
-            <div style="font-size:10px;color:var(--ok);font-family:'Geist Mono',monospace">{{ f.fixed_version | default('—') }}</div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">{{ f.package_version | default('—') }}</div>
+            <div style="font-size:10px;color:var(--ok);font-family:'Geist Mono',monospace">{{ (f.fixed_versions | first) if f.fixed_versions else '—' }}</div>
+            <div>
+              {% if f.kev %}<span style="font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;background:var(--danger);color:#fff;font-family:'Geist Mono',monospace">KEV</span>{% endif %}
+              {% if f.epss %}<span title="EPSS: probability of exploitation in the next 30 days" style="font-size:10px;font-weight:700;color:{{ epss_color }};font-family:'Geist Mono',monospace">{{ '%.1f' | format(epss_pct) }}%</span>{% elif not f.kev %}<span style="font-size:10px;color:var(--muted)">—</span>{% endif %}
+            </div>
           </div>
           {% endfor %}
         </div>

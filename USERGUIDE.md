@@ -306,6 +306,8 @@ Every finding is post-processed through a CWE→ATT&CK mapping table that adds:
 
 Each CVE finding includes: CVE ID, CVSS score, severity, summary, and the fixed version to upgrade to.
 
+**Exploitability prioritisation (EPSS + CISA KEV).** Every CVE is enriched by `exploit_intel.py` with its **EPSS** score (FIRST.org — probability of exploitation in the next 30 days) and a **CISA KEV** flag (confirmed exploited in the wild). The dependency table is re-sorted so KEV-listed and high-EPSS CVEs appear first, each row shows a `KEV` badge and EPSS %, and a banner highlights any confirmed-exploited CVEs so you fix the ones attackers are actually using before the merely high-CVSS ones. Both feeds are free (no API key), cached for 6 hours, and best-effort — a scan still completes if a feed is unreachable.
+
 ### 5.3 Docker Sandbox
 
 `sandbox.py` executes the cloned repository inside a locked-down Docker container:
