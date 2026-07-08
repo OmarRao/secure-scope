@@ -136,3 +136,49 @@ def test_exploit_intel_graceful_on_empty():
     out = ei.enrich_deps({"vulnerabilities": []})
     assert out["kev_count"] == 0 and out["max_epss"] == 0.0
     assert ei.enrich_deps(None) is None
+
+
+def test_reachability_annotate_offline():
+    """Reachability marks imported packages True, unused False, other-eco None."""
+    import reachability as rr
+    import tempfile, os
+    d = tempfile.mkdtemp()
+    with open(os.path.join(d, "app.py"), "w") as fh:
+        fh.write("import flask\nfrom requests import get\n")
+    deps = {"vulnerabilities": [
+        {"package_name": "flask", "ecosystem": "PyPI", "severity": "HIGH", "cvss_score": 7.0, "epss": 0.1, "kev": False},
+        {"package_name": "unused-lib", "ecosystem": "PyPI", "severity": "CRITICAL", "cvss_score": 9.0, "epss": 0.2, "kev": False},
+        {"package_name": "golib", "ecosystem": "Go", "severity": "HIGH", "cvss_score": 7.5, "epss": 0.3, "kev": False},
+    ]}
+    out = rr.annotate(deps, d)
+    by = {v["package_name"]: v for v in out["vulnerabilities"]}
+    assert by["flask"]["reachable"] is True and by["flask"]["reachable_files"] >= 1
+    assert by["unused-lib"]["reachable"] is False
+    assert by["golib"]["reachable"] is None
+    assert out["reachable_count"] == 1
+    # Reachable flask should sort ahead of the unreachable critical.
+    assert out["vulnerabilities"][0]["package_name"] == "flask"
+
+
+def test_dep_fix_bump_and_plan_offline():
+    import dep_fix_pr as d
+    new, ch = d.bump_requirements_txt("flask==2.0.0\nrequests>=2.20  # x\n", "flask", "3.1.3")
+    assert ch and "flask==3.1.3" in new
+    pj = '{"dependencies": {"lodash": "^4.0.0"}}'
+    new, ch = d.bump_package_json(pj, "lodash", "4.17.21")
+    import json as _j
+    assert ch and _j.loads(new)["dependencies"]["lodash"] == "4.17.21"
+    assert d._best_fixed(["1.2.0", "1.10.0", "1.9.0"]) == "1.10.0"
+    vulns = [
+        {"ecosystem": "PyPI", "package_name": "flask", "package_version": "2.0.0",
+         "file_path": "/w/requirements.txt", "fixed_versions": ["3.1.3"], "primary_cve": "CVE-1",
+         "kev": True, "epss": 0.9, "reachable": True},
+        {"ecosystem": "Go", "package_name": "golib", "file_path": "/w/go.mod",
+         "fixed_versions": ["1.1"], "primary_cve": "CVE-2"},
+    ]
+    plan = d.plan_fixes(vulns, "/w")
+    assert [e["package"] for e in plan["fixable"]] == ["flask"]
+    assert plan["fixable"][0]["fixed"] == "3.1.3"
+    assert plan["manual"][0]["package"] == "golib"
+    body = d.build_pr_body(plan, 1)
+    assert "flask" in body and "KEV" in body

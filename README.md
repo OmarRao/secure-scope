@@ -707,6 +707,19 @@ Severity and CVSS tell you how *bad* a CVE is in theory; they don't tell you whi
 
 The dependency table is re-sorted so **KEV-listed and high-EPSS CVEs surface at the top**, each row shows a `KEV` badge and EPSS percentage, and a banner flags any confirmed-exploited CVEs. Both feeds are cached in-memory (6 h) and best-effort — if a feed is unreachable the scan still completes, simply without the exploitability column. This is pure SCA intelligence: it only reads public advisory data about CVEs already found in your manifests, and performs no active testing.
 
+### Reachability analysis (v2.0)
+
+A CVE in a package you never import is far lower priority than one you call directly. [`reachability.py`](reachability.py) statically checks whether each vulnerable package is actually **imported / required** in your first-party source:
+
+- **Python** — `import pkg`, `from pkg import …` (with a distribution→module alias table, e.g. `beautifulsoup4`→`bs4`)
+- **JS/TS** — `require('pkg')`, `import … from 'pkg'`, dynamic `import('pkg')` (incl. scoped `@scope/pkg` and subpaths)
+
+Each CVE is tagged **Reachable** (imported), **Not imported** (declared but unused — likely transitive), or **Unknown** (ecosystem not statically analysed — never hidden). Reachable CVEs sort above unreachable ones, the report shows an `R` badge and a "Reachable" KPI, and the dependency table prioritises **KEV → reachable → EPSS → severity**. This is a deliberately pragmatic import-presence heuristic (not a full interprocedural call graph): it *demotes* obviously-unused dependencies without ever suppressing a finding.
+
+### One-click dependency-fix PRs (v2.0)
+
+The dependency report includes a **Create dependency-fix PR** button (also `--dep-fix-pr` on the CLI and `POST /api/dep-fix-pr`). SecureScope re-clones and rescans the repo server-side, then bumps each affected manifest — `requirements.txt` (PyPI) and `package.json` (npm) — to the **lowest version that clears every CVE** for that package, and opens a single pull request. The PR body is prioritised by exploitability (KEV / EPSS / reachable) and lists any other-ecosystem CVEs that need a manual upgrade. See [`dep_fix_pr.py`](dep_fix_pr.py). The GitHub token you supply is used only for that request and never stored or logged.
+
 ---
 
 ## IaC Misconfiguration Scanner (v1.6.0)

@@ -324,6 +324,24 @@ def _scan_one(repo_url: str, args, out_dir: Path) -> None:
         Path(commit_log).write_text(json.dumps(commit_results, indent=2))
         print(f"[+] Commit log: {commit_log}")
 
+    # ── 10. Dependency-fix PR ───────────────────────────────────
+    if args.dep_fix_pr and args.github_token and result.repo_path:
+        try:
+            from dependency_scanner import scan_repo as _deps_scan
+            from exploit_intel import enrich_deps as _enrich
+            from reachability import annotate as _reach
+            from dep_fix_pr import create_dep_fix_pr
+            print("\n[*] Building dependency-fix PR...")
+            _deps = _reach(_enrich(_deps_scan(repo_path=result.repo_path).to_dict()), result.repo_path)
+            _vulns = _deps.get("vulnerabilities", []) or []
+            _res = create_dep_fix_pr(repo_url, args.github_token, result.repo_path, _vulns, ts)
+            if _res.get("ok"):
+                print(f"[+] Dependency-fix PR: {_res['url']} ({_res['applied']} upgraded)")
+            else:
+                print(f"[!] Dependency-fix PR skipped: {_res.get('reason','')}")
+        except Exception as exc:
+            print(f"[!] Dependency-fix PR failed: {exc}")
+
     # ── Cleanup ─────────────────────────────────────────────────
     if result.repo_path and result.repo_path.startswith(str(Path(sys.prefix).parent)):
         shutil.rmtree(result.repo_path, ignore_errors=True)
@@ -371,6 +389,8 @@ def main():
                         help="Scan dependency licenses for copyleft/compliance risk")
     parser.add_argument("--supply-chain", action="store_true",
                         help="Check for dependency confusion and typosquatting")
+    parser.add_argument("--dep-fix-pr", action="store_true",
+                        help="Open a PR upgrading vulnerable deps to CVE-clearing versions (requires --github-token)")
     parser.add_argument("--pr-diff", action="store_true",
                         help="Only scan files changed vs base branch (PR diff mode)")
     parser.add_argument("--base-branch", default="main",

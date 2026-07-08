@@ -1403,11 +1403,24 @@
             <div style="font-size:1.5rem;font-weight:800;color:var(--body)">{{ deps.medium_count | default(0) }}</div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Medium</div>
           </div>
+          <div style="background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.3);border-radius:8px;padding:14px;text-align:center" title="CVEs in packages your code actually imports">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--accent)">{{ deps.reachable_count | default(0) }}</div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Reachable</div>
+          </div>
           <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;text-align:center">
             <div style="font-size:1.5rem;font-weight:800;color:var(--body)">{{ deps.ecosystems_found | default([]) | length }}</div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Ecosystems</div>
           </div>
         </div>
+
+        {# Fix-PR action — bump vulnerable manifests and open a PR #}
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:14px">
+          <button id="depFixBtn" onclick="openDepFixPr()" style="display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:8px;border:1px solid var(--accent);background:var(--accent)18;color:var(--accent);font-weight:700;font-size:12px;cursor:pointer">
+            🔀 Create dependency-fix PR
+          </button>
+          <span style="font-size:11px;color:var(--muted)">Opens a pull request that upgrades each vulnerable package (PyPI / npm) to the lowest CVE-clearing version.</span>
+        </div>
+        <div id="depFixResult" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:8px;font-size:12px"></div>
 
         {% if deps.kev_count and deps.kev_count > 0 %}
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:var(--danger)14;border:1px solid var(--danger);border-radius:8px">
@@ -1439,14 +1452,16 @@
                 {% if f.summary %}<div style="font-size:11px;color:var(--sub);margin-bottom:4px">{{ f.summary }}</div>{% endif %}
                 {% if f.cvss_score %}<div style="font-size:10px;color:var(--muted)">CVSS: <strong style="color:{{ sev_color }}">{{ f.cvss_score }}</strong>{% if f.epss %} · EPSS: <strong style="color:{{ epss_color }}">{{ '%.1f' | format(epss_pct) }}%</strong>{% if f.epss_pct %} (top {{ '%.0f' | format((1 - f.epss_pct) * 100) }}%){% endif %}{% endif %}</div>{% endif %}
                 {% if f.kev %}<div style="font-size:10px;color:var(--danger);margin-top:2px;font-weight:700">⚠ On CISA Known Exploited Vulnerabilities catalogue</div>{% endif %}
+                {% if f.reachable is not none %}<div style="font-size:10px;margin-top:2px;color:{{ 'var(--warn)' if f.reachable else 'var(--muted)' }}">{% if f.reachable %}⮑ Reachable — imported in {{ f.reachable_files | default(1) }} file{{ 's' if (f.reachable_files | default(1)) != 1 else '' }}{% else %}Not imported in first-party code (likely transitive / unused){% endif %}</div>{% endif %}
                 {% if f.aliases %}<div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">{{ f.aliases | join(', ') }}</div>{% endif %}
               </div>
             </div>
             <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">{{ f.package_version | default('—') }}</div>
             <div style="font-size:10px;color:var(--ok);font-family:'Geist Mono',monospace">{{ (f.fixed_versions | first) if f.fixed_versions else '—' }}</div>
-            <div>
+            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
               {% if f.kev %}<span style="font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;background:var(--danger);color:#fff;font-family:'Geist Mono',monospace">KEV</span>{% endif %}
-              {% if f.epss %}<span title="EPSS: probability of exploitation in the next 30 days" style="font-size:10px;font-weight:700;color:{{ epss_color }};font-family:'Geist Mono',monospace">{{ '%.1f' | format(epss_pct) }}%</span>{% elif not f.kev %}<span style="font-size:10px;color:var(--muted)">—</span>{% endif %}
+              {% if f.reachable %}<span title="Package is imported in your code" style="font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;background:var(--warn);color:#111;font-family:'Geist Mono',monospace">R</span>{% endif %}
+              {% if f.epss %}<span title="EPSS: probability of exploitation in the next 30 days" style="font-size:10px;font-weight:700;color:{{ epss_color }};font-family:'Geist Mono',monospace">{{ '%.1f' | format(epss_pct) }}%</span>{% elif not f.kev and not f.reachable %}<span style="font-size:10px;color:var(--muted)">—</span>{% endif %}
             </div>
           </div>
           {% endfor %}
@@ -1559,6 +1574,43 @@
 </div>
 
 <script>
+// ── Dependency fix-PR ─────────────────────────────────────────────────────────
+const SS_REPO_URL = {{ repo_url | tojson }};
+async function openDepFixPr(){
+  const box = document.getElementById('depFixResult');
+  const btn = document.getElementById('depFixBtn');
+  const show = (html, ok) => {
+    box.style.display = 'block';
+    box.style.background = ok ? 'var(--ok)14' : 'var(--danger)14';
+    box.style.border = '1px solid ' + (ok ? 'var(--ok)' : 'var(--danger)');
+    box.style.color = 'var(--body)';
+    box.innerHTML = html;
+  };
+  const token = window.prompt(
+    'Enter a GitHub token (fine-grained or classic) with "Contents" + "Pull requests" write access to ' +
+    SS_REPO_URL.replace('https://github.com/','') + '.\n\nThe token is used once for this request and never stored.');
+  if (!token) return;
+  btn.disabled = true; const orig = btn.innerHTML; btn.innerHTML = '⏳ Opening PR…';
+  try {
+    const r = await fetch('/api/dep-fix-pr', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({repo_url: SS_REPO_URL, github_token: token.trim()})
+    });
+    const d = await r.json();
+    if (d.ok && d.url) {
+      show('✅ Opened a PR upgrading <strong>' + d.applied + '</strong> package(s)' +
+           (d.manual ? ' (' + d.manual + ' need manual upgrade)' : '') +
+           ' — <a href="' + d.url + '" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">view pull request →</a>', true);
+    } else {
+      show('⚠ ' + (d.reason || 'Could not create the fix PR.'), false);
+    }
+  } catch (e) {
+    show('⚠ Request failed: ' + e.message, false);
+  } finally {
+    btn.disabled = false; btn.innerHTML = orig;
+  }
+}
+
 // ── Collapsible sections ──────────────────────────────────────────────────────
 function toggleSec(head) {
   const sec = head.closest('.sec');

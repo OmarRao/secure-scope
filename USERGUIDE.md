@@ -308,6 +308,10 @@ Each CVE finding includes: CVE ID, CVSS score, severity, summary, and the fixed 
 
 **Exploitability prioritisation (EPSS + CISA KEV).** Every CVE is enriched by `exploit_intel.py` with its **EPSS** score (FIRST.org — probability of exploitation in the next 30 days) and a **CISA KEV** flag (confirmed exploited in the wild). The dependency table is re-sorted so KEV-listed and high-EPSS CVEs appear first, each row shows a `KEV` badge and EPSS %, and a banner highlights any confirmed-exploited CVEs so you fix the ones attackers are actually using before the merely high-CVSS ones. Both feeds are free (no API key), cached for 6 hours, and best-effort — a scan still completes if a feed is unreachable.
 
+**Reachability (`reachability.py`).** SecureScope statically checks whether each vulnerable package is actually imported/required in your source — Python (`import`, `from … import`) and JS/TS (`require`, `import`). CVEs are tagged Reachable, Not-imported (likely transitive/unused), or Unknown (ecosystems we don't parse — never hidden). Reachable CVEs sort first (`R` badge, "Reachable" KPI), so you tackle vulnerabilities in code you actually run before dead transitive ones. It's an import-presence heuristic, not a full call graph — it demotes, never suppresses.
+
+**One-click fix PRs (`dep_fix_pr.py`).** The dependency report's **Create dependency-fix PR** button (CLI: `--dep-fix-pr`; API: `POST /api/dep-fix-pr` with `{repo_url, github_token}`) bumps `requirements.txt`/`package.json` to the lowest CVE-clearing version for each package and opens one prioritised PR. Supply a GitHub token with Contents + Pull-requests write access; it is used once and never stored. Review and run your tests before merging — a bump can introduce breaking changes.
+
 ### 5.3 Docker Sandbox
 
 `sandbox.py` executes the cloned repository inside a locked-down Docker container:

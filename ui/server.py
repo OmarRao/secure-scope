@@ -442,13 +442,19 @@ def handle_scan(data):
                     # never blocks or fails the scan if the feeds are unreachable.
                     deps_dict = None
                     if deps_result is not None:
-                        _emit(sid, "progress", {"step": "exploit", "message": "🎯 Enriching CVEs with EPSS & CISA KEV exploitability...", "pct": 66})
+                        _emit(sid, "progress", {"step": "exploit", "message": "🎯 Enriching CVEs with EPSS, CISA KEV & reachability...", "pct": 66})
                         try:
                             from exploit_intel import enrich_deps
                             deps_dict = enrich_deps(deps_result.to_dict())
                         except Exception:
                             logger.exception("EPSS/KEV enrichment failed")
                             deps_dict = deps_result.to_dict()
+                        # Reachability — demote CVEs in packages the code never imports.
+                        try:
+                            from reachability import annotate as _annotate_reach
+                            deps_dict = _annotate_reach(deps_dict, workdir)
+                        except Exception:
+                            logger.exception("reachability analysis failed")
 
                     _emit(sid, "progress", {"step": "secrets", "message": "🔑 Scanning for hardcoded secrets and credentials...", "pct": 70})
                     secrets_result = None
@@ -779,6 +785,63 @@ def handle_deps_scan(data):
 
     t = threading.Thread(target=run_deps, daemon=True)
     t.start()
+
+
+@app.route("/api/dep-fix-pr", methods=["POST"])
+def api_dep_fix_pr():
+    """POST {repo_url, github_token} — open a PR that upgrades vulnerable deps.
+
+    Re-clones the target and rescans server-side (never trusts client-supplied
+    findings), enriches with EPSS/KEV + reachability, then bumps each affected
+    manifest to the lowest CVE-clearing version and opens a single PR. The token
+    is used only for this request and never stored or logged.
+    """
+    import re as _re
+    import shutil
+    import tempfile
+    from datetime import datetime
+
+    data = request.get_json(silent=True) or {}
+    repo_url = (data.get("repo_url") or "").strip()
+    gh_token = (data.get("github_token") or "").strip()
+
+    if not _re.match(r"^https://github\.com/[^/]+/[^/]+/?$", repo_url.rstrip("/") + "/"):
+        return jsonify({"ok": False, "reason": "A valid https://github.com/owner/repo URL is required."}), 400
+    if not gh_token:
+        return jsonify({"ok": False, "reason": "A GitHub token with write access to the repo is required."}), 400
+    if not _DEPS_AVAILABLE:
+        return jsonify({"ok": False, "reason": "Dependency scanner unavailable on this server."}), 503
+
+    workdir = tempfile.mkdtemp(prefix="secreview_fixpr_")
+    try:
+        from analyzer import clone_repo
+        clone_repo(repo_url, workdir)
+        deps_result = deps_scan_repo(repo_path=workdir, progress_cb=None)
+        deps = deps_result.to_dict()
+        try:
+            from exploit_intel import enrich_deps
+            deps = enrich_deps(deps)
+        except Exception:
+            logger.exception("fix-pr: enrichment failed")
+        try:
+            from reachability import annotate as _annotate
+            deps = _annotate(deps, workdir)
+        except Exception:
+            logger.exception("fix-pr: reachability failed")
+
+        vulns = deps.get("vulnerabilities", []) or []
+        if not vulns:
+            return jsonify({"ok": False, "reason": "No dependency CVEs found — nothing to fix."})
+
+        from dep_fix_pr import create_dep_fix_pr
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        result = create_dep_fix_pr(repo_url, gh_token, workdir, vulns, ts)
+        return jsonify(result)
+    except Exception:
+        logger.exception("dep-fix-pr failed")
+        return jsonify({"ok": False, "reason": "Fix-PR generation failed. Check server logs."}), 500
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
 
 
 # ── IaC Misconfiguration Scan (v6.0.0) ───────────────────────────────────────
