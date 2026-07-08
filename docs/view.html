@@ -55,6 +55,7 @@
       const total = (s.total_findings!=null)?s.total_findings:(crit+warn);
       const when = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate().toLocaleString() : "";
       const link = r.gist_url || r.report_url || "";
+      const hasDurable = !!r.htmlz;
       wrap.innerHTML = `
         <div class="eye">Shared Security Report</div>
         <h1>Static Analysis &amp; Threat Assessment</h1>
@@ -66,9 +67,34 @@
           <div class="card"><div class="num" style="color:var(--accent)">${cve}</div><div class="lbl">Dep. CVEs</div></div>
           <div class="card"><div class="num" style="color:var(--head)">${total}</div><div class="lbl">Total Findings</div></div>
         </div>
-        ${link?`<a class="cta" href="${safeUrl(link)}" target="_blank" rel="noopener">Open full report →</a>`:'<div class="msg">The full report link is unavailable.</div>'}
+        ${hasDurable
+          ? `<a class="cta" id="openFull" href="#">Open full report →</a>`
+          : (link ? `<a class="cta" href="${safeUrl(link)}" target="_blank" rel="noopener">Open full report →</a>`
+                  : '<div class="msg">The full report is no longer available.</div>')}
       `;
+      if (hasDurable) {
+        document.getElementById("openFull").addEventListener("click", async (e) => {
+          e.preventDefault();
+          try {
+            const html = await ungzipB64(r.htmlz);
+            const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+            window.open(url, "_blank", "noopener");
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+          } catch (err) {
+            if (link) window.open(safeUrl(link), "_blank", "noopener");
+            else alert("Could not open the report.");
+          }
+        });
+      }
     })();
+
+    async function ungzipB64(b64){
+      const bin = atob(b64); const u = new Uint8Array(bin.length);
+      for (let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+      const ds = new DecompressionStream("gzip");
+      const w = ds.writable.getWriter(); w.write(u); w.close();
+      return new TextDecoder().decode(await new Response(ds.readable).arrayBuffer());
+    }
   </script>
 </body>
 </html>

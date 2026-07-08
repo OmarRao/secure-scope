@@ -244,6 +244,15 @@ window.SS = {
       summary: rec.summary || {}, scanType: rec.scanType || "full",
       createdAt: serverTimestamp(),
     };
+    // Durable copy: gzip the rendered report HTML and store it in Firestore so
+    // the report survives Render redeploys (ephemeral disk). Best-effort +
+    // size-guarded to stay well under Firestore's 1 MB document limit.
+    try {
+      if (rec.reportHtml) {
+        const z = await ssGzipB64(rec.reportHtml);
+        if (z && z.length < 700000) data.htmlz = z;
+      }
+    } catch (e) { console.warn("report compress failed", e); }
     try {
       const ref = await addDoc(collection(db, "users", _user.uid, "reports"), data);
       await recordProfile();
@@ -269,11 +278,19 @@ window.SS = {
   // Create a public view-only share doc; returns the shareable link.
   async createShare(rec) {
     if (!_user) return null;
-    const ref = await addDoc(collection(db, "shared"), {
+    const doc0 = {
       ownerUid: _user.uid, ownerEmail: _user.email || "",
       repo: rec.repo || "", report_url: rec.report_url || "", gist_url: rec.gist_url || "",
       summary: rec.summary || {}, createdAt: serverTimestamp(),
-    });
+    };
+    // Carry the durable HTML into the share doc so view-only links keep working
+    // regardless of the backend's ephemeral disk.
+    try {
+      let z = rec.htmlz;
+      if (!z && rec.reportHtml) { z = await ssGzipB64(rec.reportHtml); }
+      if (z && z.length < 700000) doc0.htmlz = z;
+    } catch (e) { console.warn("share compress failed", e); }
+    const ref = await addDoc(collection(db, "shared"), doc0);
     return `${VIEW_BASE}?id=${ref.id}`;
   },
 
@@ -300,6 +317,43 @@ window.SS = {
   },
 };
 
+// ── Durable report HTML (gzip <-> base64, native CompressionStream) ─────────────
+async function ssGzipB64(str) {
+  if (!("CompressionStream" in window)) return "";
+  const cs = new CompressionStream("gzip");
+  const w = cs.writable.getWriter();
+  w.write(new TextEncoder().encode(str)); w.close();
+  const buf = new Uint8Array(await new Response(cs.readable).arrayBuffer());
+  let b = ""; for (let i = 0; i < buf.length; i++) b += String.fromCharCode(buf[i]);
+  return btoa(b);
+}
+async function ssUngzipB64(b64) {
+  const bin = atob(b64);
+  const u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  const ds = new DecompressionStream("gzip");
+  const w = ds.writable.getWriter(); w.write(u); w.close();
+  return new TextDecoder().decode(await new Response(ds.readable).arrayBuffer());
+}
+// Open a durable report: prefer the stored gzip HTML (survives redeploys),
+// fall back to any external URL. Exposed for view.html and the history drawer.
+async function ssOpenReport(rec) {
+  try {
+    if (rec && rec.htmlz) {
+      const html = await ssUngzipB64(rec.htmlz);
+      const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
+      window.open(url, "_blank", "noopener");
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      return true;
+    }
+  } catch (e) { console.warn("open durable report failed", e); }
+  const link = (rec && (rec.gist_url || rec.report_url)) || "";
+  if (link) { window.open(link, "_blank", "noopener"); return true; }
+  return false;
+}
+window.SS.ssUngzipB64 = ssUngzipB64;
+window.SS.openReport = ssOpenReport;
+
 // ── My Reports drawer ──────────────────────────────────────────────────────────
 async function openReports() {
   drawer.classList.add("open");
@@ -313,18 +367,21 @@ async function openReports() {
     const s = r.summary || {};
     const sev = s.by_severity || {};
     const when = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate().toLocaleString() : "";
-    const link = r.gist_url || r.report_url || "#";
     return `
       <div class="ss-rep">
         <div class="ss-rep-repo">${(r.repo || "").replace(/^https?:\/\//, "")}</div>
         <div class="ss-rep-meta">${when} · ${s.total_findings ?? (sev.ERROR || 0) + (sev.WARNING || 0)} findings · ${sev.ERROR || 0} critical</div>
         <div class="ss-rep-actions">
-          <a class="pri" href="${link}" target="_blank" rel="noopener">Open report</a>
+          <button class="pri ss-open" data-id="${r.id}">Open report</button>
           <button data-id="${r.id}" class="ss-copy">Copy share link</button>
           <button data-id="${r.id}" class="ss-email">Email</button>
         </div>
       </div>`;
   }).join("");
+  list.querySelectorAll(".ss-open").forEach((b) => b.onclick = async () => {
+    const ok = await ssOpenReport(reports.find(x => x.id === b.dataset.id));
+    if (!ok) alert("This report has no stored copy or link available.");
+  });
   list.querySelectorAll(".ss-copy").forEach((b) => b.onclick = () => shareReport(reports.find(x => x.id === b.dataset.id), "copy"));
   list.querySelectorAll(".ss-email").forEach((b) => b.onclick = () => shareReport(reports.find(x => x.id === b.dataset.id), "email"));
 }

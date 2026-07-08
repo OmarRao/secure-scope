@@ -1021,14 +1021,23 @@
 
     _socket.on('scan_complete', (data) => {
       _socket.disconnect();
-      // Persist to the signed-in user's report history (Firestore).
+      // Persist to the signed-in user's report history (Firestore). Fetch the
+      // rendered HTML and store a durable gzip copy so the report survives the
+      // backend's ephemeral disk being wiped on redeploy.
       if (window.SS && window.SS.user) {
-        window.SS.saveReport({
-          repo: opts.repoUrl,
-          report_url: data.report_url ? (BACKEND + data.report_url) : '',
-          gist_url: data.gist_url || '',
-          summary: data.summary || {},
-        });
+        (async () => {
+          let reportHtml = '';
+          try {
+            if (data.report_url) reportHtml = await (await fetch(BACKEND + data.report_url)).text();
+          } catch (e) { /* best-effort; falls back to URL */ }
+          window.SS.saveReport({
+            repo: opts.repoUrl,
+            report_url: data.report_url ? (BACKEND + data.report_url) : '',
+            gist_url: data.gist_url || '',
+            summary: data.summary || {},
+            reportHtml,
+          });
+        })();
       }
       document.getElementById('stageFill').style.width = '100%';
       document.getElementById('stageMsg').textContent = 'Your detailed dashboard & report are ready.';

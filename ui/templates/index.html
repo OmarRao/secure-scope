@@ -1910,14 +1910,23 @@ socket.on('scan_complete', d => {
   progStopTimer();
   const totalMs = scanStartTime ? (Date.now() - scanStartTime) : 0;
   const totalStr = fmtDur(totalMs);
-  // Persist to the signed-in user's report history (Firestore).
+  // Persist to the signed-in user's report history (Firestore). Fetch the
+  // rendered HTML now and store a durable gzip copy so the report survives the
+  // backend's ephemeral disk being wiped on redeploy.
   if (window.SS && window.SS.user) {
-    window.SS.saveReport({
-      repo: _lastScanRepo,
-      report_url: d.report_url ? (location.origin + d.report_url) : '',
-      gist_url: d.gist_url || '',
-      summary: d.summary || {},
-    });
+    (async () => {
+      let reportHtml = '';
+      try {
+        if (d.report_url) reportHtml = await (await fetch(d.report_url)).text();
+      } catch (e) { /* best-effort; falls back to URL */ }
+      window.SS.saveReport({
+        repo: _lastScanRepo,
+        report_url: d.report_url ? (location.origin + d.report_url) : '',
+        gist_url: d.gist_url || '',
+        summary: d.summary || {},
+        reportHtml,
+      });
+    })();
   }
   document.getElementById('progBar').style.width = '100%';
   document.getElementById('progPct').textContent = '100%';

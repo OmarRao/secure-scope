@@ -129,6 +129,14 @@ def _security_headers(resp):
         "base-uri 'self'",
         "frame-ancestors 'self'",
     ]))
+    # Allow the GitHub Pages front-end to fetch rendered reports cross-origin so
+    # they can be stored durably (Firestore). Reports are already public by URL,
+    # so a cross-origin GET exposes nothing new.
+    try:
+        if request.path.startswith("/report/"):
+            resp.headers.setdefault("Access-Control-Allow-Origin", "*")
+    except Exception:
+        pass
     return resp
 
 # Log key tool availability at startup so Render logs show exactly what's present
