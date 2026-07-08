@@ -238,9 +238,12 @@ def create_dep_fix_pr(repo_url: str, gh_token: str, workdir: str,
         logger.info("Dependency fix PR opened: %s", pr.html_url)
         return {"ok": True, "url": pr.html_url, "applied": applied,
                 "manual": len(plan["manual"])}
-    except Exception as exc:
-        logger.warning("Dependency fix PR failed: %s", exc)
-        return {"ok": False, "url": "", "applied": 0, "reason": str(exc)}
+    except Exception:
+        # Log full detail server-side; never return the exception text (which can
+        # carry stack-trace / internal path info) to the client.
+        logger.exception("Dependency fix PR failed")
+        return {"ok": False, "url": "", "applied": 0,
+                "reason": "Could not create the fix PR — check the repository URL and token permissions."}
 
 
 def build_pr_body(plan: dict, applied: int) -> str:
