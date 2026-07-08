@@ -1,0 +1,1964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureScope / secure-scope</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;900&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:   #0a0c0f; --ink2: #111419; --ink3: #181c23; --ink4: #1f242d;
+      --rule:  #252b35; --rule2: #2e3540;
+      --muted: #4a5568; --dim: #6b7785; --sub: #a0aec0;
+      --body:  #e2e8f0; --head: #ffffff;
+      --accent:#4f8ef7; --danger:#f25757; --warn:#e6a817; --ok:#3ecf79; --tag:#a78bfa; --teal:#4ec9b0;
+    }
+    html.light {
+      --ink:   #f8f9fa; --ink2: #ffffff; --ink3: #f1f3f5; --ink4: #e9ecef;
+      --rule:  #dee2e6; --rule2: #ced4da;
+      --muted: #868e96; --dim: #6c757d; --sub: #495057;
+      --body:  #212529; --head: #000000;
+    }
+    .theme-btn {
+      background: none; border: 1px solid var(--rule2); border-radius: 6px;
+      color: var(--sub); cursor: pointer; padding: 5px 9px;
+      font-size: 14px; line-height: 1; transition: background .15s, color .15s;
+      margin-top: auto; margin-bottom: 0;
+    }
+    .theme-btn:hover { background: var(--ink3); color: var(--head); }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{background:var(--ink);color:var(--body);font-family:'Geist',sans-serif;font-size:14px;line-height:1.6}
+    ::selection{background:rgba(79,142,247,.25);color:var(--head)}
+    a{color:var(--accent);text-decoration:none}
+    a:hover{text-decoration:underline}
+    code,pre,kbd{font-family:'Geist Mono',monospace}
+
+    /* Layout */
+    .shell{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+    .side{
+      background:var(--ink2);border-right:1px solid var(--rule);
+      padding:0;position:sticky;top:0;height:100vh;overflow-y:auto;
+      display:flex;flex-direction:column;
+    }
+    .side-top{padding:20px 18px;border-bottom:1px solid var(--rule)}
+    .side-logo{font-size:14px;font-weight:700;color:var(--head);letter-spacing:-.2px}
+    .side-logo sup{font-size:9px;color:var(--accent);margin-left:3px;font-weight:500;font-family:'Geist Mono',monospace}
+    .side-repo{font-size:11px;color:var(--dim);margin-top:4px;font-family:'Geist Mono',monospace;word-break:break-all}
+    .nav-grp{padding:16px 0 4px 18px;font-size:9px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace}
+    .nav-item{
+      display:flex;align-items:center;gap:9px;padding:8px 18px;
+      font-size:13px;color:var(--sub);cursor:pointer;
+      transition:all .12s;border-left:2px solid transparent;
+    }
+    .nav-item:hover{background:var(--ink3);color:var(--body)}
+    .nav-item.on{background:var(--ink3);color:var(--head);border-left-color:var(--accent)}
+    .nav-ic{font-size:14px;width:16px;text-align:center;flex-shrink:0}
+    .nav-ct{
+      margin-left:auto;font-size:10px;font-weight:700;
+      font-family:'Geist Mono',monospace;padding:1px 6px;
+      border-radius:4px;
+    }
+    .ct-r{background:rgba(242,87,87,.15);color:var(--danger)}
+    .ct-w{background:rgba(230,168,23,.13);color:var(--warn)}
+    .ct-b{background:rgba(79,142,247,.13);color:var(--accent)}
+    .side-foot{margin-top:auto;padding:16px 18px;border-top:1px solid var(--rule);font-size:11px;color:var(--muted);line-height:1.7;font-family:'Geist Mono',monospace}
+
+    /* Main */
+    .content{padding:32px 36px;max-width:1080px}
+
+    /* Report banner */
+    .banner{
+      border:1px solid var(--rule2);border-radius:10px;
+      padding:24px 28px;margin-bottom:36px;
+      background:var(--ink2);
+      display:flex;justify-content:space-between;align-items:flex-start;gap:20px;
+    }
+    .banner-left h1{font-size:22px;font-weight:800;color:var(--head);letter-spacing:-.4px;margin-bottom:6px}
+    .banner-left .bsub{font-size:13px;color:var(--sub)}
+    .banner-meta{display:flex;gap:20px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--rule)}
+    .bmeta{font-size:12px;color:var(--sub);font-family:'Geist Mono',monospace}
+    .bmeta strong{color:var(--body)}
+    .banner-score{
+      text-align:center;flex-shrink:0;
+      background:var(--ink3);border:1px solid var(--rule2);
+      border-radius:10px;padding:16px 24px;
+    }
+    .score-num{font-size:44px;font-weight:900;font-family:'Geist Mono',monospace;line-height:1}
+    .score-lbl{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:6px;color:var(--muted)}
+    .score-grade{font-size:13px;font-weight:700;margin-top:4px;letter-spacing:.5px;text-transform:uppercase}
+
+    /* ── Jump bar ──────────────────────────────────────────────────── */
+    .jump-bar{
+      display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px;
+      padding:14px 18px;background:var(--ink2);border:1px solid var(--rule);
+      border-radius:10px;
+    }
+    .jump-lbl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+      color:var(--muted);font-family:'Geist Mono',monospace;width:100%;margin-bottom:4px}
+    .jump-pill{
+      display:inline-flex;align-items:center;gap:5px;
+      padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;
+      background:var(--ink3);border:1px solid var(--rule2);color:var(--sub);
+      cursor:pointer;transition:all .12s;font-family:'Geist Mono',monospace;
+      text-decoration:none;
+    }
+    .jump-pill:hover{background:rgba(79,142,247,.1);border-color:var(--accent);color:var(--accent);text-decoration:none}
+    .jump-pill.danger{border-color:rgba(242,87,87,.3);color:var(--danger);background:rgba(242,87,87,.06)}
+    .jump-pill.danger:hover{background:rgba(242,87,87,.12)}
+    .jump-pill.warn{border-color:rgba(230,168,23,.3);color:var(--warn);background:rgba(230,168,23,.06)}
+
+    /* ── Ransomware top summary strip ──────────────────────────────── */
+    .rw-top-strip{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+      border:1px solid rgba(242,87,87,.25);border-radius:10px;
+      overflow:hidden;margin-bottom:28px;
+      background:var(--rule);
+    }
+    .rw-top-cell{
+      background:rgba(242,87,87,.04);padding:16px 18px;
+      border-right:1px solid rgba(242,87,87,.15);
+    }
+    .rw-top-cell:last-child{border-right:none}
+    .rw-top-label{font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;
+      color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:5px}
+    .rw-top-val{font-size:22px;font-weight:900;font-family:'Geist Mono',monospace;
+      letter-spacing:-1px;line-height:1;margin-bottom:3px}
+    .rw-top-sub{font-size:11px;color:var(--dim);font-weight:500}
+
+    /* ── Collapsible sections ──────────────────────────────────────── */
+    .sec{margin-bottom:36px;scroll-margin-top:24px;
+      border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+    .sec-head{
+      display:flex;align-items:center;gap:12px;
+      padding:14px 20px;background:var(--ink2);
+      cursor:pointer;user-select:none;
+      border-bottom:1px solid var(--rule);
+      transition:background .12s;
+    }
+    .sec-head:hover{background:var(--ink3)}
+    .sec-title{font-size:15px;font-weight:700;color:var(--head);letter-spacing:-.2px}
+    .sec-count{font-size:11px;font-weight:600;font-family:'Geist Mono',monospace;
+      color:var(--muted);background:var(--ink3);border:1px solid var(--rule2);
+      padding:2px 8px;border-radius:5px}
+    .sec-chevron{margin-left:auto;font-size:11px;color:var(--muted);
+      transition:transform .2s;flex-shrink:0}
+    .sec.collapsed .sec-chevron{transform:rotate(-90deg)}
+    .sec-body{padding:20px}
+    .sec.collapsed .sec-body{display:none}
+    .eyebrow{font-size:10px;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;
+      color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:6px}
+
+    /* KPI row */
+    .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:28px}
+    .kpi{background:var(--ink2);padding:18px 16px;border-right:1px solid var(--rule)}
+    .kpi:last-child{border-right:none}
+    .kpi-num{font-size:30px;font-weight:800;font-family:'Geist Mono',monospace;line-height:1;color:var(--head)}
+    .kpi-num.r{color:var(--danger)} .kpi-num.w{color:var(--warn)} .kpi-num.b{color:var(--accent)} .kpi-num.g{color:var(--ok)} .kpi-num.v{color:var(--tag)}
+    .kpi-lbl{font-size:11px;color:var(--muted);margin-top:5px;letter-spacing:.2px}
+    .kpi-sub{font-size:11px;font-family:'Geist Mono',monospace;color:var(--dim);margin-top:3px}
+
+    /* Threat level bar */
+    .threat-bar-wrap{border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:28px}
+    .threat-bar-head{background:var(--ink2);padding:16px 20px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center}
+    .threat-bar-head .eyebrow{margin-bottom:0}
+    .threat-label{font-size:13px;font-weight:700;font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:.8px}
+    .threat-track{height:10px;background:var(--ink3);position:relative;overflow:hidden}
+    .threat-fill{height:100%;transition:width .8s ease;position:relative}
+    .threat-fill::after{content:'';position:absolute;top:0;right:0;bottom:0;width:40px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15))}
+    .threat-legend{background:var(--ink2);padding:12px 20px;display:flex;gap:20px}
+    .threat-leg-item{font-size:11px;color:var(--sub);display:flex;align-items:center;gap:6px;font-family:'Geist Mono',monospace}
+    .threat-leg-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+    /* Charts grid */
+    .chart-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
+    .chart-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:28px}
+    .chart-grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+    .cbox{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:20px}
+    .cbox-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:16px}
+    .cbox canvas{max-height:200px}
+
+    /* File heatmap */
+    .hm-row{display:flex;align-items:center;gap:10px;margin-bottom:7px;font-size:12px}
+    .hm-name{font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub);min-width:140px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .hm-track{flex:1;background:var(--ink3);border-radius:3px;height:16px;overflow:hidden}
+    .hm-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:7px;font-size:10px;font-weight:700;color:#fff}
+    .hm-n{font-family:'Geist Mono',monospace;font-size:11px;color:var(--dim);min-width:22px;text-align:right}
+
+    /* Attack surface tiles */
+    .atk-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px}
+    .atk-tile{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:18px}
+    .atk-tile.exposed{border-color:rgba(242,87,87,.35);background:rgba(242,87,87,.04)}
+    .atk-tile.partial{border-color:rgba(230,168,23,.3);background:rgba(230,168,23,.04)}
+    .atk-tile.safe{border-color:rgba(62,207,121,.25);background:rgba(62,207,121,.04)}
+    .atk-ic{font-size:22px;margin-bottom:10px}
+    .atk-name{font-size:12px;font-weight:700;color:var(--head);margin-bottom:4px;letter-spacing:-.1px}
+    .atk-status{font-size:11px;font-weight:600;font-family:'Geist Mono',monospace;text-transform:uppercase;letter-spacing:.5px}
+    .atk-status.e{color:var(--danger)} .atk-status.p{color:var(--warn)} .atk-status.s{color:var(--ok)}
+    .atk-detail{font-size:11px;color:var(--dim);margin-top:6px;line-height:1.4}
+
+    /* MITRE tiles */
+    .mitre-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:28px}
+    .mt{background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;transition:border-color .15s}
+    .mt.crit{border-color:rgba(242,87,87,.4);background:rgba(242,87,87,.04)}
+    .mt.med{border-color:rgba(230,168,23,.35);background:rgba(230,168,23,.04)}
+    .mt .tid{font-family:'Geist Mono',monospace;font-size:10px;color:var(--accent);margin-bottom:4px}
+    .mt .tname{font-size:12px;font-weight:600;color:var(--head);margin-bottom:2px;line-height:1.3}
+    .mt .ttactic{font-size:10px;color:var(--dim);font-family:'Geist Mono',monospace}
+    .mt .tct{font-size:28px;font-weight:900;font-family:'Geist Mono',monospace;margin-top:10px;line-height:1}
+    .mt.crit .tct{color:var(--danger)} .mt.med .tct{color:var(--warn)}
+
+    /* GitHub info */
+    .gh-card{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:24px;margin-bottom:16px}
+    .gh-top{display:flex;align-items:flex-start;gap:16px;margin-bottom:16px}
+    .gh-av{width:52px;height:52px;border-radius:50%;border:1px solid var(--rule2);flex-shrink:0}
+    .gh-name{font-size:20px;font-weight:800;color:var(--head);letter-spacing:-.3px}
+    .gh-desc{font-size:13px;color:var(--sub);margin-top:4px}
+    .gh-stats{display:flex;gap:20px;flex-wrap:wrap;padding-top:14px;border-top:1px solid var(--rule)}
+    .gh-s{font-size:13px;color:var(--sub)} .gh-s strong{color:var(--body)}
+    .gh-topics{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+    .topic{background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.2);border-radius:4px;padding:2px 9px;font-size:11px;font-family:'Geist Mono',monospace}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+    .ibox{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:18px}
+    .ibox-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:12px}
+    .irow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--rule);font-size:13px}
+    .irow:last-child{border:none}
+    .ik{color:var(--sub)} .iv{color:var(--body);font-weight:500;text-align:right;max-width:55%}
+
+    /* Commit list */
+    .commit-list{list-style:none}
+    .commit-row{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--rule);font-size:12px}
+    .commit-row:last-child{border:none}
+    .csha{font-family:'Geist Mono',monospace;font-size:10px;background:rgba(79,142,247,.1);color:var(--accent);padding:2px 6px;border-radius:3px;flex-shrink:0}
+    .cmsg{color:var(--body);flex:1;line-height:1.4}
+    .cmeta{color:var(--muted);font-family:'Geist Mono',monospace;font-size:10px;white-space:nowrap}
+
+    /* Contributors */
+    .contrib-wrap{display:flex;flex-wrap:wrap;gap:10px}
+    .contrib-item{display:flex;align-items:center;gap:8px;font-size:12px}
+    .contrib-item img{width:26px;height:26px;border-radius:50%}
+    .contrib-item strong{color:var(--body)} .contrib-item span{color:var(--dim)}
+
+    /* File tree */
+    .tree-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+    .tree-item{font-family:'Geist Mono',monospace;font-size:11px;padding:3px 9px;border:1px solid var(--rule);border-radius:4px;background:var(--ink3)}
+    .tree-item.dir{color:var(--accent)} .tree-item.file{color:var(--sub)}
+
+    /* Lang bars */
+    .lang-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12px}
+    .lang-n{min-width:90px;color:var(--sub);font-family:'Geist Mono',monospace;font-size:11px}
+    .lang-track{flex:1;background:var(--ink3);border-radius:3px;height:10px;overflow:hidden}
+    .lang-fill{height:100%;border-radius:3px}
+    .lang-p{min-width:36px;text-align:right;color:var(--dim);font-family:'Geist Mono',monospace;font-size:11px}
+
+    /* Findings */
+    .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+    .fbtn{background:var(--ink3);border:1px solid var(--rule2);color:var(--sub);padding:5px 13px;border-radius:5px;font-size:12px;cursor:pointer;font-family:'Geist Mono',monospace;transition:all .12s}
+    .fbtn:hover,.fbtn.on{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.08)}
+    .fsearch{background:var(--ink3);border:1px solid var(--rule2);color:var(--body);padding:5px 13px;border-radius:5px;font-size:12px;outline:none;font-family:'Geist Mono',monospace;min-width:200px}
+    .fsearch:focus{border-color:var(--accent)}
+
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{text-align:left;padding:9px 12px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;border-bottom:2px solid var(--rule)}
+    td{padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+    tr:hover td{background:rgba(255,255,255,.015)}
+
+    .sev{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;font-family:'Geist Mono',monospace;letter-spacing:.5px}
+    .sev-ERROR{background:rgba(242,87,87,.13);color:var(--danger)}
+    .sev-WARNING{background:rgba(230,168,23,.13);color:var(--warn)}
+    .sev-INFO{background:rgba(79,142,247,.13);color:var(--accent)}
+    .tag{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-family:'Geist Mono',monospace;margin:1px}
+    .tag-cwe{background:rgba(167,139,250,.1);color:var(--tag);border:1px solid rgba(167,139,250,.2)}
+    .tag-att{background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
+    .tag-tactic{background:rgba(78,201,176,.1);color:var(--teal);border:1px solid rgba(78,201,176,.2)}
+    details summary{cursor:pointer;color:var(--accent);font-size:11px;margin-top:5px;font-family:'Geist Mono',monospace}
+    .fix-pre{background:var(--ink);border:1px solid var(--rule);border-radius:6px;padding:10px;margin-top:7px;font-family:'Geist Mono',monospace;font-size:11px;white-space:pre-wrap;color:var(--sub);max-height:260px;overflow-y:auto;line-height:1.55}
+
+    /* CVE */
+    .cve-id{font-family:'Geist Mono',monospace;font-size:10px;background:rgba(242,87,87,.1);color:var(--danger);border:1px solid rgba(242,87,87,.2);padding:2px 7px;border-radius:4px}
+
+    /* Sandbox */
+    .sandbox-hd{display:flex;align-items:center;gap:12px;padding:16px;background:var(--ink2);border:1px solid var(--rule);border-radius:10px;margin-bottom:14px}
+    .sdot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .sdot.g{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+    .sdot.r{background:var(--danger);box-shadow:0 0 8px var(--danger)}
+    .sdot.d{background:var(--muted)}
+    .susp-item{padding:8px 12px;background:rgba(242,87,87,.07);border:1px solid rgba(242,87,87,.2);border-radius:6px;margin-bottom:7px;font-size:12px;color:var(--danger);font-family:'Geist Mono',monospace}
+    .conn-item{padding:5px 10px;background:var(--ink2);border:1px solid var(--rule);border-radius:5px;margin-bottom:5px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub)}
+    .stdout-box{background:var(--ink);border:1px solid var(--rule);border-radius:8px;padding:14px;font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub);white-space:pre-wrap;max-height:260px;overflow-y:auto;line-height:1.55}
+
+    /* ── Ransomware Section ─────────────────────────────────────────── */
+    .rw-hero{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+    .rw-card{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:18px 20px}
+    .rw-card.danger{border-color:rgba(242,87,87,.4);background:rgba(242,87,87,.04)}
+    .rw-card.warn{border-color:rgba(230,168,23,.35);background:rgba(230,168,23,.04)}
+    .rw-card.apt{border-color:rgba(167,139,250,.4);background:rgba(167,139,250,.04)}
+    .rw-score-num{font-size:40px;font-weight:900;font-family:'Geist Mono',monospace;line-height:1;letter-spacing:-1.5px}
+    .rw-score-lbl{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-top:4px;font-family:'Geist Mono',monospace}
+    .rw-grade{font-size:13px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;margin-top:6px;font-family:'Geist Mono',monospace}
+
+    /* Blast radius meter */
+    .blast-meter{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:18px 20px;margin-bottom:20px}
+    .blast-track{height:12px;background:var(--ink3);border-radius:6px;overflow:hidden;margin:10px 0 6px;position:relative}
+    .blast-segments{position:absolute;inset:0;display:flex}
+    .blast-seg{height:100%;opacity:.2}
+    .blast-fill{height:100%;border-radius:6px;transition:width 1s cubic-bezier(.4,0,.2,1);position:relative;z-index:1}
+    .blast-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 70%,rgba(255,255,255,.2))}
+    .blast-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:10px;font-family:'Geist Mono',monospace}
+    .blast-leg{display:flex;align-items:center;gap:5px;color:var(--muted)}
+    .blast-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+    /* Behavior grid */
+    .beh-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+    .beh-tile{background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;transition:border-color .15s}
+    .beh-tile.crit{border-color:rgba(242,87,87,.35);background:rgba(242,87,87,.04)}
+    .beh-tile.high{border-color:rgba(230,168,23,.3);background:rgba(230,168,23,.04)}
+    .beh-ic{font-size:18px;margin-bottom:7px}
+    .beh-name{font-size:12px;font-weight:700;color:var(--head);margin-bottom:3px}
+    .beh-mitre{font-size:10px;font-family:'Geist Mono',monospace;color:var(--accent);margin-bottom:4px}
+    .beh-desc{font-size:11px;color:var(--dim);line-height:1.45}
+    .beh-count{font-size:10px;font-weight:700;font-family:'Geist Mono',monospace;margin-top:7px;color:var(--muted)}
+
+    /* Family cards */
+    .fam-list{display:flex;flex-direction:column;gap:10px;margin-bottom:20px}
+    .fam-card{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+    .fam-card.primary{border-color:rgba(242,87,87,.4)}
+    .fam-head{display:flex;align-items:flex-start;gap:14px;padding:16px 18px;border-bottom:1px solid var(--rule)}
+    .fam-conf{flex-shrink:0;width:52px;height:52px;border-radius:8px;background:var(--ink3);display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid var(--rule2)}
+    .fam-conf-num{font-size:17px;font-weight:900;font-family:'Geist Mono',monospace;line-height:1}
+    .fam-conf-lbl{font-size:8px;color:var(--muted);font-family:'Geist Mono',monospace}
+    .fam-info{flex:1}
+    .fam-name{font-size:15px;font-weight:800;color:var(--head);margin-bottom:3px;letter-spacing:-.2px}
+    .fam-alias{font-size:11px;color:var(--dim);font-family:'Geist Mono',monospace;margin-bottom:6px}
+    .fam-tags{display:flex;flex-wrap:wrap;gap:5px}
+    .fam-tag{font-size:10px;font-family:'Geist Mono',monospace;padding:2px 8px;border-radius:4px;font-weight:600}
+    .fam-origin{background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
+    .fam-status-active{background:rgba(242,87,87,.12);color:var(--danger);border:1px solid rgba(242,87,87,.25)}
+    .fam-status-other{background:rgba(230,168,23,.12);color:var(--warn);border:1px solid rgba(230,168,23,.25)}
+    .fam-apt{background:rgba(167,139,250,.12);color:var(--tag);border:1px solid rgba(167,139,250,.25)}
+    .fam-body{padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:12px}
+    .fam-desc{color:var(--sub);line-height:1.6;grid-column:1/-1}
+    .fam-col h4{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace;margin-bottom:8px}
+    .fam-victim{font-size:11px;color:var(--dim);margin-bottom:3px;font-family:'Geist Mono',monospace}
+    .fam-matched{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+    .fam-mb{font-size:10px;font-family:'Geist Mono',monospace;padding:2px 7px;border-radius:3px;background:rgba(242,87,87,.1);color:var(--danger);border:1px solid rgba(242,87,87,.2)}
+    .fam-sector{display:inline-block;font-size:10px;font-family:'Geist Mono',monospace;padding:2px 7px;border-radius:3px;margin:2px;background:var(--ink3);border:1px solid var(--rule2);color:var(--sub)}
+
+    /* CVE ransomware table */
+    .rw-cve-row{display:grid;grid-template-columns:120px 1fr 80px 90px;gap:12px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--rule);font-size:12px}
+    .rw-cve-row:last-child{border:none}
+    .rw-cve-id{font-family:'Geist Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(242,87,87,.1);color:var(--danger);border:1px solid rgba(242,87,87,.2)}
+    .rw-cve-cvss{font-family:'Geist Mono',monospace;font-weight:700;font-size:13px;text-align:center}
+    .rw-cve-fam{font-size:10px;font-family:'Geist Mono',monospace;color:var(--dim)}
+
+    /* Affected sections */
+    .aff-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--rule);font-size:12px}
+    .aff-row:last-child{border:none}
+    .aff-file{font-family:'Geist Mono',monospace;font-size:11px;color:var(--sub);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .aff-beh{display:flex;flex-wrap:wrap;gap:4px}
+    .aff-b{font-size:10px;font-family:'Geist Mono',monospace;padding:2px 6px;border-radius:3px;background:rgba(230,168,23,.1);color:var(--warn);border:1px solid rgba(230,168,23,.2)}
+    .aff-cnt{font-family:'Geist Mono',monospace;font-size:11px;font-weight:700;color:var(--muted);min-width:30px;text-align:right}
+
+    /* Global map */
+    .map-wrap{background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:20px}
+    .map-canvas-wrap{position:relative;background:var(--ink2)}
+    #rwMapSvg{width:100%;height:auto;display:block}
+    .map-legend{padding:12px 16px;border-top:1px solid var(--rule);display:flex;gap:16px;flex-wrap:wrap;font-size:11px;font-family:'Geist Mono',monospace;color:var(--muted)}
+    .map-leg-item{display:flex;align-items:center;gap:6px}
+    .map-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+    /* APT attribution panel */
+    .apt-panel{background:rgba(167,139,250,.04);border:1px solid rgba(167,139,250,.3);border-radius:10px;padding:18px 20px;margin-bottom:20px;display:flex;gap:18px;align-items:flex-start}
+    .apt-badge{flex-shrink:0;background:rgba(167,139,250,.15);border:1px solid rgba(167,139,250,.3);border-radius:8px;padding:12px 16px;text-align:center;min-width:80px}
+    .apt-badge-ic{font-size:24px;margin-bottom:4px}
+    .apt-badge-lbl{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--tag);font-family:'Geist Mono',monospace}
+    .apt-body{flex:1}
+    .apt-title{font-size:14px;font-weight:800;color:var(--head);margin-bottom:4px}
+    .apt-sub{font-size:12px;color:var(--sub);line-height:1.6}
+
+    /* Print / PDF */
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      html, body { background: #fff !important; color: #111 !important; font-size: 12px; }
+      .side { display: none !important; }
+      .shell { display: block !important; }
+      .content { max-width: 100% !important; padding: 0 !important; }
+      .banner { background: #1a1f2e !important; border-radius: 0 !important; margin: 0 0 16px !important; page-break-inside: avoid; }
+      .sec { border: 1px solid #ddd !important; border-radius: 6px !important; margin-bottom: 20px !important; page-break-inside: avoid; background: #fff !important; }
+      .sec-hd { background: #f5f5f5 !important; color: #111 !important; border-bottom: 1px solid #ddd !important; }
+      .card, .stat-card, .wt-card { background: #f9f9f9 !important; border: 1px solid #ddd !important; }
+      .finding-row { border-bottom: 1px solid #eee !important; page-break-inside: avoid; }
+      .rw-top-strip { display: none !important; }
+      .jump-bar { display: none !important; }
+      canvas { max-width: 100% !important; }
+      a { color: #1a56db !important; }
+      @page { margin: 1.5cm; size: A4; }
+      h1,h2,h3 { page-break-after: avoid; }
+      table { page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+  
+    
+    
+  
+
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <nav class="side">
+    <div class="side-top">
+      <div class="side-logo">SecureScope<sup>BETA</sup></div>
+      <div class="side-repo">OmarRao/secure-scope</div>
+    </div>
+
+    <div class="nav-grp">Overview</div>
+    <div class="nav-item on" onclick="go('top',this)"><span class="nav-ic">&#x1F4CA;</span> Summary</div>
+    <div class="nav-item" onclick="go('threat',this)"><span class="nav-ic">&#x26A1;</span> Threat Level</div>
+    <div class="nav-item" onclick="go('surface',this)"><span class="nav-ic">&#x1F3AF;</span> Attack Surface</div>
+    <div class="nav-item" onclick="go('charts',this)"><span class="nav-ic">&#x1F4C8;</span> Analysis Charts</div>
+
+    <div class="nav-grp">Repository</div>
+    <div class="nav-item" onclick="go('github',this)"><span class="nav-ic">&#x1F4CB;</span> Repo Info</div>
+    <div class="nav-item" onclick="go('mitre',this)"><span class="nav-ic">&#x1F6E1;</span> MITRE ATT&CK <span class="nav-ct ct-b">1</span></div>
+
+    <div class="nav-grp">Findings</div>
+    <div class="nav-item" onclick="go('findings',this)">
+      <span class="nav-ic">&#x1F50D;</span> Vulnerabilities
+      <span class="nav-ct ct-r">18</span>
+    </div>
+    <div class="nav-item" onclick="go('cves',this)">
+      <span class="nav-ic">&#x1F4E6;</span> Dep. CVEs
+      <span class="nav-ct ct-b">4</span>
+    </div>
+    <div class="nav-item" onclick="go('sandbox',this)">
+      <span class="nav-ic">&#x1F433;</span> Sandbox
+      
+    </div>
+
+    <div class="nav-item" onclick="go('ransomware',this)">
+      <span class="nav-ic">&#x1F9EC;</span> Ransomware Intel
+      
+    </div>
+    <div class="nav-item" onclick="go('secrets',this)">
+      <span class="nav-ic">&#x1F511;</span> Secrets
+      
+    </div>
+    <div class="nav-item" onclick="go('deps-report',this)">
+      <span class="nav-ic">&#x1F4E6;</span> Dep. Vulns
+      <span class="nav-ct ct-r">6</span>
+    </div>
+    <div class="nav-item" onclick="go('iac',this)">
+      <span class="nav-ic">&#x1F3D7;</span> IaC Misconfigs
+      
+    </div>
+
+    <div class="nav-grp">Actions</div>
+    <div class="nav-item" onclick="window.open('#','_blank')"><span class="nav-ic">&#x1F517;</span> View on GitHub</div>
+    <div class="nav-item" onclick="downloadPDF()"><span class="nav-ic">&#x1F4C4;</span> Print Report</div>
+    <div class="nav-item" onclick="window.location='/'"><span class="nav-ic">&#x2190;</span> New Scan</div>
+
+    <div class="side-foot">
+      Generated<br>2026-07-08 12:00 UTC<br><br>
+      SecureScope v1.0<br>
+      MITRE ATT&CK v14<br><br>
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- Banner -->
+    <div class="banner" id="top">
+      <div class="banner-left">
+        <h1>OmarRao/secure-scope</h1>
+        <div class="bsub">Security analysis platform</div>
+        <div class="banner-meta">
+          <span class="bmeta">Branch <strong>main</strong></span>
+          <span class="bmeta">Language <strong>Python</strong></span>
+          <span class="bmeta">License <strong>Proprietary</strong></span>
+          <span class="bmeta">2026-07-08 12:00 UTC</span>
+        </div>
+      </div>
+      <div class="banner-score">
+        <div class="eyebrow" style="margin-bottom:8px">Risk Score</div>
+        <div class="score-num" style="color:#f25757">100</div>
+        <div class="score-lbl">out of 100</div>
+        <div class="score-grade" style="color:#f25757">CRITICAL</div>
+      </div>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpi-row">
+      <div class="kpi">
+        <div class="kpi-num r">12</div>
+        <div class="kpi-lbl">Critical Findings</div>
+        <div class="kpi-sub">ERROR severity</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-num w">6</div>
+        <div class="kpi-lbl">Warnings</div>
+        <div class="kpi-sub">WARNING severity</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-num b">4</div>
+        <div class="kpi-lbl">Dep. CVEs</div>
+        <div class="kpi-sub">Known vulnerabilities</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-num v">1</div>
+        <div class="kpi-lbl">ATT&CK Techniques</div>
+        <div class="kpi-sub">Unique techniques</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-num d" style="color:var(--muted)">
+          N/A
+        </div>
+        <div class="kpi-lbl">Sandbox Exit</div>
+        <div class="kpi-sub">Not executed</div>
+      </div>
+    </div>
+
+    <!-- Ransomware top summary strip -->
+    
+    
+
+    <!-- Jump-to navigation bar -->
+    <div class="jump-bar">
+      <div class="jump-lbl">Jump to section</div>
+      <a class="jump-pill" href="#threat" onclick="go('threat',this);return false;">&#x26A1; Threat Level</a>
+      <a class="jump-pill" href="#surface" onclick="go('surface',this);return false;">&#x1F3AF; Attack Surface</a>
+      <a class="jump-pill" href="#charts" onclick="go('charts',this);return false;">&#x1F4C8; Charts</a>
+      <a class="jump-pill" href="#github" onclick="go('github',this);return false;">&#x1F4CB; Repo Info</a>
+      <a class="jump-pill" href="#mitre" onclick="go('mitre',this);return false;">&#x1F6E1; MITRE ATT&amp;CK</a>
+      <a class="jump-pill danger" href="#findings" onclick="go('findings',this);return false;">&#x1F50D; Findings (18)</a>
+      <a class="jump-pill" href="#cves" onclick="go('cves',this);return false;">&#x1F4E6; CVEs</a>
+      <a class="jump-pill" href="#sandbox" onclick="go('sandbox',this);return false;">&#x1F433; Sandbox</a>
+      <a class="jump-pill warn" href="#ransomware" onclick="go('ransomware',this);return false;">&#x1F9EC; Ransomware Intel</a>
+    </div>
+
+    <!-- Threat Level section -->
+    <div class="sec" id="threat">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x26A1; Threat Level</div>
+        <div class="sec-count">Score 100/100</div>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+
+      <div class="threat-bar-wrap">
+        <div class="threat-bar-head">
+          <div class="eyebrow">Composite Risk Score</div>
+          <span class="threat-label" style="color:#f25757">CRITICAL</span>
+        </div>
+        <div class="threat-track">
+          <div class="threat-fill" id="threatFill"
+            style="width:100%;background:linear-gradient(90deg,
+              #f25757,#ff8c42
+              )">
+          </div>
+        </div>
+        <div class="threat-legend">
+          <span class="threat-leg-item"><span class="threat-leg-dot" style="background:#3ecf79"></span>Low (0-19)</span>
+          <span class="threat-leg-item"><span class="threat-leg-dot" style="background:#4f8ef7"></span>Medium (20-44)</span>
+          <span class="threat-leg-item"><span class="threat-leg-dot" style="background:#e6a817"></span>High (45-69)</span>
+          <span class="threat-leg-item"><span class="threat-leg-dot" style="background:#f25757"></span>Critical (70-100)</span>
+        </div>
+      </div>
+
+      <!-- Score breakdown -->
+      <div class="chart-grid-4">
+        <div class="cbox" style="text-align:center">
+          <div class="cbox-title">Critical Weight</div>
+          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--danger)">120</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">12 errors x 10 pts</div>
+        </div>
+        <div class="cbox" style="text-align:center">
+          <div class="cbox-title">Warning Weight</div>
+          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--warn)">18</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">6 warnings x 3 pts</div>
+        </div>
+        <div class="cbox" style="text-align:center">
+          <div class="cbox-title">CVE Weight</div>
+          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--accent)">32</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">4 CVEs x 8 pts</div>
+        </div>
+        <div class="cbox" style="text-align:center">
+          <div class="cbox-title">Runtime Weight</div>
+          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--tag)">0</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">0 behaviors x 15 pts</div>
+        </div>
+      </div>
+
+      <!-- Priority fix queue -->
+      
+      <div class="cbox">
+        <div class="cbox-title">Priority Fix Queue (Top 5 Critical)</div>
+        <table style="margin-top:8px">
+          <thead><tr><th>#</th><th>Rule</th><th>File</th><th>CWE</th><th>Technique</th></tr></thead>
+          <tbody>
+            
+            <tr>
+              <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">1</td>
+              <td><code style="font-size:11px">rule-1</code></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">:11</td>
+              <td><span class="tag tag-cwe">CWE-79: Cross-site Scripting</span></td>
+              <td><span class="tag tag-att">T1059</span></td>
+            </tr>
+            
+            <tr>
+              <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">2</td>
+              <td><code style="font-size:11px">rule-2</code></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">:12</td>
+              <td><span class="tag tag-cwe">CWE-79: Cross-site Scripting</span></td>
+              <td><span class="tag tag-att">T1059</span></td>
+            </tr>
+            
+            <tr>
+              <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">3</td>
+              <td><code style="font-size:11px">rule-4</code></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">:14</td>
+              <td><span class="tag tag-cwe">CWE-79: Cross-site Scripting</span></td>
+              <td><span class="tag tag-att">T1059</span></td>
+            </tr>
+            
+            <tr>
+              <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">4</td>
+              <td><code style="font-size:11px">rule-5</code></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">:15</td>
+              <td><span class="tag tag-cwe">CWE-79: Cross-site Scripting</span></td>
+              <td><span class="tag tag-att">T1059</span></td>
+            </tr>
+            
+            <tr>
+              <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">5</td>
+              <td><code style="font-size:11px">rule-7</code></td>
+              <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">:17</td>
+              <td><span class="tag tag-cwe">CWE-79: Cross-site Scripting</span></td>
+              <td><span class="tag tag-att">T1059</span></td>
+            </tr>
+            
+          </tbody>
+        </table>
+      </div>
+      
+      </div><!-- /sec-body threat -->
+    </div>
+
+    <!-- Attack Surface section -->
+    <div class="sec" id="surface">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F3AF; Attack Surface Analysis</div>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+
+      
+      
+      
+      
+      
+      
+      
+      
+
+      <div class="atk-grid">
+        <div class="atk-tile partial">
+          <div class="atk-ic">&#x1F5C4;</div>
+          <div class="atk-name">SQL Injection</div>
+          <div class="atk-status s">Clear</div>
+          <div class="atk-detail">CWE-89 / T1190 Initial Access</div>
+        </div>
+        <div class="atk-tile safe">
+          <div class="atk-ic">&#x1F4BB;</div>
+          <div class="atk-name">Command Injection</div>
+          <div class="atk-status s">Clear</div>
+          <div class="atk-detail">CWE-78 / T1059 Execution</div>
+        </div>
+        <div class="atk-tile safe">
+          <div class="atk-ic">&#x1F4DC;</div>
+          <div class="atk-name">Cross-Site Scripting</div>
+          <div class="atk-status s">Clear</div>
+          <div class="atk-detail">CWE-79 / T1059.007 Execution</div>
+        </div>
+        <div class="atk-tile safe">
+          <div class="atk-ic">&#x1F310;</div>
+          <div class="atk-name">SSRF</div>
+          <div class="atk-status s">Clear</div>
+          <div class="atk-detail">CWE-918 / T1090 Defense Evasion</div>
+        </div>
+        <div class="atk-tile safe">
+          <div class="atk-ic">&#x1F4C1;</div>
+          <div class="atk-name">Path Traversal</div>
+          <div class="atk-status s">Clear</div>
+          <div class="atk-detail">CWE-22 / T1083 Discovery</div>
+        </div>
+        <div class="atk-tile safe">
+          <div class="atk-ic">&#x1F511;</div>
+          <div class="atk-name">Hardcoded Credentials</div>
+          <div class="atk-status s">Clear</div>
+          <div class="atk-detail">CWE-798 / T1552.001 Credential Access</div>
+        </div>
+        <div class="atk-tile safe">
+          <div class="atk-ic">&#x1F512;</div>
+          <div class="atk-name">Weak Cryptography</div>
+          <div class="atk-status s">Clear</div>
+          <div class="atk-detail">CWE-327 / T1600 Defense Evasion</div>
+        </div>
+        <div class="atk-tile safe">
+          <div class="atk-ic">&#x1F4E6;</div>
+          <div class="atk-name">Insecure Deserialization</div>
+          <div class="atk-status s">Clear</div>
+          <div class="atk-detail">CWE-502 / T1059 Execution</div>
+        </div>
+      </div>
+      </div><!-- /sec-body surface -->
+    </div>
+
+    <!-- Charts -->
+    <div class="sec" id="charts">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F4C8; Analysis Charts</div>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+
+      <div class="chart-grid-3">
+        <div class="cbox">
+          <div class="cbox-title">Severity Distribution</div>
+          <canvas id="cSeverity"></canvas>
+        </div>
+        <div class="cbox">
+          <div class="cbox-title">ATT&CK Technique Radar</div>
+          <canvas id="cRadar"></canvas>
+        </div>
+        <div class="cbox">
+          <div class="cbox-title">Findings by File</div>
+          <div id="fileHm"></div>
+        </div>
+      </div>
+
+      <div class="chart-grid-2">
+        <div class="cbox">
+          <div class="cbox-title">Severity per File (Top 6)</div>
+          <canvas id="cStackBar"></canvas>
+        </div>
+        <div class="cbox">
+          <div class="cbox-title">Language Risk Distribution</div>
+          <canvas id="cLangPolar"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-grid-2">
+        <div class="cbox">
+          <div class="cbox-title">CWE Category Breakdown</div>
+          <canvas id="cCwe"></canvas>
+        </div>
+        <div class="cbox">
+          <div class="cbox-title">Tactic Phase Distribution</div>
+          <canvas id="cTactic"></canvas>
+        </div>
+      </div>
+      </div><!-- /sec-body charts -->
+    </div>
+
+    <!-- GitHub Info -->
+    <div class="sec" id="github">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F4CB; Repository Information</div>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+
+      <div class="gh-card">
+        <div class="gh-top">
+          
+          <div>
+            <div class="gh-name"><a href="#" target="_blank">OmarRao/secure-scope</a></div>
+            <div class="gh-desc">Security analysis platform</div>
+          </div>
+        </div>
+        <div class="gh-stats">
+          <span class="gh-s">Stars <strong>0</strong></span>
+          <span class="gh-s">Forks <strong>0</strong></span>
+          <span class="gh-s">Watchers <strong>0</strong></span>
+          <span class="gh-s">Issues <strong>0</strong></span>
+          <span class="gh-s">Size <strong>0 KB</strong></span>
+        </div>
+        
+      </div>
+
+      <div class="info-grid">
+        <div class="ibox">
+          <div class="ibox-title">Details</div>
+          <div class="irow"><span class="ik">Owner</span><span class="iv">N/A</span></div>
+          <div class="irow"><span class="ik">Default Branch</span><span class="iv"><code>main</code></span></div>
+          <div class="irow"><span class="ik">License</span><span class="iv">Proprietary</span></div>
+          <div class="irow"><span class="ik">Created</span><span class="iv">N/A</span></div>
+          <div class="irow"><span class="ik">Last Push</span><span class="iv">N/A</span></div>
+          <div class="irow"><span class="ik">Size</span><span class="iv">0 KB</span></div>
+        </div>
+
+        <div class="ibox">
+          <div class="ibox-title">Language Breakdown</div>
+          <p style="color:var(--muted);font-size:12px">No language data available.</p>
+        </div>
+
+        <div class="ibox">
+          <div class="ibox-title">Recent Commits</div>
+          <p style="color:var(--muted);font-size:12px">No commit data.</p>
+        </div>
+
+        <div class="ibox">
+          <div class="ibox-title">Contributors</div>
+          <p style="color:var(--muted);font-size:12px">No contributor data.</p>
+        </div>
+      </div>
+
+      
+      </div><!-- /sec-body github -->
+    </div>
+
+    <!-- MITRE ATT&CK -->
+    <div class="sec" id="mitre">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F6E1; MITRE ATT&amp;CK Coverage</div>
+        <div class="sec-count">1 techniques</div>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+      <div class="mitre-grid">
+        
+        <div class="mt med">
+          <div class="tid">T1059</div>
+          <div class="tname">Command and Scripting Interpreter</div>
+          <div class="ttactic">Execution</div>
+          <div class="tct">18</div>
+        </div>
+        
+        
+      </div>
+      </div><!-- /sec-body mitre -->
+    </div>
+
+    <!-- Findings -->
+    <div class="sec" id="findings">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F50D; Vulnerability Findings</div>
+        <div class="sec-count">18 total</div>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+      <div class="filter-row">
+        <button class="fbtn on" onclick="filt('ALL',this)">All (18)</button>
+        <button class="fbtn" onclick="filt('ERROR',this)" style="color:var(--danger)">Critical (12)</button>
+        <button class="fbtn" onclick="filt('WARNING',this)" style="color:var(--warn)">Warning (6)</button>
+        <input class="fsearch" id="fsearch" placeholder="Filter by file, rule, CWE..." oninput="fsrch(this.value)">
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Severity</th><th>Rule / Description</th><th>Location</th><th>MITRE</th>
+            
+          </tr>
+        </thead>
+        <tbody>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.audit.rule-0  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-0</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L10</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-1  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-1</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L11</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-2  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-2</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L12</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.audit.rule-3  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-3</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L13</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-4  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-4</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L14</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-5  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-5</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L15</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.audit.rule-6  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-6</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L16</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-7  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-7</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L17</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-8  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-8</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L18</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.audit.rule-9  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-9</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L19</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-10  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-10</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L20</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-11  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-11</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L21</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.audit.rule-12  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-12</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L22</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-13  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-13</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L23</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-14  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-14</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L24</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.audit.rule-15  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-WARNING">WARNING</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-15</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L25</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-16  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-16</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L26</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-17  cwe-79: cross-site scripting t1059">
+            <td><span class="sev sev-ERROR">ERROR</span></td>
+            <td>
+              <code style="font-size:11px">python.lang.security.audit.rule-17</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+            </td>
+            <td>
+              <code style="font-size:11px;color:var(--teal)"></code>
+              <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L27</div>
+            </td>
+            <td>
+              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-att">T1059</span>
+              <span class="tag tag-tactic">Execution</span>
+            </td>
+            
+          </tr>
+          
+        </tbody>
+      </table>
+      </div><!-- /sec-body findings -->
+    </div>
+
+    <!-- CVEs -->
+    <div class="sec" id="cves">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F4E6; Dependency CVEs</div>
+        <div class="sec-count">4</div>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+      
+      <table>
+        <thead><tr><th>Ecosystem</th><th>Package</th><th>Version</th><th>CVE / ID</th><th>Description</th><th>Fix</th></tr></thead>
+        <tbody>
+          
+          <tr>
+            <td><span class="tag tag-tactic"></span></td>
+            <td><code style="font-size:11px">log4j-core</code></td>
+            <td><code style="font-size:11px"></code></td>
+            <td><span class="cve-id">CVE-2021-44228</span></td>
+            <td style="font-size:12px;color:var(--sub)">Remote code execution via JNDI lookup (Log4Shell).</td>
+            <td style="font-size:12px;color:var(--ok)">N/A</td>
+          </tr>
+          
+          <tr>
+            <td><span class="tag tag-tactic"></span></td>
+            <td><code style="font-size:11px">flask</code></td>
+            <td><code style="font-size:11px"></code></td>
+            <td><span class="cve-id">CVE-2023-30861</span></td>
+            <td style="font-size:12px;color:var(--sub)">Possible session cookie disclosure via caching proxy.</td>
+            <td style="font-size:12px;color:var(--ok)">N/A</td>
+          </tr>
+          
+          <tr>
+            <td><span class="tag tag-tactic"></span></td>
+            <td><code style="font-size:11px">requests</code></td>
+            <td><code style="font-size:11px"></code></td>
+            <td><span class="cve-id">CVE-2023-32681</span></td>
+            <td style="font-size:12px;color:var(--sub)">Proxy-Authorization header leak on redirect.</td>
+            <td style="font-size:12px;color:var(--ok)">N/A</td>
+          </tr>
+          
+          <tr>
+            <td><span class="tag tag-tactic"></span></td>
+            <td><code style="font-size:11px">pyyaml</code></td>
+            <td><code style="font-size:11px"></code></td>
+            <td><span class="cve-id">CVE-2020-14343</span></td>
+            <td style="font-size:12px;color:var(--sub)">Arbitrary code execution via full_load.</td>
+            <td style="font-size:12px;color:var(--ok)">N/A</td>
+          </tr>
+          
+        </tbody>
+      </table>
+      
+      </div><!-- /sec-body cves -->
+    </div>
+
+    <!-- Sandbox -->
+    <div class="sec" id="sandbox">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F433; Sandbox Runtime Analysis</div>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+      
+        <div style="padding:28px;text-align:center;color:var(--muted);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px">
+          Sandbox not enabled for this scan. Re-run with Docker Sandbox option active.
+        </div>
+      
+      </div><!-- /sec-body sandbox -->
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- RANSOMWARE INTELLIGENCE                                          -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <div class="sec" id="ransomware">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F9EC; Ransomware Intelligence</div>
+        
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+
+      
+      
+      <div style="padding:28px;text-align:center;color:var(--muted);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px">
+        Ransomware analysis not available for this scan.
+      </div>
+      
+      </div><!-- /sec-body ransomware -->
+    </div>
+    <!-- /ransomware -->
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SECRETS DETECTION                                               -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="sec" id="secrets">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F511; Secrets Detection</div>
+        
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+      
+        <div style="padding:28px;text-align:center;color:var(--muted);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px">
+          Secrets scan not included in this report.
+        </div>
+      
+      </div><!-- /sec-body secrets -->
+    </div>
+    <!-- /secrets -->
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- DEPENDENCY VULNERABILITIES                                       -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="sec" id="deps-report">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F4E6; Dependency Vulnerabilities</div>
+        
+          <span class="sec-count" style="color:var(--danger)">6 CVEs · 84 packages</span>
+        
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+      
+
+        
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:20px">
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;text-align:center">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--body)">84</div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Packages</div>
+          </div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;text-align:center">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--body)">6</div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Vulnerable</div>
+          </div>
+          <div style="background:rgba(242,87,87,0.08);border:1px solid rgba(242,87,87,0.3);border-radius:8px;padding:14px;text-align:center">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--danger)">1</div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Critical</div>
+          </div>
+          <div style="background:rgba(230,168,23,0.08);border:1px solid rgba(230,168,23,0.3);border-radius:8px;padding:14px;text-align:center">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--warn)">3</div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">High</div>
+          </div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;text-align:center">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--body)">2</div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Medium</div>
+          </div>
+          <div style="background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.3);border-radius:8px;padding:14px;text-align:center" title="CVEs in packages your code actually imports">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--accent)">2</div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Reachable</div>
+          </div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;text-align:center">
+            <div style="font-size:1.5rem;font-weight:800;color:var(--body)">1</div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Ecosystems</div>
+          </div>
+        </div>
+
+        
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:14px">
+          <button id="depFixBtn" onclick="openDepFixPr()" style="display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:8px;border:1px solid var(--accent);background:var(--accent)18;color:var(--accent);font-weight:700;font-size:12px;cursor:pointer">
+            🔀 Create dependency-fix PR
+          </button>
+          <span style="font-size:11px;color:var(--muted)">Opens a pull request that upgrades each vulnerable package (PyPI / npm) to the lowest CVE-clearing version.</span>
+        </div>
+        <div id="depFixResult" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:8px;font-size:12px"></div>
+
+        
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px 14px;background:var(--danger)14;border:1px solid var(--danger);border-radius:8px">
+          <span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:4px;background:var(--danger);color:#fff;font-family:'Geist Mono',monospace">CISA KEV</span>
+          <span style="font-size:12px;color:var(--body)"><strong>1</strong> of these CVEs is on CISA's Known Exploited Vulnerabilities catalogue — confirmed exploited in the wild. Prioritise it first.</span>
+        </div>
+        
+
+        
+        <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:84px 88px 120px 1fr 90px 82px 128px;gap:10px;padding:8px 14px;background:var(--ink3);border-bottom:2px solid var(--rule)">
+            
+            <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Severity</span>
+            
+            <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Ecosystem</span>
+            
+            <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Package</span>
+            
+            <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Vulnerability</span>
+            
+            <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Version</span>
+            
+            <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Fixed In</span>
+            
+            <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Exploitability</span>
+            
+          </div>
+          
+          
+          
+          
+          <div onclick="this.querySelector('.dep-detail').style.display=this.querySelector('.dep-detail').style.display==='none'?'block':'none'"
+               style="display:grid;grid-template-columns:84px 88px 120px 1fr 90px 82px 128px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .15s"
+               onmouseenter="this.style.background='var(--ink3)'" onmouseleave="this.style.background=''">
+            <div><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;border:1px solid var(--danger);color:var(--danger);background:var(--danger)18">CRITICAL</span></div>
+            <div style="font-size:11px;color:var(--sub)">Maven</div>
+            <div style="font-size:11px;color:var(--body);font-weight:600;word-break:break-all">log4j-core</div>
+            <div>
+              <div style="font-size:12px;color:var(--body);font-weight:500">CVE-2021-44228 Remote code execution via JNDI lookup (Log4Shell).</div>
+              <div class="dep-detail" style="display:none;margin-top:8px;padding:8px;background:var(--ink);border-radius:6px;border-left:3px solid var(--danger)">
+                <div style="font-size:11px;color:var(--sub);margin-bottom:4px">Remote code execution via JNDI lookup (Log4Shell).</div>
+                <div style="font-size:10px;color:var(--muted)">CVSS: <strong style="color:var(--danger)">10.0</strong> · EPSS: <strong style="color:var(--danger)">97.4%</strong> (top 0%)</div>
+                <div style="font-size:10px;color:var(--danger);margin-top:2px;font-weight:700">⚠ On CISA Known Exploited Vulnerabilities catalogue</div>
+                
+                <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">CVE-2021-44228</div>
+              </div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">2.14.0</div>
+            <div style="font-size:10px;color:var(--ok);font-family:'Geist Mono',monospace">2.17.0</div>
+            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+              <span style="font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;background:var(--danger);color:#fff;font-family:'Geist Mono',monospace">KEV</span>
+              
+              <span title="EPSS: probability of exploitation in the next 30 days" style="font-size:10px;font-weight:700;color:var(--danger);font-family:'Geist Mono',monospace">97.4%</span>
+            </div>
+          </div>
+          
+          
+          
+          
+          <div onclick="this.querySelector('.dep-detail').style.display=this.querySelector('.dep-detail').style.display==='none'?'block':'none'"
+               style="display:grid;grid-template-columns:84px 88px 120px 1fr 90px 82px 128px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .15s"
+               onmouseenter="this.style.background='var(--ink3)'" onmouseleave="this.style.background=''">
+            <div><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;border:1px solid var(--warn);color:var(--warn);background:var(--warn)18">HIGH</span></div>
+            <div style="font-size:11px;color:var(--sub)">PyPI</div>
+            <div style="font-size:11px;color:var(--body);font-weight:600;word-break:break-all">flask</div>
+            <div>
+              <div style="font-size:12px;color:var(--body);font-weight:500">CVE-2023-30861 Possible session cookie disclosure via caching proxy.</div>
+              <div class="dep-detail" style="display:none;margin-top:8px;padding:8px;background:var(--ink);border-radius:6px;border-left:3px solid var(--warn)">
+                <div style="font-size:11px;color:var(--sub);margin-bottom:4px">Possible session cookie disclosure via caching proxy.</div>
+                <div style="font-size:10px;color:var(--muted)">CVSS: <strong style="color:var(--warn)">7.5</strong> · EPSS: <strong style="color:var(--sub)">1.2%</strong> (top 17%)</div>
+                
+                <div style="font-size:10px;margin-top:2px;color:var(--warn)">⮑ Reachable — imported in 3 files</div>
+                <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">CVE-2023-30861</div>
+              </div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">2.0.1</div>
+            <div style="font-size:10px;color:var(--ok);font-family:'Geist Mono',monospace">2.3.2</div>
+            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+              
+              <span title="Package is imported in your code" style="font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;background:var(--warn);color:#111;font-family:'Geist Mono',monospace">R</span>
+              <span title="EPSS: probability of exploitation in the next 30 days" style="font-size:10px;font-weight:700;color:var(--sub);font-family:'Geist Mono',monospace">1.2%</span>
+            </div>
+          </div>
+          
+          
+          
+          
+          <div onclick="this.querySelector('.dep-detail').style.display=this.querySelector('.dep-detail').style.display==='none'?'block':'none'"
+               style="display:grid;grid-template-columns:84px 88px 120px 1fr 90px 82px 128px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .15s"
+               onmouseenter="this.style.background='var(--ink3)'" onmouseleave="this.style.background=''">
+            <div><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;border:1px solid #a78bfa;color:#a78bfa;background:#a78bfa18">MEDIUM</span></div>
+            <div style="font-size:11px;color:var(--sub)">PyPI</div>
+            <div style="font-size:11px;color:var(--body);font-weight:600;word-break:break-all">requests</div>
+            <div>
+              <div style="font-size:12px;color:var(--body);font-weight:500">CVE-2023-32681 Proxy-Authorization header leak on redirect.</div>
+              <div class="dep-detail" style="display:none;margin-top:8px;padding:8px;background:var(--ink);border-radius:6px;border-left:3px solid #a78bfa">
+                <div style="font-size:11px;color:var(--sub);margin-bottom:4px">Proxy-Authorization header leak on redirect.</div>
+                <div style="font-size:10px;color:var(--muted)">CVSS: <strong style="color:#a78bfa">6.1</strong> · EPSS: <strong style="color:var(--sub)">0.8%</strong> (top 25%)</div>
+                
+                <div style="font-size:10px;margin-top:2px;color:var(--warn)">⮑ Reachable — imported in 5 files</div>
+                <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">CVE-2023-32681</div>
+              </div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">2.25.0</div>
+            <div style="font-size:10px;color:var(--ok);font-family:'Geist Mono',monospace">2.31.0</div>
+            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+              
+              <span title="Package is imported in your code" style="font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;background:var(--warn);color:#111;font-family:'Geist Mono',monospace">R</span>
+              <span title="EPSS: probability of exploitation in the next 30 days" style="font-size:10px;font-weight:700;color:var(--sub);font-family:'Geist Mono',monospace">0.8%</span>
+            </div>
+          </div>
+          
+          
+          
+          
+          <div onclick="this.querySelector('.dep-detail').style.display=this.querySelector('.dep-detail').style.display==='none'?'block':'none'"
+               style="display:grid;grid-template-columns:84px 88px 120px 1fr 90px 82px 128px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .15s"
+               onmouseenter="this.style.background='var(--ink3)'" onmouseleave="this.style.background=''">
+            <div><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;border:1px solid var(--warn);color:var(--warn);background:var(--warn)18">HIGH</span></div>
+            <div style="font-size:11px;color:var(--sub)">PyPI</div>
+            <div style="font-size:11px;color:var(--body);font-weight:600;word-break:break-all">pyyaml</div>
+            <div>
+              <div style="font-size:12px;color:var(--body);font-weight:500">CVE-2020-14343 Arbitrary code execution via full_load.</div>
+              <div class="dep-detail" style="display:none;margin-top:8px;padding:8px;background:var(--ink);border-radius:6px;border-left:3px solid var(--warn)">
+                <div style="font-size:11px;color:var(--sub);margin-bottom:4px">Arbitrary code execution via full_load.</div>
+                <div style="font-size:10px;color:var(--muted)">CVSS: <strong style="color:var(--warn)">7.8</strong> · EPSS: <strong style="color:var(--sub)">2.0%</strong> (top 14%)</div>
+                
+                <div style="font-size:10px;margin-top:2px;color:var(--muted)">Not imported in first-party code (likely transitive / unused)</div>
+                <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">CVE-2020-14343</div>
+              </div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">5.3</div>
+            <div style="font-size:10px;color:var(--ok);font-family:'Geist Mono',monospace">5.4</div>
+            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+              
+              
+              <span title="EPSS: probability of exploitation in the next 30 days" style="font-size:10px;font-weight:700;color:var(--sub);font-family:'Geist Mono',monospace">2.0%</span>
+            </div>
+          </div>
+          
+        </div>
+
+      
+      </div><!-- /sec-body deps-report -->
+    </div>
+    <!-- /deps-report -->
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- IaC MISCONFIGURATION SCANNER                                    -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    
+    <div class="sec" id="iac">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">🏗️ IaC Misconfiguration Scanner</div>
+        
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+
+      
+      <div style="padding:28px;text-align:center;color:var(--muted);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px">
+        IaC scan not included in this report.
+      </div>
+      
+
+      </div><!-- /sec-body iac -->
+    </div>
+    <!-- /iac -->
+
+  </div>
+</div>
+
+<script>
+// ── Dependency fix-PR ─────────────────────────────────────────────────────────
+const SS_REPO_URL = "https://github.com/OmarRao/secure-scope";
+async function openDepFixPr(){
+  const box = document.getElementById('depFixResult');
+  const btn = document.getElementById('depFixBtn');
+  const show = (html, ok) => {
+    box.style.display = 'block';
+    box.style.background = ok ? 'var(--ok)14' : 'var(--danger)14';
+    box.style.border = '1px solid ' + (ok ? 'var(--ok)' : 'var(--danger)');
+    box.style.color = 'var(--body)';
+    box.innerHTML = html;
+  };
+  const token = window.prompt(
+    'Enter a GitHub token (fine-grained or classic) with "Contents" + "Pull requests" write access to ' +
+    SS_REPO_URL.replace('https://github.com/','') + '.\n\nThe token is used once for this request and never stored.');
+  if (!token) return;
+  btn.disabled = true; const orig = btn.innerHTML; btn.innerHTML = '⏳ Opening PR…';
+  try {
+    const r = await fetch('/api/dep-fix-pr', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({repo_url: SS_REPO_URL, github_token: token.trim()})
+    });
+    const d = await r.json();
+    if (d.ok && d.url) {
+      show('✅ Opened a PR upgrading <strong>' + d.applied + '</strong> package(s)' +
+           (d.manual ? ' (' + d.manual + ' need manual upgrade)' : '') +
+           ' — <a href="' + d.url + '" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">view pull request →</a>', true);
+    } else {
+      show('⚠ ' + (d.reason || 'Could not create the fix PR.'), false);
+    }
+  } catch (e) {
+    show('⚠ Request failed: ' + e.message, false);
+  } finally {
+    btn.disabled = false; btn.innerHTML = orig;
+  }
+}
+
+// ── Collapsible sections ──────────────────────────────────────────────────────
+function toggleSec(head) {
+  const sec = head.closest('.sec');
+  if (!sec) return;
+  sec.classList.toggle('collapsed');
+  const id = sec.id;
+  if (id) {
+    try {
+      const collapsed = JSON.parse(localStorage.getItem('sec_collapsed') || '{}');
+      if (sec.classList.contains('collapsed')) collapsed[id] = true;
+      else delete collapsed[id];
+      localStorage.setItem('sec_collapsed', JSON.stringify(collapsed));
+    } catch(e) {}
+  }
+}
+(function restoreSections() {
+  try {
+    const collapsed = JSON.parse(localStorage.getItem('sec_collapsed') || '{}');
+    Object.keys(collapsed).forEach(id => {
+      const sec = document.getElementById(id);
+      if (sec) sec.classList.add('collapsed');
+    });
+  } catch(e) {}
+})();
+
+// ── Theme toggle ──────────────────────────────────────────────────────────────
+function downloadPDF() {
+  const btn = document.querySelector('.nav-item[onclick="downloadPDF()"]');
+  const orig = btn ? btn.innerHTML : '';
+  if (btn) btn.innerHTML = '<span class="nav-ic">⏳</span> Generating…';
+  const pdfUrl = window.location.pathname + '/pdf';
+  fetch(pdfUrl)
+    .then(r => {
+      if (!r.ok) throw new Error('PDF generation failed');
+      return r.blob();
+    })
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'securescope_report.pdf';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      if (btn) btn.innerHTML = orig;
+    })
+    .catch(err => {
+      alert('PDF generation failed: ' + err.message);
+      if (btn) btn.innerHTML = orig;
+    });
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const btn = document.getElementById('themeBtn');
+  if (html.classList.contains('light')) {
+    html.classList.remove('light');
+    btn.textContent = '🌙';
+    localStorage.setItem('theme', 'dark');
+  } else {
+    html.classList.add('light');
+    btn.textContent = '☀️';
+    localStorage.setItem('theme', 'light');
+  }
+}
+(function() {
+  if (localStorage.getItem('theme') === 'light') {
+    document.documentElement.classList.add('light');
+    const btn = document.getElementById('themeBtn');
+    if (btn) btn.textContent = '☀️';
+  }
+})();
+
+const findings = [{"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 10, "line_start": 10, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_0.py", "rule_id": "python.lang.security.audit.rule-0", "severity": "WARNING"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 11, "line_start": 11, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_1.py", "rule_id": "python.lang.security.audit.rule-1", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 12, "line_start": 12, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_2.py", "rule_id": "python.lang.security.audit.rule-2", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 13, "line_start": 13, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_3.py", "rule_id": "python.lang.security.audit.rule-3", "severity": "WARNING"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 14, "line_start": 14, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_4.py", "rule_id": "python.lang.security.audit.rule-4", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 15, "line_start": 15, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_5.py", "rule_id": "python.lang.security.audit.rule-5", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 16, "line_start": 16, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_6.py", "rule_id": "python.lang.security.audit.rule-6", "severity": "WARNING"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 17, "line_start": 17, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_7.py", "rule_id": "python.lang.security.audit.rule-7", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 18, "line_start": 18, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_8.py", "rule_id": "python.lang.security.audit.rule-8", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 19, "line_start": 19, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_9.py", "rule_id": "python.lang.security.audit.rule-9", "severity": "WARNING"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 20, "line_start": 20, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_10.py", "rule_id": "python.lang.security.audit.rule-10", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 21, "line_start": 21, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_11.py", "rule_id": "python.lang.security.audit.rule-11", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 22, "line_start": 22, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_12.py", "rule_id": "python.lang.security.audit.rule-12", "severity": "WARNING"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 23, "line_start": 23, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_13.py", "rule_id": "python.lang.security.audit.rule-13", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 24, "line_start": 24, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_14.py", "rule_id": "python.lang.security.audit.rule-14", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 25, "line_start": 25, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_15.py", "rule_id": "python.lang.security.audit.rule-15", "severity": "WARNING"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 26, "line_start": 26, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_16.py", "rule_id": "python.lang.security.audit.rule-16", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 27, "line_start": 27, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_17.py", "rule_id": "python.lang.security.audit.rule-17", "severity": "ERROR"}];
+const ghInfo   = {"default_branch": "main", "description": "Security analysis platform", "full_name": "OmarRao/secure-scope", "language": "Python", "license": "Proprietary"};
+
+// Severity donut
+const sevCounts = {ERROR:0,WARNING:0,INFO:0};
+findings.forEach(f => sevCounts[f.severity] = (sevCounts[f.severity]||0)+1);
+new Chart(document.getElementById('cSeverity'),{
+  type:'doughnut',
+  data:{
+    labels:['Critical','Warning','Info'],
+    datasets:[{data:[sevCounts.ERROR,sevCounts.WARNING,sevCounts.INFO],
+      backgroundColor:['rgba(242,87,87,.75)','rgba(230,168,23,.75)','rgba(79,142,247,.75)'],
+      borderColor:['#f25757','#e6a817','#4f8ef7'],borderWidth:2}]
+  },
+  options:{cutout:'68%',plugins:{legend:{labels:{color:'#8b96a4',font:{family:'Geist Mono',size:11}}}}}
+});
+
+// Radar
+const techMap={};
+findings.forEach(f=>{if(f.attack_technique)techMap[f.attack_technique]=(techMap[f.attack_technique]||0)+1});
+new Chart(document.getElementById('cRadar'),{
+  type:'radar',
+  data:{
+    labels:Object.keys(techMap).length?Object.keys(techMap):['None'],
+    datasets:[{label:'Hits',data:Object.keys(techMap).length?Object.values(techMap):[0],
+      backgroundColor:'rgba(79,142,247,.12)',borderColor:'#4f8ef7',
+      pointBackgroundColor:'#4f8ef7',pointRadius:3}]
+  },
+  options:{scales:{r:{ticks:{color:'#4a5568',backdropColor:'transparent',stepSize:1},
+    grid:{color:'#252b35'},pointLabels:{color:'#8b96a4',font:{family:'Geist Mono',size:9}}}},
+    plugins:{legend:{display:false}}}
+});
+
+// File heatmap
+const fileMap={};
+findings.forEach(f=>{fileMap[f.file]=(fileMap[f.file]||0)+1});
+const sortedF=Object.entries(fileMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+const maxN=sortedF[0]?.[1]||1;
+const hmEl=document.getElementById('fileHm');
+sortedF.forEach(([file,n])=>{
+  const pct=Math.round(n/maxN*100);
+  const col=n>=5?'#f25757':n>=3?'#e6a817':'#4f8ef7';
+  const nm=file.split(/[/\\]/).pop();
+  hmEl.innerHTML+=`<div class="hm-row">
+    <span class="hm-name" title="${file}">${nm}</span>
+    <div class="hm-track"><div class="hm-fill" style="width:${pct}%;background:${col}">${n}</div></div>
+    <span class="hm-n">${n}</span></div>`;
+});
+
+// Stacked bar
+const top6=Object.entries(fileMap).sort((a,b)=>b[1]-a[1]).slice(0,6);
+new Chart(document.getElementById('cStackBar'),{
+  type:'bar',
+  data:{
+    labels:top6.map(([f])=>f.split(/[/\\]/).pop()),
+    datasets:[
+      {label:'Critical',data:top6.map(([f])=>findings.filter(x=>x.file===f&&x.severity==='ERROR').length),backgroundColor:'rgba(242,87,87,.7)',borderRadius:3},
+      {label:'Warning', data:top6.map(([f])=>findings.filter(x=>x.file===f&&x.severity==='WARNING').length),backgroundColor:'rgba(230,168,23,.7)',borderRadius:3},
+    ]
+  },
+  options:{plugins:{legend:{labels:{color:'#8b96a4',font:{family:'Geist Mono',size:10}}}},
+    scales:{x:{stacked:true,ticks:{color:'#4a5568',font:{family:'Geist Mono',size:9}},grid:{color:'#1f242d'}},
+            y:{stacked:true,ticks:{color:'#4a5568',stepSize:1,font:{family:'Geist Mono',size:9}},grid:{color:'#1f242d'}}}}
+});
+
+// Polar (language)
+const langs=ghInfo.languages||{};
+const lnames=Object.keys(langs).slice(0,6);
+const lcolors={Python:'rgba(53,114,165,.7)',JavaScript:'rgba(241,224,90,.7)',TypeScript:'rgba(43,116,137,.7)',PHP:'rgba(79,93,149,.7)',Java:'rgba(176,114,25,.7)',Go:'rgba(0,173,216,.7)',Shell:'rgba(137,224,81,.7)',HTML:'rgba(227,76,38,.7)'};
+new Chart(document.getElementById('cLangPolar'),{
+  type:'polarArea',
+  data:{labels:lnames.length?lnames:['N/A'],datasets:[{data:lnames.length?lnames.map(l=>langs[l]):[100],
+    backgroundColor:lnames.map(l=>lcolors[l]||'rgba(79,142,247,.5)')}]},
+  options:{plugins:{legend:{labels:{color:'#8b96a4',font:{family:'Geist Mono',size:10}}}},
+    scales:{r:{ticks:{color:'#4a5568',backdropColor:'transparent'},grid:{color:'#252b35'}}}}
+});
+
+// CWE bar
+const cweMap={};
+findings.forEach(f=>{if(f.cwe)cweMap[f.cwe]=(cweMap[f.cwe]||0)+1});
+const cweSorted=Object.entries(cweMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+new Chart(document.getElementById('cCwe'),{
+  type:'bar',
+  data:{labels:cweSorted.map(([c])=>c),datasets:[{label:'Findings',
+    data:cweSorted.map(([,n])=>n),
+    backgroundColor:'rgba(167,139,250,.65)',borderColor:'#a78bfa',borderWidth:1,borderRadius:3}]},
+  options:{indexAxis:'y',plugins:{legend:{display:false}},
+    scales:{x:{ticks:{color:'#4a5568',stepSize:1,font:{family:'Geist Mono',size:9}},grid:{color:'#1f242d'}},
+            y:{ticks:{color:'#8b96a4',font:{family:'Geist Mono',size:9}},grid:{color:'#1f242d'}}}}
+});
+
+// Tactic doughnut
+const tacMap={};
+findings.forEach(f=>{if(f.attack_tactic)tacMap[f.attack_tactic]=(tacMap[f.attack_tactic]||0)+1});
+const tacColors=['rgba(79,142,247,.75)','rgba(242,87,87,.75)','rgba(230,168,23,.75)','rgba(167,139,250,.75)','rgba(62,207,121,.75)','rgba(78,201,176,.75)'];
+new Chart(document.getElementById('cTactic'),{
+  type:'doughnut',
+  data:{labels:Object.keys(tacMap).length?Object.keys(tacMap):['None'],
+    datasets:[{data:Object.keys(tacMap).length?Object.values(tacMap):[1],
+      backgroundColor:Object.keys(tacMap).map((_,i)=>tacColors[i%tacColors.length]),
+      borderWidth:2}]},
+  options:{cutout:'55%',plugins:{legend:{labels:{color:'#8b96a4',font:{family:'Geist Mono',size:10}}}}}
+});
+
+// ── Ransomware Global Impact Map ─────────────────────────────────────────────
+(function(){
+  const canvas = document.getElementById('rwMapCanvas');
+  if (!canvas) return;
+  const regions = [];
+  if (!regions.length) return;
+
+  // Convert a #rrggbb hex colour to an rgba() string (the old code did a broken
+  // string replace that produced an invalid colour and aborted all drawing).
+  function hexToRgba(hex, a) {
+    const n = parseInt(hex.slice(1), 16);
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+  }
+
+  // Approximate Mercator projection for A4-ish viewport
+  function project(lat, lon, W, H) {
+    const x = (lon + 180) / 360 * W;
+    const latRad = lat * Math.PI / 180;
+    const mercN = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
+    const y = H / 2 - (mercN / Math.PI) * H * 0.5;
+    return [x, y];
+  }
+
+  const W = canvas.offsetWidth || 800;
+  const H = Math.round(W * 0.44);
+  canvas.width  = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  const isDark = !document.documentElement.classList.contains('light');
+  ctx.fillStyle = isDark ? '#111419' : '#f1f5f9';
+  ctx.fillRect(0, 0, W, H);
+
+  // Simple world outline using a minimal SVG-converted path would be too large;
+  // draw grid lines instead as context
+  ctx.strokeStyle = isDark ? '#252b35' : '#d1d5db';
+  ctx.lineWidth = 0.5;
+  for (let lon = -180; lon <= 180; lon += 30) {
+    const [x] = project(0, lon, W, H);
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let lat = -60; lat <= 75; lat += 30) {
+    const [, y] = project(lat, 0, W, H);
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // Lat/lon labels
+  ctx.fillStyle = isDark ? '#4a5568' : '#9ca3af';
+  ctx.font = '9px Geist Mono, monospace';
+  ctx.textAlign = 'center';
+  for (let lon = -150; lon <= 150; lon += 60) {
+    const [x] = project(0, lon, W, H);
+    ctx.fillText(lon + '°', x, H - 4);
+  }
+
+  // Draw impact circles
+  regions.forEach((r, i) => {
+    const [x, y] = project(r.coords[0], r.coords[1], W, H);
+    const inc = r.incidents || 10;
+    const radius = Math.min(6 + Math.log(inc) * 2.5, 28);
+    const color = inc >= 500 ? '#dc2626' : inc >= 200 ? '#d97706' : inc >= 100 ? '#2563eb' : '#6b7280';
+
+    // Outer glow
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, radius * 1.8);
+    grad.addColorStop(0, hexToRgba(color, 0.3));
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.beginPath(); ctx.arc(x, y, radius * 1.8, 0, Math.PI * 2);
+    ctx.fillStyle = grad; ctx.fill();
+
+    // Main dot
+    ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = color + 'cc'; ctx.fill();
+    ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+
+    // Country label — alternate above/below and add a halo so labels stay
+    // legible when impact points cluster together.
+    ctx.font = 'bold 10px Geist, sans-serif';
+    ctx.textAlign = 'center';
+    const shortName = r.country.replace('United States','USA').replace('United Kingdom','UK').replace('Australia','AUS');
+    const ly = (i % 2 === 0) ? (y - radius - 5) : (y + radius + 11);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = isDark ? 'rgba(17,20,25,0.85)' : 'rgba(241,245,249,0.9)';
+    ctx.strokeText(shortName, x, ly);
+    ctx.fillStyle = isDark ? '#e2e8f0' : '#1f2937';
+    ctx.fillText(shortName, x, ly);
+  });
+})();
+
+// ── Filter/search ─────────────────────────────────────────────────────────────
+function filt(sev,btn){
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.fr').forEach(r=>r.style.display=(sev==='ALL'||r.dataset.sev===sev)?'':'none');
+}
+function fsrch(q){
+  const ql=q.toLowerCase();
+  document.querySelectorAll('.fr').forEach(r=>r.style.display=r.dataset.txt.includes(ql)?'':'none');
+}
+function go(id,el){
+  document.getElementById(id)?.scrollIntoView({behavior:'smooth'});
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('on'));
+  el.classList.add('on');
+}
+function toggleIacRow(row){
+  const fix = row.querySelector('.iac-fix-row');
+  if(fix) fix.style.display = fix.style.display === 'none' ? 'block' : 'none';
+}
+</script>
+</body>
+</html>

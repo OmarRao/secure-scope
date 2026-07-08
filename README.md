@@ -7,7 +7,7 @@
 ![Firebase](https://img.shields.io/badge/telemetry-Firebase-orange)
 ![Platforms](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
 
-**🌐 [Live Demo](https://secure-scope.onrender.com/)** | **[📖 Technical User Guide](USERGUIDE.md)** | **[View Sample Report](docs/sample_report.pdf)**
+**🌐 [Live Demo](https://secure-scope.onrender.com/)** | **[📖 Technical User Guide](USERGUIDE.md)** | **[View Sample Report (interactive)](https://omarrao.github.io/secure-scope/sample_report.html)** | **[PDF](docs/sample_report.pdf)**
 
 ## Documentation
 
@@ -40,7 +40,9 @@
 | IaC scanning | `--iac-scan` via checkov + built-in pattern checks |
 | Markdown PR comments | `--pr-comment` posts summary to open PR |
 
-**[View Sample Report (PDF)](https://github.com/OmarRao/secure-scope/blob/main/docs/sample_report.pdf)**
+**[View Sample Report — interactive HTML](https://omarrao.github.io/secure-scope/sample_report.html)** · **[PDF version](https://github.com/OmarRao/secure-scope/blob/main/docs/sample_report.pdf)**
+
+> The interactive sample is a fully-rendered report (risk score, findings, and the EPSS / CISA KEV / reachability dependency section). Note: `ui/templates/report.html` is the *template* — opening it directly shows raw `{{ }}` placeholders; only rendered reports like the sample above display real data.
 
 ---
 
