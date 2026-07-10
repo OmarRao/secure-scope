@@ -32,6 +32,14 @@
     .gate .btn{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
     .hidden{display:none}
     a{color:var(--accent)}
+    .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    @media (max-width:768px){
+      .wrap{padding:24px 14px}
+      .stats{grid-template-columns:repeat(2,1fr);gap:10px}
+      .gate{margin:48px auto}
+      table{min-width:560px}
+    }
+    @media (max-width:420px){ .stats{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
@@ -54,9 +62,9 @@
       <h1>User Activity &amp; Statistics</h1>
       <div class="stats" id="stats"></div>
       <div class="sec">Users</div>
-      <table id="usersTbl"><thead><tr><th>Email</th><th>UID</th><th>Last active</th></tr></thead><tbody></tbody></table>
+      <div class="tbl-scroll"><table id="usersTbl"><thead><tr><th>Email</th><th>UID</th><th>Last active</th></tr></thead><tbody></tbody></table></div>
       <div class="sec">Recent Scan Activity</div>
-      <table id="actTbl"><thead><tr><th>When</th><th>User</th><th>Repository</th><th>Type</th><th>Findings</th></tr></thead><tbody></tbody></table>
+      <div class="tbl-scroll"><table id="actTbl"><thead><tr><th>When</th><th>User</th><th>Repository</th><th>Type</th><th>Findings</th></tr></thead><tbody></tbody></table></div>
     </div>
   </div>
 

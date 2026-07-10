@@ -100,7 +100,7 @@ function buildUI() {
     </div>`);
   document.body.appendChild(banner);
   banner.querySelector("#ssBannerIn").onclick = () => openAuth();
-  banner.querySelector("#ssBannerX").onclick = () => { banner.classList.remove("show"); try { localStorage.setItem("ss-banner-dismissed", "1"); } catch (e) {} };
+  banner.querySelector("#ssBannerX").onclick = () => { banner.classList.remove("show"); syncBannerSpace(); try { localStorage.setItem("ss-banner-dismissed", "1"); } catch (e) {} };
 
   overlay = el(`
     <div class="ss-overlay" id="ssOverlay">
@@ -159,8 +159,30 @@ function renderChip() {
     let dismissed = false;
     try { dismissed = localStorage.getItem("ss-banner-dismissed") === "1"; } catch (e) {}
     banner.classList.toggle("show", !_user && !dismissed);
+    syncBannerSpace();
   }
 }
+
+// The banner is position:fixed, so reserve equal space below the topbar to keep
+// it from overlapping page content — critical on phones where it wraps to two
+// lines. A ResizeObserver keeps the reserved space correct across font reflow,
+// orientation change, and show/hide.
+let _bannerRO;
+function _applyBannerSpace() {
+  if (!banner) return;
+  const h = banner.classList.contains("show") ? banner.offsetHeight : 0;
+  document.body.style.paddingTop = h ? h + "px" : "";
+}
+function syncBannerSpace() {
+  if (!banner) return;
+  _applyBannerSpace();
+  if (!_bannerRO && "ResizeObserver" in window) {
+    _bannerRO = new ResizeObserver(_applyBannerSpace);
+    _bannerRO.observe(banner);
+  }
+}
+window.addEventListener("resize", _applyBannerSpace);
+window.addEventListener("orientationchange", _applyBannerSpace);
 
 function setErr(m) { const e = overlay?.querySelector("#ssErr"); if (e) e.textContent = m || ""; }
 function openAuth() { setErr(""); overlay.classList.add("open"); }

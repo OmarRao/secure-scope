@@ -24,6 +24,12 @@
     .cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border-radius:10px;padding:13px 24px;font-size:15px;font-weight:600;text-decoration:none}
     .msg{padding:40px;text-align:center;color:var(--dim)}
     a{color:var(--accent)}
+    @media (max-width:768px){
+      .wrap{padding:32px 16px}
+      .grid{grid-template-columns:repeat(2,1fr);gap:10px}
+      .cta{display:flex;justify-content:center}
+    }
+    @media (max-width:420px){ .grid{grid-template-columns:1fr} }
   </style>
 </head>
 <body>

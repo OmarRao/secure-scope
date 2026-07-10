@@ -379,6 +379,40 @@
     .apt-sub{font-size:12px;color:var(--sub);line-height:1.6}
 
     /* Print / PDF */
+    /* ── Mobile (iOS + Android phones) ─────────────────────────────── */
+    @media (max-width: 768px) {
+      html, body { overflow-x: hidden; }
+      .shell { grid-template-columns: 1fr; }
+      /* min-width:0 stops the 1fr grid track from expanding to a wide child's
+         min-content (which would blow the page out horizontally on phones). */
+      .shell > * { min-width: 0; }
+      /* Sidebar nav is redundant on mobile — the jump bar covers navigation. */
+      .side { display: none; }
+      .content { padding: 18px 14px; max-width: 100%; min-width: 0; }
+      .banner { flex-direction: column; padding: 18px 16px; }
+      .banner-score { align-self: stretch; }
+      .banner-left h1 { font-size: 19px; }
+      .rw-top-strip { grid-template-columns: repeat(2, 1fr); }
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+      .chart-grid-2, .chart-grid-3, .chart-grid-4 { grid-template-columns: 1fr; }
+      .atk-grid { grid-template-columns: repeat(2, 1fr); }
+      .beh-grid { grid-template-columns: 1fr; }
+      .rw-hero { grid-template-columns: 1fr; }
+      .fam-body { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+      .hm-name { min-width: 96px; max-width: 96px; }
+      .fsearch { min-width: 0; width: 100%; }
+      .filter-row { gap: 6px; }
+      /* Dense fixed-column tables: swipe horizontally instead of squishing. */
+      .datatbl { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+      .datatbl > div { min-width: 600px; }
+      canvas { max-width: 100% !important; height: auto !important; }
+    }
+    @media (max-width: 420px) {
+      .rw-top-strip, .kpi-row, .atk-grid { grid-template-columns: 1fr; }
+      .score-num { font-size: 38px; }
+    }
+
     @media print {
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       html, body { background: #fff !important; color: #111 !important; font-size: 12px; }
@@ -1226,7 +1260,7 @@
         <div class="sec-title" style="font-size:14px">Active CVE Variants Exploited by Matched Families</div>
         <span class="sec-count">{{ rw.active_cves | length }} CVEs</span>
       </div>
-      <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:20px">
+      <div class="datatbl" style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:20px">
         <div style="display:grid;grid-template-columns:120px 1fr 80px 90px;gap:12px;padding:8px 14px;background:var(--ink3);border-bottom:2px solid var(--rule)">
           <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">CVE ID</span>
           <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Vulnerability / Description</span>
@@ -1253,7 +1287,7 @@
         <div class="sec-title" style="font-size:14px">Affected Code Sections</div>
         <span class="sec-count">{{ rw.affected_sections | length }} files</span>
       </div>
-      <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:20px">
+      <div class="datatbl" style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden;margin-bottom:20px">
         {% for sec in rw.affected_sections %}
         <div class="aff-row">
           <span class="aff-file" title="{{ sec.file }}">{{ sec.file }}</span>
@@ -1319,7 +1353,7 @@
         </div>
 
         {# Findings table #}
-        <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden">
+        <div class="datatbl" style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden">
           <div style="display:grid;grid-template-columns:90px 130px 1fr 160px 50px;gap:10px;padding:8px 14px;background:var(--ink3);border-bottom:2px solid var(--rule)">
             {% for hdr in ['Severity','Category','Description / Blast Radius','File','Line'] %}
             <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">{{ hdr }}</span>
@@ -1430,7 +1464,7 @@
         {% endif %}
 
         {# Findings table — prioritised by exploitability (KEV, then EPSS) #}
-        <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden">
+        <div class="datatbl" style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden">
           <div style="display:grid;grid-template-columns:84px 88px 120px 1fr 90px 82px 128px;gap:10px;padding:8px 14px;background:var(--ink3);border-bottom:2px solid var(--rule)">
             {% for hdr in ['Severity','Ecosystem','Package','Vulnerability','Version','Fixed In','Exploitability'] %}
             <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">{{ hdr }}</span>

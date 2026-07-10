@@ -907,7 +907,27 @@
     }
     .scanner-btn:hover { opacity: .88; }
     .scanner-btn:active { transform: scale(.98); }
-    @media (max-width: 768px) { .scanner-grid { grid-template-columns: 1fr; } }
+    /* ── Mobile (iOS + Android phones) ─────────────────────────────── */
+    @media (max-width: 768px) {
+      :root { --gutter: 16px; }
+      .topbar-inner { gap: 10px; }
+      .tb-badge, .tb-div { display: none; }
+      .hero h1 { letter-spacing: -.8px; }
+      .hero-sub { font-size: 15px; }
+      .stat-strip { grid-template-columns: repeat(2, 1fr); }
+      .feat-grid { grid-template-columns: 1fr; }
+      .why-grid { grid-template-columns: 1fr; }
+      .yara-rules-grid { grid-template-columns: repeat(2, 1fr); }
+      .provider-grid { grid-template-columns: 1fr; }
+      .scanner-grid { grid-template-columns: 1fr; }
+      .footer-top { grid-template-columns: 1fr; gap: 32px; }
+      .ti-grid { grid-template-columns: 1fr; }
+      .drawer-grid { grid-template-columns: 1fr; }
+      .modal { padding: 22px 18px; max-width: calc(100vw - 24px) !important; }
+    }
+    @media (max-width: 420px) {
+      .stat-strip, .yara-rules-grid { grid-template-columns: 1fr; }
+    }
 
     /* ── Scanning state: focus on the live pipeline, hide marketing sections ── */
     body.scanning .hero,

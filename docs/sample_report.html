@@ -379,6 +379,40 @@
     .apt-sub{font-size:12px;color:var(--sub);line-height:1.6}
 
     /* Print / PDF */
+    /* ── Mobile (iOS + Android phones) ─────────────────────────────── */
+    @media (max-width: 768px) {
+      html, body { overflow-x: hidden; }
+      .shell { grid-template-columns: 1fr; }
+      /* min-width:0 stops the 1fr grid track from expanding to a wide child's
+         min-content (which would blow the page out horizontally on phones). */
+      .shell > * { min-width: 0; }
+      /* Sidebar nav is redundant on mobile — the jump bar covers navigation. */
+      .side { display: none; }
+      .content { padding: 18px 14px; max-width: 100%; min-width: 0; }
+      .banner { flex-direction: column; padding: 18px 16px; }
+      .banner-score { align-self: stretch; }
+      .banner-left h1 { font-size: 19px; }
+      .rw-top-strip { grid-template-columns: repeat(2, 1fr); }
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+      .chart-grid-2, .chart-grid-3, .chart-grid-4 { grid-template-columns: 1fr; }
+      .atk-grid { grid-template-columns: repeat(2, 1fr); }
+      .beh-grid { grid-template-columns: 1fr; }
+      .rw-hero { grid-template-columns: 1fr; }
+      .fam-body { grid-template-columns: 1fr; }
+      .info-grid { grid-template-columns: 1fr; }
+      .hm-name { min-width: 96px; max-width: 96px; }
+      .fsearch { min-width: 0; width: 100%; }
+      .filter-row { gap: 6px; }
+      /* Dense fixed-column tables: swipe horizontally instead of squishing. */
+      .datatbl { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+      .datatbl > div { min-width: 600px; }
+      canvas { max-width: 100% !important; height: auto !important; }
+    }
+    @media (max-width: 420px) {
+      .rw-top-strip, .kpi-row, .atk-grid { grid-template-columns: 1fr; }
+      .score-num { font-size: 38px; }
+    }
+
     @media print {
       * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
       html, body { background: #fff !important; color: #111 !important; font-size: 12px; }
@@ -535,7 +569,7 @@
     </div>
     <div class="nav-item" onclick="go('cves',this)">
       <span class="nav-ic">&#x1F4E6;</span> Dep. CVEs
-      <span class="nav-ct ct-b">4</span>
+      <span class="nav-ct ct-b">2</span>
     </div>
     <div class="nav-item" onclick="go('sandbox',this)">
       <span class="nav-ic">&#x1F433;</span> Sandbox
@@ -552,7 +586,7 @@
     </div>
     <div class="nav-item" onclick="go('deps-report',this)">
       <span class="nav-ic">&#x1F4E6;</span> Dep. Vulns
-      <span class="nav-ct ct-r">6</span>
+      <span class="nav-ct ct-r">4</span>
     </div>
     <div class="nav-item" onclick="go('iac',this)">
       <span class="nav-ic">&#x1F3D7;</span> IaC Misconfigs
@@ -608,7 +642,7 @@
         <div class="kpi-sub">WARNING severity</div>
       </div>
       <div class="kpi">
-        <div class="kpi-num b">4</div>
+        <div class="kpi-num b">2</div>
         <div class="kpi-lbl">Dep. CVEs</div>
         <div class="kpi-sub">Known vulnerabilities</div>
       </div>
@@ -687,8 +721,8 @@
         </div>
         <div class="cbox" style="text-align:center">
           <div class="cbox-title">CVE Weight</div>
-          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--accent)">32</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">4 CVEs x 8 pts</div>
+          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--accent)">16</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">2 CVEs x 8 pts</div>
         </div>
         <div class="cbox" style="text-align:center">
           <div class="cbox-title">Runtime Weight</div>
@@ -709,7 +743,7 @@
               <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">1</td>
               <td><code style="font-size:11px">rule-1</code></td>
               <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">:11</td>
-              <td><span class="tag tag-cwe">CWE-79: Cross-site Scripting</span></td>
+              <td><span class="tag tag-cwe">CWE-79</span></td>
               <td><span class="tag tag-att">T1059</span></td>
             </tr>
             
@@ -717,7 +751,7 @@
               <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">2</td>
               <td><code style="font-size:11px">rule-2</code></td>
               <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">:12</td>
-              <td><span class="tag tag-cwe">CWE-79: Cross-site Scripting</span></td>
+              <td><span class="tag tag-cwe">CWE-79</span></td>
               <td><span class="tag tag-att">T1059</span></td>
             </tr>
             
@@ -725,7 +759,7 @@
               <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">3</td>
               <td><code style="font-size:11px">rule-4</code></td>
               <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">:14</td>
-              <td><span class="tag tag-cwe">CWE-79: Cross-site Scripting</span></td>
+              <td><span class="tag tag-cwe">CWE-79</span></td>
               <td><span class="tag tag-att">T1059</span></td>
             </tr>
             
@@ -733,7 +767,7 @@
               <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">4</td>
               <td><code style="font-size:11px">rule-5</code></td>
               <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">:15</td>
-              <td><span class="tag tag-cwe">CWE-79: Cross-site Scripting</span></td>
+              <td><span class="tag tag-cwe">CWE-79</span></td>
               <td><span class="tag tag-att">T1059</span></td>
             </tr>
             
@@ -741,7 +775,7 @@
               <td style="font-family:'Geist Mono',monospace;font-size:12px;color:var(--muted)">5</td>
               <td><code style="font-size:11px">rule-7</code></td>
               <td style="font-family:'Geist Mono',monospace;font-size:11px;color:var(--teal)">:17</td>
-              <td><span class="tag tag-cwe">CWE-79: Cross-site Scripting</span></td>
+              <td><span class="tag tag-cwe">CWE-79</span></td>
               <td><span class="tag tag-att">T1059</span></td>
             </tr>
             
@@ -782,10 +816,10 @@
           <div class="atk-status s">Clear</div>
           <div class="atk-detail">CWE-78 / T1059 Execution</div>
         </div>
-        <div class="atk-tile safe">
+        <div class="atk-tile partial">
           <div class="atk-ic">&#x1F4DC;</div>
           <div class="atk-name">Cross-Site Scripting</div>
-          <div class="atk-status s">Clear</div>
+          <div class="atk-status p">Detected</div>
           <div class="atk-detail">CWE-79 / T1059.007 Execution</div>
         </div>
         <div class="atk-tile safe">
@@ -938,7 +972,7 @@
         
         <div class="mt med">
           <div class="tid">T1059</div>
-          <div class="tname">Command and Scripting Interpreter</div>
+          <div class="tname">CSI</div>
           <div class="ttactic">Execution</div>
           <div class="tct">18</div>
         </div>
@@ -972,324 +1006,324 @@
         </thead>
         <tbody>
           
-          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.audit.rule-0  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="WARNING" data-txt="rule-0  cwe-79 t1059">
             <td><span class="sev sev-WARNING">WARNING</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-0</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-0</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L10</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-1  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="ERROR" data-txt="rule-1  cwe-79 t1059">
             <td><span class="sev sev-ERROR">ERROR</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-1</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-1</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L11</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-2  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="ERROR" data-txt="rule-2  cwe-79 t1059">
             <td><span class="sev sev-ERROR">ERROR</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-2</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-2</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L12</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.audit.rule-3  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="WARNING" data-txt="rule-3  cwe-79 t1059">
             <td><span class="sev sev-WARNING">WARNING</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-3</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-3</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L13</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-4  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="ERROR" data-txt="rule-4  cwe-79 t1059">
             <td><span class="sev sev-ERROR">ERROR</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-4</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-4</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L14</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-5  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="ERROR" data-txt="rule-5  cwe-79 t1059">
             <td><span class="sev sev-ERROR">ERROR</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-5</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-5</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L15</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.audit.rule-6  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="WARNING" data-txt="rule-6  cwe-79 t1059">
             <td><span class="sev sev-WARNING">WARNING</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-6</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-6</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L16</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-7  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="ERROR" data-txt="rule-7  cwe-79 t1059">
             <td><span class="sev sev-ERROR">ERROR</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-7</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-7</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L17</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-8  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="ERROR" data-txt="rule-8  cwe-79 t1059">
             <td><span class="sev sev-ERROR">ERROR</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-8</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-8</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L18</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.audit.rule-9  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="WARNING" data-txt="rule-9  cwe-79 t1059">
             <td><span class="sev sev-WARNING">WARNING</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-9</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-9</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L19</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-10  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="ERROR" data-txt="rule-10  cwe-79 t1059">
             <td><span class="sev sev-ERROR">ERROR</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-10</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-10</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L20</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-11  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="ERROR" data-txt="rule-11  cwe-79 t1059">
             <td><span class="sev sev-ERROR">ERROR</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-11</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-11</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L21</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.audit.rule-12  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="WARNING" data-txt="rule-12  cwe-79 t1059">
             <td><span class="sev sev-WARNING">WARNING</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-12</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-12</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L22</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-13  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="ERROR" data-txt="rule-13  cwe-79 t1059">
             <td><span class="sev sev-ERROR">ERROR</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-13</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-13</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L23</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-14  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="ERROR" data-txt="rule-14  cwe-79 t1059">
             <td><span class="sev sev-ERROR">ERROR</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-14</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-14</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L24</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="WARNING" data-txt="python.lang.security.audit.rule-15  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="WARNING" data-txt="rule-15  cwe-79 t1059">
             <td><span class="sev sev-WARNING">WARNING</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-15</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-15</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L25</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-16  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="ERROR" data-txt="rule-16  cwe-79 t1059">
             <td><span class="sev sev-ERROR">ERROR</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-16</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-16</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L26</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
             
           </tr>
           
-          <tr class="fr" data-sev="ERROR" data-txt="python.lang.security.audit.rule-17  cwe-79: cross-site scripting t1059">
+          <tr class="fr" data-sev="ERROR" data-txt="rule-17  cwe-79 t1059">
             <td><span class="sev sev-ERROR">ERROR</span></td>
             <td>
-              <code style="font-size:11px">python.lang.security.audit.rule-17</code>
-              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Potential security issue detected in this code path that may allow injection.</div>
+              <code style="font-size:11px">rule-17</code>
+              <div style="color:var(--sub);margin-top:4px;font-size:12px;line-height:1.4">Issue.</div>
             </td>
             <td>
               <code style="font-size:11px;color:var(--teal)"></code>
               <div style="color:var(--muted);font-size:10px;font-family:'Geist Mono',monospace">L27</div>
             </td>
             <td>
-              <span class="tag tag-cwe">CWE-79: Cross-site Scripting</span>
+              <span class="tag tag-cwe">CWE-79</span>
               <span class="tag tag-att">T1059</span>
               <span class="tag tag-tactic">Execution</span>
             </td>
@@ -1305,7 +1339,7 @@
     <div class="sec" id="cves">
       <div class="sec-head" onclick="toggleSec(this)">
         <div class="sec-title">&#x1F4E6; Dependency CVEs</div>
-        <div class="sec-count">4</div>
+        <div class="sec-count">2</div>
         <span class="sec-chevron">&#x25BC;</span>
       </div>
       <div class="sec-body">
@@ -1319,7 +1353,7 @@
             <td><code style="font-size:11px">log4j-core</code></td>
             <td><code style="font-size:11px"></code></td>
             <td><span class="cve-id">CVE-2021-44228</span></td>
-            <td style="font-size:12px;color:var(--sub)">Remote code execution via JNDI lookup (Log4Shell).</td>
+            <td style="font-size:12px;color:var(--sub)">RCE via JNDI.</td>
             <td style="font-size:12px;color:var(--ok)">N/A</td>
           </tr>
           
@@ -1328,25 +1362,7 @@
             <td><code style="font-size:11px">flask</code></td>
             <td><code style="font-size:11px"></code></td>
             <td><span class="cve-id">CVE-2023-30861</span></td>
-            <td style="font-size:12px;color:var(--sub)">Possible session cookie disclosure via caching proxy.</td>
-            <td style="font-size:12px;color:var(--ok)">N/A</td>
-          </tr>
-          
-          <tr>
-            <td><span class="tag tag-tactic"></span></td>
-            <td><code style="font-size:11px">requests</code></td>
-            <td><code style="font-size:11px"></code></td>
-            <td><span class="cve-id">CVE-2023-32681</span></td>
-            <td style="font-size:12px;color:var(--sub)">Proxy-Authorization header leak on redirect.</td>
-            <td style="font-size:12px;color:var(--ok)">N/A</td>
-          </tr>
-          
-          <tr>
-            <td><span class="tag tag-tactic"></span></td>
-            <td><code style="font-size:11px">pyyaml</code></td>
-            <td><code style="font-size:11px"></code></td>
-            <td><span class="cve-id">CVE-2020-14343</span></td>
-            <td style="font-size:12px;color:var(--sub)">Arbitrary code execution via full_load.</td>
+            <td style="font-size:12px;color:var(--sub)">Cookie disclosure.</td>
             <td style="font-size:12px;color:var(--ok)">N/A</td>
           </tr>
           
@@ -1419,7 +1435,7 @@
       <div class="sec-head" onclick="toggleSec(this)">
         <div class="sec-title">&#x1F4E6; Dependency Vulnerabilities</div>
         
-          <span class="sec-count" style="color:var(--danger)">6 CVEs · 84 packages</span>
+          <span class="sec-count" style="color:var(--danger)">4 CVEs · 84 packages</span>
         
         <span class="sec-chevron">&#x25BC;</span>
       </div>
@@ -1433,7 +1449,7 @@
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Packages</div>
           </div>
           <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;text-align:center">
-            <div style="font-size:1.5rem;font-weight:800;color:var(--body)">6</div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--body)">4</div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Vulnerable</div>
           </div>
           <div style="background:rgba(242,87,87,0.08);border:1px solid rgba(242,87,87,0.3);border-radius:8px;padding:14px;text-align:center">
@@ -1441,11 +1457,11 @@
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Critical</div>
           </div>
           <div style="background:rgba(230,168,23,0.08);border:1px solid rgba(230,168,23,0.3);border-radius:8px;padding:14px;text-align:center">
-            <div style="font-size:1.5rem;font-weight:800;color:var(--warn)">3</div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--warn)">2</div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">High</div>
           </div>
           <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;text-align:center">
-            <div style="font-size:1.5rem;font-weight:800;color:var(--body)">2</div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--body)">1</div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Medium</div>
           </div>
           <div style="background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.3);border-radius:8px;padding:14px;text-align:center" title="CVEs in packages your code actually imports">
@@ -1475,7 +1491,7 @@
         
 
         
-        <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden">
+        <div class="datatbl" style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden">
           <div style="display:grid;grid-template-columns:84px 88px 120px 1fr 90px 82px 128px;gap:10px;padding:8px 14px;background:var(--ink3);border-bottom:2px solid var(--rule)">
             
             <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Severity</span>
@@ -1504,9 +1520,9 @@
             <div style="font-size:11px;color:var(--sub)">Maven</div>
             <div style="font-size:11px;color:var(--body);font-weight:600;word-break:break-all">log4j-core</div>
             <div>
-              <div style="font-size:12px;color:var(--body);font-weight:500">CVE-2021-44228 Remote code execution via JNDI lookup (Log4Shell).</div>
+              <div style="font-size:12px;color:var(--body);font-weight:500">CVE-2021-44228 RCE via JNDI.</div>
               <div class="dep-detail" style="display:none;margin-top:8px;padding:8px;background:var(--ink);border-radius:6px;border-left:3px solid var(--danger)">
-                <div style="font-size:11px;color:var(--sub);margin-bottom:4px">Remote code execution via JNDI lookup (Log4Shell).</div>
+                <div style="font-size:11px;color:var(--sub);margin-bottom:4px">RCE via JNDI.</div>
                 <div style="font-size:10px;color:var(--muted)">CVSS: <strong style="color:var(--danger)">10.0</strong> · EPSS: <strong style="color:var(--danger)">97.4%</strong> (top 0%)</div>
                 <div style="font-size:10px;color:var(--danger);margin-top:2px;font-weight:700">⚠ On CISA Known Exploited Vulnerabilities catalogue</div>
                 
@@ -1532,9 +1548,9 @@
             <div style="font-size:11px;color:var(--sub)">PyPI</div>
             <div style="font-size:11px;color:var(--body);font-weight:600;word-break:break-all">flask</div>
             <div>
-              <div style="font-size:12px;color:var(--body);font-weight:500">CVE-2023-30861 Possible session cookie disclosure via caching proxy.</div>
+              <div style="font-size:12px;color:var(--body);font-weight:500">CVE-2023-30861 Cookie disclosure.</div>
               <div class="dep-detail" style="display:none;margin-top:8px;padding:8px;background:var(--ink);border-radius:6px;border-left:3px solid var(--warn)">
-                <div style="font-size:11px;color:var(--sub);margin-bottom:4px">Possible session cookie disclosure via caching proxy.</div>
+                <div style="font-size:11px;color:var(--sub);margin-bottom:4px">Cookie disclosure.</div>
                 <div style="font-size:10px;color:var(--muted)">CVSS: <strong style="color:var(--warn)">7.5</strong> · EPSS: <strong style="color:var(--sub)">1.2%</strong> (top 17%)</div>
                 
                 <div style="font-size:10px;margin-top:2px;color:var(--warn)">⮑ Reachable — imported in 3 files</div>
@@ -1547,62 +1563,6 @@
               
               <span title="Package is imported in your code" style="font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;background:var(--warn);color:#111;font-family:'Geist Mono',monospace">R</span>
               <span title="EPSS: probability of exploitation in the next 30 days" style="font-size:10px;font-weight:700;color:var(--sub);font-family:'Geist Mono',monospace">1.2%</span>
-            </div>
-          </div>
-          
-          
-          
-          
-          <div onclick="this.querySelector('.dep-detail').style.display=this.querySelector('.dep-detail').style.display==='none'?'block':'none'"
-               style="display:grid;grid-template-columns:84px 88px 120px 1fr 90px 82px 128px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .15s"
-               onmouseenter="this.style.background='var(--ink3)'" onmouseleave="this.style.background=''">
-            <div><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;border:1px solid #a78bfa;color:#a78bfa;background:#a78bfa18">MEDIUM</span></div>
-            <div style="font-size:11px;color:var(--sub)">PyPI</div>
-            <div style="font-size:11px;color:var(--body);font-weight:600;word-break:break-all">requests</div>
-            <div>
-              <div style="font-size:12px;color:var(--body);font-weight:500">CVE-2023-32681 Proxy-Authorization header leak on redirect.</div>
-              <div class="dep-detail" style="display:none;margin-top:8px;padding:8px;background:var(--ink);border-radius:6px;border-left:3px solid #a78bfa">
-                <div style="font-size:11px;color:var(--sub);margin-bottom:4px">Proxy-Authorization header leak on redirect.</div>
-                <div style="font-size:10px;color:var(--muted)">CVSS: <strong style="color:#a78bfa">6.1</strong> · EPSS: <strong style="color:var(--sub)">0.8%</strong> (top 25%)</div>
-                
-                <div style="font-size:10px;margin-top:2px;color:var(--warn)">⮑ Reachable — imported in 5 files</div>
-                <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">CVE-2023-32681</div>
-              </div>
-            </div>
-            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">2.25.0</div>
-            <div style="font-size:10px;color:var(--ok);font-family:'Geist Mono',monospace">2.31.0</div>
-            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
-              
-              <span title="Package is imported in your code" style="font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;background:var(--warn);color:#111;font-family:'Geist Mono',monospace">R</span>
-              <span title="EPSS: probability of exploitation in the next 30 days" style="font-size:10px;font-weight:700;color:var(--sub);font-family:'Geist Mono',monospace">0.8%</span>
-            </div>
-          </div>
-          
-          
-          
-          
-          <div onclick="this.querySelector('.dep-detail').style.display=this.querySelector('.dep-detail').style.display==='none'?'block':'none'"
-               style="display:grid;grid-template-columns:84px 88px 120px 1fr 90px 82px 128px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .15s"
-               onmouseenter="this.style.background='var(--ink3)'" onmouseleave="this.style.background=''">
-            <div><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;border:1px solid var(--warn);color:var(--warn);background:var(--warn)18">HIGH</span></div>
-            <div style="font-size:11px;color:var(--sub)">PyPI</div>
-            <div style="font-size:11px;color:var(--body);font-weight:600;word-break:break-all">pyyaml</div>
-            <div>
-              <div style="font-size:12px;color:var(--body);font-weight:500">CVE-2020-14343 Arbitrary code execution via full_load.</div>
-              <div class="dep-detail" style="display:none;margin-top:8px;padding:8px;background:var(--ink);border-radius:6px;border-left:3px solid var(--warn)">
-                <div style="font-size:11px;color:var(--sub);margin-bottom:4px">Arbitrary code execution via full_load.</div>
-                <div style="font-size:10px;color:var(--muted)">CVSS: <strong style="color:var(--warn)">7.8</strong> · EPSS: <strong style="color:var(--sub)">2.0%</strong> (top 14%)</div>
-                
-                <div style="font-size:10px;margin-top:2px;color:var(--muted)">Not imported in first-party code (likely transitive / unused)</div>
-                <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">CVE-2020-14343</div>
-              </div>
-            </div>
-            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">5.3</div>
-            <div style="font-size:10px;color:var(--ok);font-family:'Geist Mono',monospace">5.4</div>
-            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
-              
-              
-              <span title="EPSS: probability of exploitation in the next 30 days" style="font-size:10px;font-weight:700;color:var(--sub);font-family:'Geist Mono',monospace">2.0%</span>
             </div>
           </div>
           
@@ -1747,7 +1707,7 @@ function toggleTheme() {
   }
 })();
 
-const findings = [{"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 10, "line_start": 10, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_0.py", "rule_id": "python.lang.security.audit.rule-0", "severity": "WARNING"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 11, "line_start": 11, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_1.py", "rule_id": "python.lang.security.audit.rule-1", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 12, "line_start": 12, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_2.py", "rule_id": "python.lang.security.audit.rule-2", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 13, "line_start": 13, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_3.py", "rule_id": "python.lang.security.audit.rule-3", "severity": "WARNING"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 14, "line_start": 14, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_4.py", "rule_id": "python.lang.security.audit.rule-4", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 15, "line_start": 15, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_5.py", "rule_id": "python.lang.security.audit.rule-5", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 16, "line_start": 16, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_6.py", "rule_id": "python.lang.security.audit.rule-6", "severity": "WARNING"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 17, "line_start": 17, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_7.py", "rule_id": "python.lang.security.audit.rule-7", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 18, "line_start": 18, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_8.py", "rule_id": "python.lang.security.audit.rule-8", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 19, "line_start": 19, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_9.py", "rule_id": "python.lang.security.audit.rule-9", "severity": "WARNING"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 20, "line_start": 20, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_10.py", "rule_id": "python.lang.security.audit.rule-10", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 21, "line_start": 21, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_11.py", "rule_id": "python.lang.security.audit.rule-11", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 22, "line_start": 22, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_12.py", "rule_id": "python.lang.security.audit.rule-12", "severity": "WARNING"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 23, "line_start": 23, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_13.py", "rule_id": "python.lang.security.audit.rule-13", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 24, "line_start": 24, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_14.py", "rule_id": "python.lang.security.audit.rule-14", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 25, "line_start": 25, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_15.py", "rule_id": "python.lang.security.audit.rule-15", "severity": "WARNING"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 26, "line_start": 26, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_16.py", "rule_id": "python.lang.security.audit.rule-16", "severity": "ERROR"}, {"attack_name": "Command and Scripting Interpreter", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "os.system(user_input)", "cwe": "CWE-79: Cross-site Scripting", "line_end": 27, "line_start": 27, "message": "Potential security issue detected in this code path that may allow injection.", "path": "src/module_17.py", "rule_id": "python.lang.security.audit.rule-17", "severity": "ERROR"}];
+const findings = [{"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 10, "line_start": 10, "message": "Issue.", "path": "src/m_0.py", "rule_id": "rule-0", "severity": "WARNING"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 11, "line_start": 11, "message": "Issue.", "path": "src/m_1.py", "rule_id": "rule-1", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 12, "line_start": 12, "message": "Issue.", "path": "src/m_2.py", "rule_id": "rule-2", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 13, "line_start": 13, "message": "Issue.", "path": "src/m_3.py", "rule_id": "rule-3", "severity": "WARNING"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 14, "line_start": 14, "message": "Issue.", "path": "src/m_4.py", "rule_id": "rule-4", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 15, "line_start": 15, "message": "Issue.", "path": "src/m_5.py", "rule_id": "rule-5", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 16, "line_start": 16, "message": "Issue.", "path": "src/m_6.py", "rule_id": "rule-6", "severity": "WARNING"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 17, "line_start": 17, "message": "Issue.", "path": "src/m_7.py", "rule_id": "rule-7", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 18, "line_start": 18, "message": "Issue.", "path": "src/m_8.py", "rule_id": "rule-8", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 19, "line_start": 19, "message": "Issue.", "path": "src/m_9.py", "rule_id": "rule-9", "severity": "WARNING"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 20, "line_start": 20, "message": "Issue.", "path": "src/m_10.py", "rule_id": "rule-10", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 21, "line_start": 21, "message": "Issue.", "path": "src/m_11.py", "rule_id": "rule-11", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 22, "line_start": 22, "message": "Issue.", "path": "src/m_12.py", "rule_id": "rule-12", "severity": "WARNING"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 23, "line_start": 23, "message": "Issue.", "path": "src/m_13.py", "rule_id": "rule-13", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 24, "line_start": 24, "message": "Issue.", "path": "src/m_14.py", "rule_id": "rule-14", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 25, "line_start": 25, "message": "Issue.", "path": "src/m_15.py", "rule_id": "rule-15", "severity": "WARNING"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 26, "line_start": 26, "message": "Issue.", "path": "src/m_16.py", "rule_id": "rule-16", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 27, "line_start": 27, "message": "Issue.", "path": "src/m_17.py", "rule_id": "rule-17", "severity": "ERROR"}];
 const ghInfo   = {"default_branch": "main", "description": "Security analysis platform", "full_name": "OmarRao/secure-scope", "language": "Python", "license": "Proprietary"};
 
 // Severity donut
