@@ -393,8 +393,15 @@ The HTML report includes:
 - KPI summary cards (critical/warning/info/CVEs/ATT&CK techniques)
 - Six Chart.js visualisations (severity doughnut, ATT&CK radar, findings-by-file heatmap, etc.)
 - Filterable findings table with expandable AI fix panels
-- Compliance posture section (when `--compliance`)
+- Dependency vulnerabilities prioritised by exploitability (EPSS %, CISA KEV, reachability) with a one-click dependency-fix PR
+- **Compliance mapping** — findings mapped to PCI DSS v4.0 / NIST 800-53 / OWASP Top 10 / SANS Top 25 as a coverage matrix
+- **License compliance** — dependency licenses classified for copyleft/GPL risk
+- **SBOM** — CycloneDX inventory viewable in-report and downloadable as JSON
 - Trend sparkline (when previous scans exist)
+
+> In the web app (dashboard / landing scans), compliance mapping, license
+> compliance, and the SBOM are generated automatically on every scan — no flags
+> needed. They appear under the report's "Governance" navigation group.
 
 **Screenshot:** `docs/screenshots/06_report_overview.png`
 
