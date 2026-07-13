@@ -182,3 +182,36 @@ def test_dep_fix_bump_and_plan_offline():
     assert plan["manual"][0]["package"] == "golib"
     body = d.build_pr_body(plan, 1)
     assert "flask" in body and "KEV" in body
+
+
+def test_compliance_mapping_shape():
+    from compliance import build_compliance_posture
+    posture = build_compliance_posture([
+        {"cwe": "CWE-79", "rule_id": "r1"},
+        {"cwe": "CWE-89", "rule_id": "r2"},
+    ])
+    assert posture.mapped_findings == 2
+    assert posture.owasp  # at least one OWASP category mapped
+    import dataclasses
+    d = dataclasses.asdict(posture)
+    assert "coverage_pct" in d and "pci_dss" in d
+
+
+def test_sbom_generates_cyclonedx():
+    from sbom import generate_sbom
+    import json as _json
+
+    class _R:
+        dependency_vulns = [{
+            "ecosystem": "python", "package": "flask", "version": "2.0.1",
+            "vuln_id": "CVE-2023-30861", "severity": "HIGH",
+            "fix_versions": ["2.3.2"], "description": "x",
+        }]
+        repo_url = "https://github.com/OmarRao/secure-scope"
+
+    out = os.path.join(tempfile.gettempdir(), "ss_test.cyclonedx.json")
+    generate_sbom(_R(), out)
+    bom = _json.loads(Path(out).read_text(encoding="utf-8"))
+    os.unlink(out)
+    assert bom["bomFormat"] == "CycloneDX"
+    assert len(bom["components"]) >= 1

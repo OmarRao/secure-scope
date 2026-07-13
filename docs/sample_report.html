@@ -569,7 +569,7 @@
     </div>
     <div class="nav-item" onclick="go('cves',this)">
       <span class="nav-ic">&#x1F4E6;</span> Dep. CVEs
-      <span class="nav-ct ct-b">2</span>
+      <span class="nav-ct ct-b">1</span>
     </div>
     <div class="nav-item" onclick="go('sandbox',this)">
       <span class="nav-ic">&#x1F433;</span> Sandbox
@@ -586,11 +586,25 @@
     </div>
     <div class="nav-item" onclick="go('deps-report',this)">
       <span class="nav-ic">&#x1F4E6;</span> Dep. Vulns
-      <span class="nav-ct ct-r">4</span>
+      <span class="nav-ct ct-r">2</span>
     </div>
     <div class="nav-item" onclick="go('iac',this)">
       <span class="nav-ic">&#x1F3D7;</span> IaC Misconfigs
       
+    </div>
+
+    <div class="nav-grp">Governance</div>
+    <div class="nav-item" onclick="go('compliance',this)">
+      <span class="nav-ic">&#x1F4CB;</span> Compliance
+      <span class="nav-ct ct-b">66.6%</span>
+    </div>
+    <div class="nav-item" onclick="go('licenses',this)">
+      <span class="nav-ic">&#x2696;</span> Licenses
+      <span class="nav-ct ct-r">3</span>
+    </div>
+    <div class="nav-item" onclick="go('sbom',this)">
+      <span class="nav-ic">&#x1F4E6;</span> SBOM
+      <span class="nav-ct ct-b">2</span>
     </div>
 
     <div class="nav-grp">Actions</div>
@@ -599,7 +613,7 @@
     <div class="nav-item" onclick="window.location='/'"><span class="nav-ic">&#x2190;</span> New Scan</div>
 
     <div class="side-foot">
-      Generated<br>2026-07-08 12:00 UTC<br><br>
+      Generated<br>2026-07-08<br><br>
       SecureScope v1.0<br>
       MITRE ATT&CK v14<br><br>
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode">🌙</button>
@@ -613,12 +627,12 @@
     <div class="banner" id="top">
       <div class="banner-left">
         <h1>OmarRao/secure-scope</h1>
-        <div class="bsub">Security analysis platform</div>
+        <div class="bsub">Security analysis report</div>
         <div class="banner-meta">
           <span class="bmeta">Branch <strong>main</strong></span>
-          <span class="bmeta">Language <strong>Python</strong></span>
-          <span class="bmeta">License <strong>Proprietary</strong></span>
-          <span class="bmeta">2026-07-08 12:00 UTC</span>
+          <span class="bmeta">Language <strong>Unknown</strong></span>
+          <span class="bmeta">License <strong>None</strong></span>
+          <span class="bmeta">2026-07-08</span>
         </div>
       </div>
       <div class="banner-score">
@@ -642,7 +656,7 @@
         <div class="kpi-sub">WARNING severity</div>
       </div>
       <div class="kpi">
-        <div class="kpi-num b">2</div>
+        <div class="kpi-num b">1</div>
         <div class="kpi-lbl">Dep. CVEs</div>
         <div class="kpi-sub">Known vulnerabilities</div>
       </div>
@@ -676,6 +690,9 @@
       <a class="jump-pill" href="#cves" onclick="go('cves',this);return false;">&#x1F4E6; CVEs</a>
       <a class="jump-pill" href="#sandbox" onclick="go('sandbox',this);return false;">&#x1F433; Sandbox</a>
       <a class="jump-pill warn" href="#ransomware" onclick="go('ransomware',this);return false;">&#x1F9EC; Ransomware Intel</a>
+      <a class="jump-pill" href="#compliance" onclick="go('compliance',this);return false;">&#x1F4CB; Compliance</a>
+      <a class="jump-pill" href="#licenses" onclick="go('licenses',this);return false;">&#x2696; Licenses</a>
+      <a class="jump-pill" href="#sbom" onclick="go('sbom',this);return false;">&#x1F4E6; SBOM</a>
     </div>
 
     <!-- Threat Level section -->
@@ -721,8 +738,8 @@
         </div>
         <div class="cbox" style="text-align:center">
           <div class="cbox-title">CVE Weight</div>
-          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--accent)">16</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">2 CVEs x 8 pts</div>
+          <div style="font-size:36px;font-weight:900;font-family:'Geist Mono',monospace;color:var(--accent)">8</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">1 CVEs x 8 pts</div>
         </div>
         <div class="cbox" style="text-align:center">
           <div class="cbox-title">Runtime Weight</div>
@@ -916,7 +933,7 @@
           
           <div>
             <div class="gh-name"><a href="#" target="_blank">OmarRao/secure-scope</a></div>
-            <div class="gh-desc">Security analysis platform</div>
+            <div class="gh-desc">No description provided.</div>
           </div>
         </div>
         <div class="gh-stats">
@@ -934,7 +951,7 @@
           <div class="ibox-title">Details</div>
           <div class="irow"><span class="ik">Owner</span><span class="iv">N/A</span></div>
           <div class="irow"><span class="ik">Default Branch</span><span class="iv"><code>main</code></span></div>
-          <div class="irow"><span class="ik">License</span><span class="iv">Proprietary</span></div>
+          <div class="irow"><span class="ik">License</span><span class="iv">None</span></div>
           <div class="irow"><span class="ik">Created</span><span class="iv">N/A</span></div>
           <div class="irow"><span class="ik">Last Push</span><span class="iv">N/A</span></div>
           <div class="irow"><span class="ik">Size</span><span class="iv">0 KB</span></div>
@@ -1339,7 +1356,7 @@
     <div class="sec" id="cves">
       <div class="sec-head" onclick="toggleSec(this)">
         <div class="sec-title">&#x1F4E6; Dependency CVEs</div>
-        <div class="sec-count">2</div>
+        <div class="sec-count">1</div>
         <span class="sec-chevron">&#x25BC;</span>
       </div>
       <div class="sec-body">
@@ -1350,19 +1367,10 @@
           
           <tr>
             <td><span class="tag tag-tactic"></span></td>
-            <td><code style="font-size:11px">log4j-core</code></td>
-            <td><code style="font-size:11px"></code></td>
-            <td><span class="cve-id">CVE-2021-44228</span></td>
-            <td style="font-size:12px;color:var(--sub)">RCE via JNDI.</td>
-            <td style="font-size:12px;color:var(--ok)">N/A</td>
-          </tr>
-          
-          <tr>
-            <td><span class="tag tag-tactic"></span></td>
             <td><code style="font-size:11px">flask</code></td>
             <td><code style="font-size:11px"></code></td>
             <td><span class="cve-id">CVE-2023-30861</span></td>
-            <td style="font-size:12px;color:var(--sub)">Cookie disclosure.</td>
+            <td style="font-size:12px;color:var(--sub)">x</td>
             <td style="font-size:12px;color:var(--ok)">N/A</td>
           </tr>
           
@@ -1435,7 +1443,7 @@
       <div class="sec-head" onclick="toggleSec(this)">
         <div class="sec-title">&#x1F4E6; Dependency Vulnerabilities</div>
         
-          <span class="sec-count" style="color:var(--danger)">4 CVEs · 84 packages</span>
+          <span class="sec-count" style="color:var(--danger)">2 CVEs · 84 packages</span>
         
         <span class="sec-chevron">&#x25BC;</span>
       </div>
@@ -1449,7 +1457,7 @@
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Packages</div>
           </div>
           <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;text-align:center">
-            <div style="font-size:1.5rem;font-weight:800;color:var(--body)">4</div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--body)">2</div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Vulnerable</div>
           </div>
           <div style="background:rgba(242,87,87,0.08);border:1px solid rgba(242,87,87,0.3);border-radius:8px;padding:14px;text-align:center">
@@ -1457,15 +1465,15 @@
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Critical</div>
           </div>
           <div style="background:rgba(230,168,23,0.08);border:1px solid rgba(230,168,23,0.3);border-radius:8px;padding:14px;text-align:center">
-            <div style="font-size:1.5rem;font-weight:800;color:var(--warn)">2</div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--warn)">1</div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">High</div>
           </div>
           <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;text-align:center">
-            <div style="font-size:1.5rem;font-weight:800;color:var(--body)">1</div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--body)">0</div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Medium</div>
           </div>
           <div style="background:rgba(79,142,247,0.08);border:1px solid rgba(79,142,247,0.3);border-radius:8px;padding:14px;text-align:center" title="CVEs in packages your code actually imports">
-            <div style="font-size:1.5rem;font-weight:800;color:var(--accent)">2</div>
+            <div style="font-size:1.5rem;font-weight:800;color:var(--accent)">1</div>
             <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px">Reachable</div>
           </div>
           <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:8px;padding:14px;text-align:center">
@@ -1516,41 +1524,13 @@
           <div onclick="this.querySelector('.dep-detail').style.display=this.querySelector('.dep-detail').style.display==='none'?'block':'none'"
                style="display:grid;grid-template-columns:84px 88px 120px 1fr 90px 82px 128px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .15s"
                onmouseenter="this.style.background='var(--ink3)'" onmouseleave="this.style.background=''">
-            <div><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;border:1px solid var(--danger);color:var(--danger);background:var(--danger)18">CRITICAL</span></div>
-            <div style="font-size:11px;color:var(--sub)">Maven</div>
-            <div style="font-size:11px;color:var(--body);font-weight:600;word-break:break-all">log4j-core</div>
-            <div>
-              <div style="font-size:12px;color:var(--body);font-weight:500">CVE-2021-44228 RCE via JNDI.</div>
-              <div class="dep-detail" style="display:none;margin-top:8px;padding:8px;background:var(--ink);border-radius:6px;border-left:3px solid var(--danger)">
-                <div style="font-size:11px;color:var(--sub);margin-bottom:4px">RCE via JNDI.</div>
-                <div style="font-size:10px;color:var(--muted)">CVSS: <strong style="color:var(--danger)">10.0</strong> · EPSS: <strong style="color:var(--danger)">97.4%</strong> (top 0%)</div>
-                <div style="font-size:10px;color:var(--danger);margin-top:2px;font-weight:700">⚠ On CISA Known Exploited Vulnerabilities catalogue</div>
-                
-                <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'Geist Mono',monospace">CVE-2021-44228</div>
-              </div>
-            </div>
-            <div style="font-size:10px;color:var(--muted);font-family:'Geist Mono',monospace">2.14.0</div>
-            <div style="font-size:10px;color:var(--ok);font-family:'Geist Mono',monospace">2.17.0</div>
-            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
-              <span style="font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;background:var(--danger);color:#fff;font-family:'Geist Mono',monospace">KEV</span>
-              
-              <span title="EPSS: probability of exploitation in the next 30 days" style="font-size:10px;font-weight:700;color:var(--danger);font-family:'Geist Mono',monospace">97.4%</span>
-            </div>
-          </div>
-          
-          
-          
-          
-          <div onclick="this.querySelector('.dep-detail').style.display=this.querySelector('.dep-detail').style.display==='none'?'block':'none'"
-               style="display:grid;grid-template-columns:84px 88px 120px 1fr 90px 82px 128px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule);cursor:pointer;transition:background .15s"
-               onmouseenter="this.style.background='var(--ink3)'" onmouseleave="this.style.background=''">
             <div><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;border:1px solid var(--warn);color:var(--warn);background:var(--warn)18">HIGH</span></div>
             <div style="font-size:11px;color:var(--sub)">PyPI</div>
             <div style="font-size:11px;color:var(--body);font-weight:600;word-break:break-all">flask</div>
             <div>
-              <div style="font-size:12px;color:var(--body);font-weight:500">CVE-2023-30861 Cookie disclosure.</div>
+              <div style="font-size:12px;color:var(--body);font-weight:500">CVE-2023-30861 x</div>
               <div class="dep-detail" style="display:none;margin-top:8px;padding:8px;background:var(--ink);border-radius:6px;border-left:3px solid var(--warn)">
-                <div style="font-size:11px;color:var(--sub);margin-bottom:4px">Cookie disclosure.</div>
+                <div style="font-size:11px;color:var(--sub);margin-bottom:4px">x</div>
                 <div style="font-size:10px;color:var(--muted)">CVSS: <strong style="color:var(--warn)">7.5</strong> · EPSS: <strong style="color:var(--sub)">1.2%</strong> (top 17%)</div>
                 
                 <div style="font-size:10px;margin-top:2px;color:var(--warn)">⮑ Reachable — imported in 3 files</div>
@@ -1594,6 +1574,157 @@
       </div><!-- /sec-body iac -->
     </div>
     <!-- /iac -->
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMPLIANCE MAPPING                                              -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="sec" id="compliance">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">📋 Compliance Mapping</div>
+        <span class="sec-count" style="color:var(--accent)">12/18 mapped · 66.6% coverage</span>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+      
+        <p style="font-size:12px;color:var(--sub);margin-bottom:16px">Findings mapped to <strong>PCI DSS v4.0</strong>, <strong>NIST SP 800-53 Rev 5</strong>, <strong>OWASP Top 10 (2021)</strong>, and <strong>SANS/CWE Top 25</strong>.</p>
+        <div class="chart-grid-2" style="margin-bottom:16px">
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px;font-family:'Geist Mono',monospace">OWASP Top 10</div>
+            
+            <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--rule);font-size:12px"><span style="color:var(--body)">A03:2021 - Injection</span><span style="color:var(--warn);font-family:'Geist Mono',monospace;font-weight:700">3</span></div>
+            
+          </div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px;font-family:'Geist Mono',monospace">PCI DSS v4.0</div>
+            
+            <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--rule);font-size:12px"><span style="color:var(--body)">Req 6.2.4 (prevent XSS)</span><span style="color:var(--warn);font-family:'Geist Mono',monospace;font-weight:700">2</span></div>
+            
+          </div>
+        </div>
+        <div class="chart-grid-2">
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px;font-family:'Geist Mono',monospace">NIST 800-53</div>
+            
+            <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--rule);font-size:12px"><span style="color:var(--body)">SI-10 (Information Input Validation)</span><span style="color:var(--warn);font-family:'Geist Mono',monospace;font-weight:700">2</span></div>
+            
+          </div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px;font-family:'Geist Mono',monospace">SANS/CWE Top 25</div>
+            
+              
+              <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--rule);font-size:12px"><span style="color:var(--body)">#2 · CWE-79</span><span style="color:var(--danger);font-family:'Geist Mono',monospace;font-weight:700">3</span></div>
+              
+            
+          </div>
+        </div>
+      
+      </div><!-- /sec-body compliance -->
+    </div>
+    <!-- /compliance -->
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- LICENSE COMPLIANCE                                              -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="sec" id="licenses">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">⚖️ License Compliance</div>
+        <span class="sec-count">3 packages</span>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+      
+        
+        
+        
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:20px">
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--danger)">1</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">High risk (copyleft)</div></div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--warn)">1</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Medium risk</div></div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--body)">3</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Total packages</div></div>
+        </div>
+        <div class="datatbl" style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1fr 110px 180px 90px;gap:10px;padding:8px 14px;background:var(--ink3);border-bottom:2px solid var(--rule)">
+            <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Package</span><span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Version</span><span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">License</span><span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Risk</span>
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 110px 180px 90px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule)">
+            <span style="font-size:12px;color:var(--body);font-weight:600;word-break:break-all">flask</span>
+            <span style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace">2.0.1</span>
+            <span style="font-size:11px;color:var(--sub);font-family:'Geist Mono',monospace">BSD-3-Clause</span>
+            <span><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;color:var(--ok);border:1px solid var(--ok)">OK</span></span>
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 110px 180px 90px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule)">
+            <span style="font-size:12px;color:var(--body);font-weight:600;word-break:break-all">somegpl</span>
+            <span style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace">1.0</span>
+            <span style="font-size:11px;color:var(--sub);font-family:'Geist Mono',monospace">GPL-3.0</span>
+            <span><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;color:var(--danger);border:1px solid var(--danger)">HIGH</span></span>
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 110px 180px 90px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule)">
+            <span style="font-size:12px;color:var(--body);font-weight:600;word-break:break-all">mixed</span>
+            <span style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace">2.1</span>
+            <span style="font-size:11px;color:var(--sub);font-family:'Geist Mono',monospace">LGPL-2.1</span>
+            <span><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;color:var(--warn);border:1px solid var(--warn)">MEDIUM</span></span>
+          </div>
+          
+        </div>
+      
+      </div><!-- /sec-body licenses -->
+    </div>
+    <!-- /licenses -->
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SBOM (Software Bill of Materials)                               -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="sec" id="sbom">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">📦 Software Bill of Materials</div>
+        <span class="sec-count">CycloneDX 1.4 · 2 components</span>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+      
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:20px">
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--body)">2</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Components</div></div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--danger)">1</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Vulnerabilities</div></div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--accent)">1.4</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">CycloneDX</div></div>
+        </div>
+        <p style="font-size:12px;color:var(--sub);margin-bottom:14px">Machine-readable inventory — compatible with Dependency-Track, grype, trivy and the GitHub Dependency Submission API.</p>
+        <button onclick="downloadSBOM()" class="jump-pill" style="cursor:pointer;font-size:13px;padding:9px 16px;margin-bottom:16px">&#x2B07; Download CycloneDX JSON</button>
+        <script id="sbomData" type="application/json">{"bomFormat": "CycloneDX", "components": [{"name": "flask", "purl": "pkg:pypi/flask@2.0.1", "version": "2.0.1"}, {"name": "requests", "purl": "pkg:pypi/requests@2.25.0", "version": "2.25.0"}], "specVersion": "1.4", "vulnerabilities": [{"id": "CVE-2023-30861"}]}</script>
+        <div class="datatbl" style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1fr 120px 1fr;gap:10px;padding:8px 14px;background:var(--ink3);border-bottom:2px solid var(--rule)">
+            <span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Component</span><span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">Version</span><span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">PURL</span>
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 120px 1fr;gap:10px;padding:9px 14px;border-bottom:1px solid var(--rule)">
+            <span style="font-size:12px;color:var(--body);font-weight:600;word-break:break-all">flask</span>
+            <span style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace">2.0.1</span>
+            <span style="font-size:10px;color:var(--sub);font-family:'Geist Mono',monospace;word-break:break-all">pkg:pypi/flask@2.0.1</span>
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 120px 1fr;gap:10px;padding:9px 14px;border-bottom:1px solid var(--rule)">
+            <span style="font-size:12px;color:var(--body);font-weight:600;word-break:break-all">requests</span>
+            <span style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace">2.25.0</span>
+            <span style="font-size:10px;color:var(--sub);font-family:'Geist Mono',monospace;word-break:break-all">pkg:pypi/requests@2.25.0</span>
+          </div>
+          
+        </div>
+        
+      
+      </div><!-- /sec-body sbom -->
+    </div>
+    <!-- /sbom -->
+    <script>
+      function downloadSBOM(){
+        const el=document.getElementById('sbomData'); if(!el) return;
+        const blob=new Blob([el.textContent],{type:'application/json'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a'); a.href=url;
+        a.download='secure-scope.cyclonedx.json'; document.body.appendChild(a); a.click();
+        a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+      }
+    </script>
 
   </div>
 </div>
@@ -1708,7 +1839,7 @@ function toggleTheme() {
 })();
 
 const findings = [{"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 10, "line_start": 10, "message": "Issue.", "path": "src/m_0.py", "rule_id": "rule-0", "severity": "WARNING"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 11, "line_start": 11, "message": "Issue.", "path": "src/m_1.py", "rule_id": "rule-1", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 12, "line_start": 12, "message": "Issue.", "path": "src/m_2.py", "rule_id": "rule-2", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 13, "line_start": 13, "message": "Issue.", "path": "src/m_3.py", "rule_id": "rule-3", "severity": "WARNING"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 14, "line_start": 14, "message": "Issue.", "path": "src/m_4.py", "rule_id": "rule-4", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 15, "line_start": 15, "message": "Issue.", "path": "src/m_5.py", "rule_id": "rule-5", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 16, "line_start": 16, "message": "Issue.", "path": "src/m_6.py", "rule_id": "rule-6", "severity": "WARNING"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 17, "line_start": 17, "message": "Issue.", "path": "src/m_7.py", "rule_id": "rule-7", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 18, "line_start": 18, "message": "Issue.", "path": "src/m_8.py", "rule_id": "rule-8", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 19, "line_start": 19, "message": "Issue.", "path": "src/m_9.py", "rule_id": "rule-9", "severity": "WARNING"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 20, "line_start": 20, "message": "Issue.", "path": "src/m_10.py", "rule_id": "rule-10", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 21, "line_start": 21, "message": "Issue.", "path": "src/m_11.py", "rule_id": "rule-11", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 22, "line_start": 22, "message": "Issue.", "path": "src/m_12.py", "rule_id": "rule-12", "severity": "WARNING"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 23, "line_start": 23, "message": "Issue.", "path": "src/m_13.py", "rule_id": "rule-13", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 24, "line_start": 24, "message": "Issue.", "path": "src/m_14.py", "rule_id": "rule-14", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 25, "line_start": 25, "message": "Issue.", "path": "src/m_15.py", "rule_id": "rule-15", "severity": "WARNING"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 26, "line_start": 26, "message": "Issue.", "path": "src/m_16.py", "rule_id": "rule-16", "severity": "ERROR"}, {"attack_name": "CSI", "attack_tactic": "Execution", "attack_technique": "T1059", "code": "x", "cwe": "CWE-79", "line_end": 27, "line_start": 27, "message": "Issue.", "path": "src/m_17.py", "rule_id": "rule-17", "severity": "ERROR"}];
-const ghInfo   = {"default_branch": "main", "description": "Security analysis platform", "full_name": "OmarRao/secure-scope", "language": "Python", "license": "Proprietary"};
+const ghInfo   = {"default_branch": "main", "full_name": "OmarRao/secure-scope"};
 
 // Severity donut
 const sevCounts = {ERROR:0,WARNING:0,INFO:0};

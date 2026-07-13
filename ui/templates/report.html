@@ -510,6 +510,20 @@
       {% if iac and iac.total_findings > 0 %}<span class="nav-ct {% if iac.critical_count > 0 %}ct-r{% else %}ct-w{% endif %}">{{ iac.total_findings }}</span>{% endif %}
     </div>
 
+    <div class="nav-grp">Governance</div>
+    <div class="nav-item" onclick="go('compliance',this)">
+      <span class="nav-ic">&#x1F4CB;</span> Compliance
+      {% if compliance and compliance.mapped_findings > 0 %}<span class="nav-ct ct-b">{{ compliance.coverage_pct }}%</span>{% endif %}
+    </div>
+    <div class="nav-item" onclick="go('licenses',this)">
+      <span class="nav-ic">&#x2696;</span> Licenses
+      {% if licenses %}<span class="nav-ct {% if licenses|selectattr('risk','equalto','high')|list|length > 0 %}ct-r{% else %}ct-b{% endif %}">{{ licenses|length }}</span>{% endif %}
+    </div>
+    <div class="nav-item" onclick="go('sbom',this)">
+      <span class="nav-ic">&#x1F4E6;</span> SBOM
+      {% if sbom and sbom.components %}<span class="nav-ct ct-b">{{ sbom.components|length }}</span>{% endif %}
+    </div>
+
     <div class="nav-grp">Actions</div>
     <div class="nav-item" onclick="window.open('{{ gh.get('url','#') }}','_blank')"><span class="nav-ic">&#x1F517;</span> View on GitHub</div>
     <div class="nav-item" onclick="downloadPDF()"><span class="nav-ic">&#x1F4C4;</span> Print Report</div>
@@ -624,6 +638,9 @@
       <a class="jump-pill" href="#cves" onclick="go('cves',this);return false;">&#x1F4E6; CVEs</a>
       <a class="jump-pill" href="#sandbox" onclick="go('sandbox',this);return false;">&#x1F433; Sandbox</a>
       <a class="jump-pill warn" href="#ransomware" onclick="go('ransomware',this);return false;">&#x1F9EC; Ransomware Intel</a>
+      <a class="jump-pill" href="#compliance" onclick="go('compliance',this);return false;">&#x1F4CB; Compliance</a>
+      <a class="jump-pill" href="#licenses" onclick="go('licenses',this);return false;">&#x2696; Licenses</a>
+      <a class="jump-pill" href="#sbom" onclick="go('sbom',this);return false;">&#x1F4E6; SBOM</a>
     </div>
 
     <!-- Threat Level section -->
@@ -1603,6 +1620,151 @@
       </div><!-- /sec-body iac -->
     </div>
     <!-- /iac -->
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- COMPLIANCE MAPPING                                              -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="sec" id="compliance">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">📋 Compliance Mapping</div>
+        {% if compliance %}<span class="sec-count" style="color:var(--accent)">{{ compliance.mapped_findings }}/{{ compliance.total_findings }} mapped · {{ compliance.coverage_pct }}% coverage</span>{% endif %}
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+      {% if compliance and compliance.mapped_findings > 0 %}
+        <p style="font-size:12px;color:var(--sub);margin-bottom:16px">Findings mapped to <strong>PCI DSS v4.0</strong>, <strong>NIST SP 800-53 Rev 5</strong>, <strong>OWASP Top 10 (2021)</strong>, and <strong>SANS/CWE Top 25</strong>.</p>
+        <div class="chart-grid-2" style="margin-bottom:16px">
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px;font-family:'Geist Mono',monospace">OWASP Top 10</div>
+            {% for cat, ids in compliance.owasp.items() %}
+            <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--rule);font-size:12px"><span style="color:var(--body)">{{ cat }}</span><span style="color:var(--warn);font-family:'Geist Mono',monospace;font-weight:700">{{ ids|length }}</span></div>
+            {% endfor %}
+          </div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px;font-family:'Geist Mono',monospace">PCI DSS v4.0</div>
+            {% for req, ids in compliance.pci_dss.items() %}
+            <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--rule);font-size:12px"><span style="color:var(--body)">{{ req }}</span><span style="color:var(--warn);font-family:'Geist Mono',monospace;font-weight:700">{{ ids|length }}</span></div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="chart-grid-2">
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px;font-family:'Geist Mono',monospace">NIST 800-53</div>
+            {% for ctl, ids in compliance.nist.items() %}
+            <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--rule);font-size:12px"><span style="color:var(--body)">{{ ctl }}</span><span style="color:var(--warn);font-family:'Geist Mono',monospace;font-weight:700">{{ ids|length }}</span></div>
+            {% endfor %}
+          </div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:10px;font-family:'Geist Mono',monospace">SANS/CWE Top 25</div>
+            {% if compliance.sans_top25_hit %}
+              {% for s in compliance.sans_top25_hit %}
+              <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--rule);font-size:12px"><span style="color:var(--body)">#{{ s.rank }} · {{ s.cwe }}</span><span style="color:var(--danger);font-family:'Geist Mono',monospace;font-weight:700">{{ s.count }}</span></div>
+              {% endfor %}
+            {% else %}
+              <div style="font-size:12px;color:var(--muted);padding:6px 0">No SANS Top 25 weaknesses detected.</div>
+            {% endif %}
+          </div>
+        </div>
+      {% else %}
+        <div style="padding:28px;text-align:center;color:var(--ok);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px">
+          ✅ No findings mapped to compliance controls{% if compliance %} across {{ compliance.total_findings }} findings{% endif %}.
+        </div>
+      {% endif %}
+      </div><!-- /sec-body compliance -->
+    </div>
+    <!-- /compliance -->
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- LICENSE COMPLIANCE                                              -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="sec" id="licenses">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">⚖️ License Compliance</div>
+        {% if licenses %}<span class="sec-count">{{ licenses|length }} packages</span>{% endif %}
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+      {% if licenses %}
+        {% set lic_hi = licenses|selectattr('risk','equalto','high')|list %}
+        {% set lic_med = licenses|selectattr('risk','equalto','medium')|list %}
+        {% set lic_color = {'high':'var(--danger)','medium':'var(--warn)','low':'var(--accent)','ok':'var(--ok)'} %}
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:20px">
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--danger)">{{ lic_hi|length }}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">High risk (copyleft)</div></div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--warn)">{{ lic_med|length }}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Medium risk</div></div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--body)">{{ licenses|length }}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Total packages</div></div>
+        </div>
+        <div class="datatbl" style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1fr 110px 180px 90px;gap:10px;padding:8px 14px;background:var(--ink3);border-bottom:2px solid var(--rule)">
+            {% for hdr in ['Package','Version','License','Risk'] %}<span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">{{ hdr }}</span>{% endfor %}
+          </div>
+          {% for l in licenses %}
+          <div style="display:grid;grid-template-columns:1fr 110px 180px 90px;gap:10px;padding:10px 14px;border-bottom:1px solid var(--rule)">
+            <span style="font-size:12px;color:var(--body);font-weight:600;word-break:break-all">{{ l.package }}</span>
+            <span style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace">{{ l.version | default('—') }}</span>
+            <span style="font-size:11px;color:var(--sub);font-family:'Geist Mono',monospace">{{ l.license | default('Unknown') }}</span>
+            <span><span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;color:{{ lic_color.get(l.risk,'var(--sub)') }};border:1px solid {{ lic_color.get(l.risk,'var(--sub)') }}">{{ (l.risk or 'ok') | upper }}</span></span>
+          </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div style="padding:28px;text-align:center;color:var(--muted);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px">
+          No dependency licenses detected in this repository.
+        </div>
+      {% endif %}
+      </div><!-- /sec-body licenses -->
+    </div>
+    <!-- /licenses -->
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- SBOM (Software Bill of Materials)                               -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <div class="sec" id="sbom">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">📦 Software Bill of Materials</div>
+        {% if sbom and sbom.components %}<span class="sec-count">CycloneDX {{ sbom.specVersion }} · {{ sbom.components|length }} components</span>{% endif %}
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+      {% if sbom and sbom.components %}
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:20px">
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--body)">{{ sbom.components|length }}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Components</div></div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--danger)">{{ sbom.vulnerabilities|length if sbom.vulnerabilities else 0 }}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">Vulnerabilities</div></div>
+          <div style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;padding:16px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--accent)">{{ sbom.specVersion }}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:4px">CycloneDX</div></div>
+        </div>
+        <p style="font-size:12px;color:var(--sub);margin-bottom:14px">Machine-readable inventory — compatible with Dependency-Track, grype, trivy and the GitHub Dependency Submission API.</p>
+        <button onclick="downloadSBOM()" class="jump-pill" style="cursor:pointer;font-size:13px;padding:9px 16px;margin-bottom:16px">&#x2B07; Download CycloneDX JSON</button>
+        <script id="sbomData" type="application/json">{{ sbom | tojson }}</script>
+        <div class="datatbl" style="background:var(--ink2);border:1px solid var(--rule);border-radius:10px;overflow:hidden">
+          <div style="display:grid;grid-template-columns:1fr 120px 1fr;gap:10px;padding:8px 14px;background:var(--ink3);border-bottom:2px solid var(--rule)">
+            {% for hdr in ['Component','Version','PURL'] %}<span style="font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:'Geist Mono',monospace">{{ hdr }}</span>{% endfor %}
+          </div>
+          {% for c in sbom.components[:60] %}
+          <div style="display:grid;grid-template-columns:1fr 120px 1fr;gap:10px;padding:9px 14px;border-bottom:1px solid var(--rule)">
+            <span style="font-size:12px;color:var(--body);font-weight:600;word-break:break-all">{{ c.name }}</span>
+            <span style="font-size:11px;color:var(--muted);font-family:'Geist Mono',monospace">{{ c.version }}</span>
+            <span style="font-size:10px;color:var(--sub);font-family:'Geist Mono',monospace;word-break:break-all">{{ c.purl }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% if sbom.components|length > 60 %}<p style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center">Showing first 60 of {{ sbom.components|length }} components — full list in the download.</p>{% endif %}
+      {% else %}
+        <div style="padding:28px;text-align:center;color:var(--muted);background:var(--ink2);border:1px solid var(--rule);border-radius:10px;font-family:'Geist Mono',monospace;font-size:13px">
+          No SBOM generated (no dependencies detected).
+        </div>
+      {% endif %}
+      </div><!-- /sec-body sbom -->
+    </div>
+    <!-- /sbom -->
+    <script>
+      function downloadSBOM(){
+        const el=document.getElementById('sbomData'); if(!el) return;
+        const blob=new Blob([el.textContent],{type:'application/json'});
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a'); a.href=url;
+        a.download='{{ repo_slug }}.cyclonedx.json'; document.body.appendChild(a); a.click();
+        a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+      }
+    </script>
 
   </div>
 </div>

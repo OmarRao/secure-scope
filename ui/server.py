@@ -502,6 +502,45 @@ def handle_scan(data):
                     findings_dicts = enriched or [f.to_dict() for f in result.findings]
                     rw_report = ransomware_detect(findings_dicts, workdir)
 
+                    # ── Compliance mapping + license scan + SBOM ─────────────────
+                    # All three are cheap and reuse existing, tested modules.
+                    _emit(sid, "progress", {"step": "compliance", "message": "📋 Mapping to PCI/NIST/OWASP, scanning licenses & building SBOM...", "pct": 89})
+                    compliance_data = None
+                    try:
+                        from compliance import build_compliance_posture
+                        import dataclasses as _dc
+                        # Normalise "CWE-79: XSS" → "CWE-79" so it maps cleanly.
+                        def _norm_cwe(f):
+                            c = f.get("cwe") or ""
+                            m = re.search(r"CWE-\d+", c)
+                            return {**f, "cwe": m.group(0) if m else c}
+                        compliance_data = _dc.asdict(
+                            build_compliance_posture([_norm_cwe(f) for f in findings_dicts]))
+                    except Exception:
+                        logger.exception("compliance mapping failed")
+
+                    license_data = None
+                    try:
+                        from license_scanner import scan_licenses
+                        license_data = scan_licenses(workdir)
+                    except Exception:
+                        logger.exception("license scan failed")
+
+                    sbom_data = None
+                    try:
+                        from sbom import generate_sbom
+                        import uuid as _uuid, json as _json_sbom
+                        result.repo_url = repo_url
+                        _sbom_path = str(REPORTS_DIR / f"sbom_{_uuid.uuid4().hex}.cyclonedx.json")
+                        generate_sbom(result, _sbom_path)
+                        sbom_data = _json_sbom.loads(Path(_sbom_path).read_text(encoding="utf-8"))
+                        try:
+                            Path(_sbom_path).unlink()
+                        except OSError:
+                            pass
+                    except Exception:
+                        logger.exception("SBOM generation failed")
+
                     _emit(sid, "progress", {"step": "report", "message": "Building report...", "pct": 90})
 
                     from report import to_json, to_html
@@ -527,6 +566,9 @@ def handle_scan(data):
                         "secrets": secrets_result.to_dict() if secrets_result else None,
                         "deps": deps_dict if deps_dict is not None else (deps_result.to_dict() if deps_result else None),
                         "iac": iac_result.to_dict() if iac_result else None,
+                        "compliance": compliance_data,
+                        "licenses": license_data,
+                        "sbom": sbom_data,
                         "runtime": {
                             "exit_code": obs.exit_code if obs else None,
                             "suspicious_behaviors": obs.suspicious_behaviors if obs else [],
