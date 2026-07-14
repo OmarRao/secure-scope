@@ -397,11 +397,16 @@ The HTML report includes:
 - **Compliance mapping** — findings mapped to PCI DSS v4.0 / NIST 800-53 / OWASP Top 10 / SANS Top 25 as a coverage matrix
 - **License compliance** — dependency licenses classified for copyleft/GPL risk
 - **SBOM** — CycloneDX inventory viewable in-report and downloadable as JSON
+- **Supply-chain risk** — typosquatting + dependency-confusion detection
+- **Project health** — OpenSSF Scorecard (maintenance, branch protection, signed releases)
+- **Container** — Trivy Dockerfile/image findings (requires the Trivy binary; available in CLI / self-hosted)
 - Trend sparkline (when previous scans exist)
 
 > In the web app (dashboard / landing scans), compliance mapping, license
-> compliance, and the SBOM are generated automatically on every scan — no flags
-> needed. They appear under the report's "Governance" navigation group.
+> compliance, SBOM, supply-chain risk, and OpenSSF project health are generated
+> automatically on every scan — no flags needed. They appear under the report's
+> "Governance" and "Supply Chain" navigation groups. The compliance mapping and
+> license summary also appear in the exported PDF.
 
 **Screenshot:** `docs/screenshots/06_report_overview.png`
 

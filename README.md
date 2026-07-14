@@ -44,6 +44,9 @@
 | Compliance mapping | Findings mapped to PCI DSS v4.0, NIST SP 800-53, OWASP Top 10, and SANS/CWE Top 25 — shown as a coverage matrix in the report |
 | License compliance | Dependency licenses classified for copyleft/GPL risk, in the web scan and report |
 | SBOM export | CycloneDX SBOM generated per scan, viewable in the report and downloadable as JSON |
+| Supply-chain risk | Typosquatting + dependency-confusion detection surfaced in the web scan and report |
+| Project health | OpenSSF Scorecard (maintenance, branch protection, signed releases, etc.) shown per scan |
+| Container scanning | Trivy Dockerfile/image findings in the report (CLI / self-hosted; requires the Trivy binary) |
 | Mobile responsive | Landing page, dashboard, and reports are fully responsive on iOS and Android phones (tested at 375 px / 412 px) |
 
 **[View Sample Report — interactive HTML](https://omarrao.github.io/secure-scope/sample_report.html)** · **[PDF version](https://github.com/OmarRao/secure-scope/blob/main/docs/sample_report.pdf)**

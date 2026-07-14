@@ -541,7 +541,31 @@ def handle_scan(data):
                     except Exception:
                         logger.exception("SBOM generation failed")
 
-                    _emit(sid, "progress", {"step": "report", "message": "Building report...", "pct": 90})
+                    # ── Supply-chain risk + OpenSSF Scorecard + container ────────
+                    _emit(sid, "progress", {"step": "supplychain", "message": "🔗 Checking typosquatting, dependency confusion & project health...", "pct": 90})
+                    supply_chain_data = None
+                    try:
+                        from supply_chain import check_dependency_confusion, check_typosquatting
+                        supply_chain_data = (check_dependency_confusion(workdir) or []) + (check_typosquatting(workdir) or [])
+                    except Exception:
+                        logger.exception("supply-chain checks failed")
+
+                    scorecard_data = None
+                    try:
+                        from scorecard import run_scorecard
+                        scorecard_data = run_scorecard(repo_url)
+                    except Exception:
+                        logger.exception("OpenSSF Scorecard failed")
+
+                    container_data = None
+                    try:
+                        from trivy_scanner import scan_dockerfile
+                        _cv = scan_dockerfile(workdir)
+                        container_data = [v.to_dict() for v in _cv] if _cv else []
+                    except Exception:
+                        logger.exception("container scan failed")
+
+                    _emit(sid, "progress", {"step": "report", "message": "Building report...", "pct": 92})
 
                     from report import to_json, to_html
                     from datetime import datetime
@@ -551,6 +575,18 @@ def handle_scan(data):
                     html_path = str(REPORTS_DIR / f"{repo_slug}_{ts}.html")
 
                     to_json(result, obs, enriched, json_path)
+
+                    # Enrich the saved JSON with governance data so the PDF (built
+                    # from this JSON) can render the compliance + license summaries.
+                    try:
+                        import json as _json_enrich
+                        _jd = _json_enrich.loads(Path(json_path).read_text(encoding="utf-8"))
+                        _jd["compliance"] = compliance_data
+                        _jd["licenses"] = license_data
+                        _jd["sbom_components"] = len(sbom_data.get("components", [])) if sbom_data else 0
+                        Path(json_path).write_text(_json_enrich.dumps(_jd), encoding="utf-8")
+                    except Exception:
+                        logger.exception("enriching report JSON failed")
 
                     # Build the rich UI report (separate from the basic one)
                     report_data = {
@@ -569,6 +605,9 @@ def handle_scan(data):
                         "compliance": compliance_data,
                         "licenses": license_data,
                         "sbom": sbom_data,
+                        "supply_chain": supply_chain_data,
+                        "scorecard": scorecard_data,
+                        "container": container_data,
                         "runtime": {
                             "exit_code": obs.exit_code if obs else None,
                             "suspicious_behaviors": obs.suspicious_behaviors if obs else [],

@@ -234,6 +234,48 @@ def build_html(data: dict) -> tuple:
           {behaviors}
         </div>"""
 
+    def governance_section():
+        """Compliance mapping + license compliance summaries for the PDF."""
+        comp = data.get("compliance") or {}
+        lic = data.get("licenses") or []
+        parts = []
+        if comp.get("mapped_findings"):
+            owasp = comp.get("owasp") or {}
+            owasp_rows = "".join(
+                f"<tr><td>{esc(k)}</td><td style='text-align:center;'>{len(v)}</td></tr>"
+                for k, v in owasp.items())
+            parts.append(f"""
+            <div class="section-eye">Compliance Mapping</div>
+            <div class="section-title">Regulatory Coverage</div>
+            <p style="font-size:10.5pt;color:#6b7280;margin-bottom:12pt;line-height:1.6;">
+              {comp.get('mapped_findings', 0)} of {comp.get('total_findings', 0)} findings mapped
+              ({comp.get('coverage_pct', 0)}% coverage) to PCI DSS v4.0, NIST SP 800-53,
+              OWASP Top 10 (2021), and SANS/CWE Top 25.</p>
+            <table class="data-table" style="margin-bottom:10pt;">
+              <thead><tr><th>OWASP Top 10 Category</th><th style="text-align:center;width:90pt;">Findings</th></tr></thead>
+              <tbody>{owasp_rows or '<tr><td colspan="2">No OWASP categories triggered.</td></tr>'}</tbody>
+            </table>
+            <p style="font-size:10pt;color:#374151;">PCI DSS requirements touched: <strong>{len(comp.get('pci_dss') or {})}</strong>
+              &nbsp;·&nbsp; NIST controls: <strong>{len(comp.get('nist') or {})}</strong>
+              &nbsp;·&nbsp; SANS Top 25 weaknesses: <strong>{len(comp.get('sans_top25_hit') or [])}</strong></p>""")
+        if lic:
+            hi = [l for l in lic if l.get("risk") == "high"]
+            med = [l for l in lic if l.get("risk") == "medium"]
+            rows = "".join(
+                f"<tr><td>{esc(l.get('package', ''))}</td><td>{esc(l.get('license') or 'Unknown')}</td>"
+                f"<td style='text-align:center;font-weight:700;color:{'#dc2626' if l.get('risk') == 'high' else '#d97706'};'>{esc((l.get('risk') or '').upper())}</td></tr>"
+                for l in (hi + med)[:20])
+            lic_table = (f'<table class="data-table"><thead><tr><th>Package</th><th>License</th>'
+                         f'<th style="text-align:center;width:80pt;">Risk</th></tr></thead><tbody>{rows}</tbody></table>'
+                         if rows else '<p style="font-size:10pt;color:#16a34a;">No high or medium license risks detected.</p>')
+            parts.append(f"""
+            <div class="section-eye" style="margin-top:16pt;">License Compliance</div>
+            <div class="section-title">Dependency License Risk</div>
+            <p style="font-size:10.5pt;color:#6b7280;margin-bottom:12pt;line-height:1.6;">
+              {len(hi)} high-risk (copyleft / GPL), {len(med)} medium-risk across {len(lic)} packages.</p>
+            {lic_table}""")
+        return f'<div class="pb-before">{"".join(parts)}</div>' if parts else ""
+
     HTML = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -454,6 +496,8 @@ def build_html(data: dict) -> tuple:
 </div>
 
 {ransomware_section()}
+
+{governance_section()}
 
 <div class="pb-before">
   <div class="section-eye">Methodology</div>
