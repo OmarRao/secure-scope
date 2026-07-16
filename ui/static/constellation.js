@@ -23,7 +23,7 @@
         sum: "Inventories your third-party packages and flags the ones with known vulnerabilities — ranked by real-world exploit risk, not just severity.",
         l: [["OSV CVEs", "Cross-ecosystem vulnerability lookup against OSV.dev."],
             ["EPSS + KEV", "Prioritised by exploit probability (EPSS) and CISA known-exploited status."],
-            ["Reachable", "Checks whether your code actually uses the vulnerable package."],
+            ["Reachable", "Checks whether your code actually uses the vulnerable package.", [10, 24]],
             ["Fix PRs", "One-click pull request bumping each package to its safe version."],
             ["Polyglot", "npm, cargo, go and bundler audits across every ecosystem."]] },
       { n: "Secrets & malware",
@@ -146,6 +146,7 @@
         var la = ang + (M > 1 ? (j - (M - 1) / 2) * (spread / (M - 1)) : 0);
         var Rl = 204 + (j % 3) * 46, lca = Math.cos(la), lsa = Math.sin(la);
         var lx = cx + Rl * lca, ly = cy + Rl * lsa;
+        var off = cats[i].l[j][2]; if (off) { lx += off[0] || 0; ly += off[1] || 0; }
         var mpx = hx + (lx - hx) * 0.5 - 12 * Math.sin(la), mpy = hy + (ly - hy) * 0.5 + 12 * Math.cos(la);
         g += '<path class="ssc-flow2" d="M' + hx.toFixed(1) + ',' + hy.toFixed(1) + ' Q' + mpx.toFixed(1) + ',' + mpy.toFixed(1) + ' ' + lx.toFixed(1) + ',' + ly.toFixed(1) + '" fill="none" style="stroke:' + v + '" stroke-width="1.2" stroke-opacity="0.42"/>';
         g += '<circle cx="' + lx.toFixed(1) + '" cy="' + ly.toFixed(1) + '" r="4.5" style="fill:' + v + '"/>';
