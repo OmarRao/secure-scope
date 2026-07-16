@@ -9,6 +9,12 @@
 
 **🌐 [Live Demo](https://secure-scope.onrender.com/)** | **[📖 Technical User Guide](USERGUIDE.md)** | **[View Sample Report (interactive)](https://omarrao.github.io/secure-scope/sample_report.html)** | **[PDF](docs/sample_report.pdf)**
 
+## What SecureScope does
+
+One scan fires signals from the core across seven fronts of security — each mapping, prioritising, and hardening a different layer of your code. Explore the **[interactive capability constellation](https://omarrao.github.io/secure-scope/#ss-constellation)** on the live site.
+
+![SecureScope capability constellation](docs/diagrams/capability-constellation.svg)
+
 ## Documentation
 
 | Document | Description |
