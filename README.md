@@ -13,8 +13,6 @@
 
 One scan fires signals from the core across seven fronts of security — each mapping, prioritising, and hardening a different layer of your code. Explore the **[interactive capability constellation](https://omarrao.github.io/secure-scope/#ss-constellation)** on the live site.
 
-![SecureScope capability constellation](docs/diagrams/capability-constellation.svg)
-
 ## Documentation
 
 | Document | Description |

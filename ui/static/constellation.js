@@ -10,7 +10,7 @@
     if (!mount || mount.dataset.built) return;
     mount.dataset.built = "1";
 
-    var cx = 360, cy = 335, Rh = 150, N;
+    var cx = 380, cy = 340, Rh = 150, N;
     var cats = [
       { n: "Static analysis", c: "#38bdf8",
         sum: "Reads your source code without running it, pattern-matching for insecure code and mapping every hit to a known weakness and attacker technique.",
@@ -76,9 +76,9 @@
       "@keyframes sscdash{to{stroke-dashoffset:-16}}" +
       ".ssc-cat{transition:opacity .25s ease;cursor:pointer}" +
       ".ssc-svg:hover .ssc-cat{opacity:.24}.ssc-svg .ssc-cat:hover{opacity:1}" +
-      ".ssc-ring{transform-origin:360px 335px;animation:sscspin 22s linear infinite}" +
+      ".ssc-ring{transform-origin:380px 340px;animation:sscspin 22s linear infinite}" +
       "@keyframes sscspin{to{transform:rotate(360deg)}}" +
-      ".ssc-pulse{transform-origin:360px 335px;animation:sscpul 2.8s ease-out infinite}" +
+      ".ssc-pulse{transform-origin:380px 340px;animation:sscpul 2.8s ease-out infinite}" +
       "@keyframes sscpul{0%{transform:scale(1);opacity:.45}70%{transform:scale(2.5);opacity:0}100%{opacity:0}}" +
       ".ssc-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 12px;margin-top:16px}" +
       ".ssc-li{display:flex;align-items:center;gap:7px;font-size:13px;color:#c4d0e2;cursor:pointer;padding:4px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.08);transition:border-color .2s,background .2s}" +
@@ -94,7 +94,9 @@
       ".ssc-cn{flex:0 0 130px;font-size:13px;font-weight:600;color:var(--n)}" +
       ".ssc-cd{flex:1;font-size:13px;color:#c1cdde;line-height:1.5}" +
       ".ssc-foot{text-align:center;font-size:12px;color:#647591;margin-top:14px}" +
-      "@media(max-width:540px){.ssc-cn{flex-basis:104px}}";
+      ".ssc-mobnote{display:none;text-align:center;font-size:13px;color:#9fb0c9;margin:2px 0 4px}" +
+      "@media(max-width:640px){.ssc-svg{display:none}.ssc-foot{display:none}.ssc-mobnote{display:block}.ssc-panel{padding:22px 13px 18px}.ssc-h{font-size:20px}}" +
+      "@media(max-width:540px){.ssc-cn{flex-basis:100%;flex-basis:104px}}";
 
     var st = document.createElement("style");
     st.textContent = css;
@@ -105,7 +107,8 @@
       '<p class="ssc-eye">SecureScope · capability constellation</p>' +
       '<h2 class="ssc-h">Your code enters the core. Seven fronts light up.</h2>' +
       '<p class="ssc-sub">Every scan fires signals from the core across seven fronts of security. Click any front for a full briefing on what it does.</p>' +
-      '<svg class="ssc-svg" id="sscSvg" viewBox="0 0 720 680" role="img" aria-hidden="true"></svg>' +
+      '<svg class="ssc-svg" id="sscSvg" viewBox="0 0 760 700" role="img" aria-hidden="true"></svg>' +
+      '<p class="ssc-mobnote">Tap a front to explore its capabilities.</p>' +
       '<div class="ssc-legend" id="sscLegend"></div>' +
       '<div class="ssc-detail" id="sscDetail"></div>' +
       '<p class="ssc-foot">Hover to isolate a front · click a front or legend chip for its full briefing</p>' +
@@ -122,19 +125,19 @@
       var g = '<g class="ssc-cat" data-i="' + i + '">';
       var cpx = cx + Rh * 0.55 * ca - 18 * sa, cpy = cy + Rh * 0.55 * sa + 18 * ca;
       g += '<path class="ssc-flow" d="M' + cx + ',' + cy + ' Q' + cpx.toFixed(1) + ',' + cpy.toFixed(1) + ' ' + hx.toFixed(1) + ',' + hy.toFixed(1) + '" fill="none" stroke="' + col + '" stroke-width="2.4" stroke-opacity="0.85"/>';
-      var M = cats[i].l.length, spread = 42 * Math.PI / 180;
+      var M = cats[i].l.length, spread = 40 * Math.PI / 180;
       for (var j = 0; j < M; j++) {
         var la = ang + (M > 1 ? (j - (M - 1) / 2) * (spread / (M - 1)) : 0);
-        var Rl = 230 + (j % 2) * 40, lca = Math.cos(la), lsa = Math.sin(la);
+        var Rl = 214 + (j % 3) * 36, lca = Math.cos(la), lsa = Math.sin(la);
         var lx = cx + Rl * lca, ly = cy + Rl * lsa;
         var mpx = hx + (lx - hx) * 0.5 - 12 * Math.sin(la), mpy = hy + (ly - hy) * 0.5 + 12 * Math.cos(la);
         g += '<path class="ssc-flow2" d="M' + hx.toFixed(1) + ',' + hy.toFixed(1) + ' Q' + mpx.toFixed(1) + ',' + mpy.toFixed(1) + ' ' + lx.toFixed(1) + ',' + ly.toFixed(1) + '" fill="none" stroke="' + col + '" stroke-width="1.3" stroke-opacity="0.45"/>';
-        g += '<circle cx="' + lx.toFixed(1) + '" cy="' + ly.toFixed(1) + '" r="4" fill="' + col + '"/>';
-        var right = lca >= 0, tx = lx + (right ? 8 : -8);
-        g += '<text x="' + tx.toFixed(1) + '" y="' + (ly + 4).toFixed(1) + '" text-anchor="' + (right ? "start" : "end") + '" fill="#d8e2f0" font-size="13">' + esc(cats[i].l[j][0]) + '</text>';
+        g += '<circle cx="' + lx.toFixed(1) + '" cy="' + ly.toFixed(1) + '" r="4.5" fill="' + col + '"/>';
       }
-      g += '<circle cx="' + hx.toFixed(1) + '" cy="' + hy.toFixed(1) + '" r="16" fill="none" stroke="' + col + '" stroke-opacity="0.35" stroke-width="1.2"/>';
-      g += '<circle cx="' + hx.toFixed(1) + '" cy="' + hy.toFixed(1) + '" r="8" fill="' + col + '"/>';
+      g += '<circle cx="' + hx.toFixed(1) + '" cy="' + hy.toFixed(1) + '" r="18" fill="#0b1324" stroke="' + col + '" stroke-opacity="0.5" stroke-width="1.2"/>';
+      g += '<circle cx="' + hx.toFixed(1) + '" cy="' + hy.toFixed(1) + '" r="7" fill="' + col + '"/>';
+      var hr = ca >= 0;
+      g += '<text x="' + (hx + ca * 26).toFixed(1) + '" y="' + (hy + sa * 26 + 4).toFixed(1) + '" text-anchor="' + (hr ? "start" : "end") + '" fill="' + col + '" font-size="14.5" font-weight="600">' + esc(cats[i].n) + '</text>';
       g += "</g>";
       s += g;
     }
