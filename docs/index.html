@@ -271,6 +271,12 @@
       margin: 20px;
     }
     .modal-overlay.open .modal { transform: translateY(0); }
+    /* Blended, theme-adaptive scrollbars for modal / scan scroll areas */
+    .modal, .scan-stage-inner { scrollbar-width: thin; scrollbar-color: var(--rule2) transparent; }
+    .modal::-webkit-scrollbar, .scan-stage-inner::-webkit-scrollbar { width: 7px; }
+    .modal::-webkit-scrollbar-track, .scan-stage-inner::-webkit-scrollbar-track { background: transparent; }
+    .modal::-webkit-scrollbar-thumb, .scan-stage-inner::-webkit-scrollbar-thumb { background: var(--rule2); border-radius: 999px; }
+    .modal::-webkit-scrollbar-thumb:hover, .scan-stage-inner::-webkit-scrollbar-thumb:hover { background: var(--muted); }
     .modal-close {
       position: absolute; top: 18px; right: 18px;
       background: none; border: 1px solid var(--rule2); border-radius: 6px;

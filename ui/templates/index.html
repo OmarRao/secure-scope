@@ -259,6 +259,12 @@
     .log-body::-webkit-scrollbar { width: 4px; }
     .log-body::-webkit-scrollbar-track { background: transparent; }
     .log-body::-webkit-scrollbar-thumb { background: var(--rule2); border-radius: 2px; }
+    /* Blended, theme-adaptive scrollbars for scan/modal scroll areas */
+    #progLog, .modal, .prev-tab-content, #liveFeed, #variantList { scrollbar-width: thin; scrollbar-color: var(--rule2) transparent; }
+    #progLog::-webkit-scrollbar, .modal::-webkit-scrollbar, .prev-tab-content::-webkit-scrollbar, #liveFeed::-webkit-scrollbar, #variantList::-webkit-scrollbar { width: 7px; }
+    #progLog::-webkit-scrollbar-track, .modal::-webkit-scrollbar-track, .prev-tab-content::-webkit-scrollbar-track, #liveFeed::-webkit-scrollbar-track, #variantList::-webkit-scrollbar-track { background: transparent; }
+    #progLog::-webkit-scrollbar-thumb, .modal::-webkit-scrollbar-thumb, .prev-tab-content::-webkit-scrollbar-thumb, #liveFeed::-webkit-scrollbar-thumb, #variantList::-webkit-scrollbar-thumb { background: var(--rule2); border-radius: 999px; }
+    #progLog::-webkit-scrollbar-thumb:hover, .modal::-webkit-scrollbar-thumb:hover, .prev-tab-content::-webkit-scrollbar-thumb:hover, #liveFeed::-webkit-scrollbar-thumb:hover, #variantList::-webkit-scrollbar-thumb:hover { background: var(--muted); }
     .log-entry {
       display: flex; gap: 10px; align-items: flex-start;
       padding: 7px 16px; border-bottom: 1px solid var(--rule);
