@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SecureScope — My Portfolio</title>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;900&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{--ink:#0a0c0f;--ink2:#111419;--ink3:#181c23;--rule:#252b35;--rule2:#2e3540;--muted:#6b7785;--dim:#6b7785;--sub:#a0aec0;--body:#e2e8f0;--head:#fff;--accent:#4f8ef7;--danger:#f25757;--warn:#e6a817;--ok:#3ecf79}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:var(--ink);color:var(--body);font-family:'Geist',sans-serif;min-height:100vh;line-height:1.6}
+    a{color:var(--accent);text-decoration:none}
+    .top{height:52px;border-bottom:1px solid var(--rule);display:flex;align-items:center;padding:0 24px;gap:12px}
+    .wm{font-size:15px;font-weight:700;color:var(--head)} .wm sup{font-size:9px;color:var(--accent);vertical-align:top}
+    .badge{font-size:10px;font-family:'Geist Mono',monospace;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:3px 8px;text-transform:uppercase;letter-spacing:.6px}
+    .spacer{flex:1}
+    .btn{background:transparent;border:1px solid var(--rule2);color:var(--sub);border-radius:8px;padding:8px 14px;font-size:13px;cursor:pointer;font-family:inherit}
+    .btn:hover{border-color:var(--accent);color:var(--head)}
+    .wrap{max-width:1100px;margin:0 auto;padding:36px 24px}
+    h1{font-size:24px;font-weight:900;color:var(--head);margin-bottom:6px;letter-spacing:-.4px}
+    .lead{font-size:14px;color:var(--sub);margin-bottom:24px}
+    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px}
+    .stat{background:var(--ink2);border:1px solid var(--rule);border-radius:12px;padding:18px}
+    .stat .n{font-size:28px;font-weight:800;font-family:'Geist Mono',monospace;color:var(--head);line-height:1}
+    .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-top:6px}
+    .stat.crit .n{color:var(--danger)} .stat.cve .n{color:var(--accent)}
+    .trend{background:var(--ink2);border:1px solid var(--rule);border-radius:12px;padding:16px 18px;margin-bottom:24px}
+    .trend .l{font-size:11px;font-family:'Geist Mono',monospace;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+    .sec{font-size:11px;font-family:'Geist Mono',monospace;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin:22px 0 10px}
+    .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--rule2) transparent}
+    table{width:100%;border-collapse:collapse;background:var(--ink2);border:1px solid var(--rule);border-radius:12px;overflow:hidden}
+    th{text-align:left;font-size:10px;font-family:'Geist Mono',monospace;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;padding:10px 14px;background:var(--ink3);border-bottom:1px solid var(--rule)}
+    td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--rule);color:var(--body)}
+    tr:last-child td{border-bottom:none}
+    .mono{font-family:'Geist Mono',monospace;font-size:12px}
+    .num{font-family:'Geist Mono',monospace;text-align:right}
+    .pill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid currentColor}
+    .link-btn{background:transparent;border:1px solid var(--rule2);color:var(--accent);border-radius:7px;padding:5px 11px;font-size:12px;cursor:pointer;font-family:inherit}
+    .link-btn:hover{border-color:var(--accent)}
+    .gate{max-width:440px;margin:80px auto;text-align:center}
+    .gate h2{color:var(--head);font-size:20px;margin-bottom:8px}
+    .gate p{color:var(--sub);font-size:14px;margin-bottom:18px}
+    .gate .btn{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+    .hidden{display:none}
+    .empty{padding:34px;text-align:center;color:var(--dim);background:var(--ink2);border:1px solid var(--rule);border-radius:12px;font-size:14px}
+    @media (max-width:768px){
+      .wrap{padding:24px 14px}
+      .stats{grid-template-columns:repeat(2,1fr);gap:10px}
+      .gate{margin:48px auto}
+      table{min-width:640px}
+    }
+    @media (max-width:420px){ .stats{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <a class="wm" href="./index.html">SecureScope<sup>BETA</sup></a>
+    <span class="badge">My Portfolio</span>
+    <div class="spacer"></div>
+    <a class="btn" href="./index.html">&larr; Home</a>
+    <span class="mono" id="who" style="color:var(--sub)"></span>
+    <button class="btn hidden" id="signout">Sign out</button>
+  </div>
+
+  <div class="wrap">
+    <div class="gate" id="gate">
+      <h2>Sign in to see your portfolio</h2>
+      <p id="gateMsg">Your portfolio aggregates the security posture of every repository you've scanned with SecureScope.</p>
+      <button class="btn" id="signin">Sign in with Google</button>
+    </div>
+
+    <div id="panel" class="hidden">
+      <h1>Security portfolio</h1>
+      <div class="lead" id="lead">Posture across every repository you've scanned.</div>
+      <div class="stats" id="stats"></div>
+      <div class="trend" id="trendWrap" style="display:none">
+        <div class="l">Total findings over time</div>
+        <svg id="trend" width="100%" height="60" viewBox="0 0 600 60" preserveAspectRatio="none" role="img" aria-label="Findings over time"></svg>
+      </div>
+      <div class="sec">Repositories &mdash; current posture (latest scan)</div>
+      <div class="tbl-scroll">
+        <table id="repoTbl">
+          <thead><tr><th>Repository</th><th>Last scanned</th><th class="num">Critical</th><th class="num">Warnings</th><th class="num">Dep CVEs</th><th class="num">Total</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, query, orderBy }
+      from "https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+    import { firebaseConfig } from "./firebase-config.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+
+    $("signin").onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => $("gateMsg").textContent = e.message);
+    $("signout").onclick = () => signOut(auth);
+
+    let byId = {};
+
+    onAuthStateChanged(auth, async (u) => {
+      $("who").textContent = u ? u.email : "";
+      $("signout").classList.toggle("hidden", !u);
+      if (!u) { $("gate").classList.remove("hidden"); $("panel").classList.add("hidden"); return; }
+      $("gate").classList.add("hidden"); $("panel").classList.remove("hidden");
+      await load(u);
+    });
+
+    function crit(s){ s=s||{}; const sev=s.by_severity||{}; return (s.critical!=null)?s.critical:(sev.ERROR||0); }
+    function warn(s){ s=s||{}; const sev=s.by_severity||{}; return (s.warnings!=null)?s.warnings:(sev.WARNING||0); }
+    function cve(s){ return (s&&s.dependency_vulns)||0; }
+    function total(s){ s=s||{}; return (s.total_findings!=null)?s.total_findings:(crit(s)+warn(s)); }
+
+    async function load(u) {
+      let reports = [];
+      try {
+        const snap = await getDocs(query(collection(db,"users",u.uid,"reports"), orderBy("createdAt","desc")));
+        reports = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+      } catch (e) {
+        $("panel").innerHTML = `<div class="empty" style="color:#fca5a5">Could not load your reports (${esc(e.code||e.message)}). Check Firestore rules.</div>`;
+        return;
+      }
+      byId = {}; reports.forEach(r => byId[r.id] = r);
+
+      if (!reports.length) {
+        $("stats").innerHTML = "";
+        $("repoTbl").parentElement.innerHTML = `<div class="empty">No scans yet. Run a scan from the <a href="./index.html">home page</a> and your portfolio will fill in.</div>`;
+        return;
+      }
+
+      // Latest report per repository (reports are newest-first).
+      const latest = {};
+      reports.forEach(r => { const k=(r.repo||"").trim(); if (k && !latest[k]) latest[k]=r; });
+      const repos = Object.values(latest);
+
+      const totFindings = repos.reduce((n,r)=>n+total(r.summary),0);
+      const totCrit = repos.reduce((n,r)=>n+crit(r.summary),0);
+      const totCve = repos.reduce((n,r)=>n+cve(r.summary),0);
+      $("lead").textContent = `Posture across ${repos.length} repositor${repos.length===1?"y":"ies"} · ${reports.length} total scan${reports.length===1?"":"s"}.`;
+      $("stats").innerHTML = [
+        ["repos", "Repositories", repos.length],
+        ["scans", "Total scans", reports.length],
+        ["crit", "Open critical", totCrit],
+        ["cve", "Dependency CVEs", totCve],
+        ["find", "Total findings", totFindings],
+      ].map(([c,l,n]) => `<div class="stat ${c}"><div class="n">${n}</div><div class="l">${l}</div></div>`).join("");
+
+      // Trend sparkline: total findings per scan, oldest → newest.
+      const chrono = reports.slice().reverse();
+      if (chrono.length >= 2) {
+        $("trendWrap").style.display = "block";
+        const vals = chrono.map(r => total(r.summary));
+        const max = Math.max(1, ...vals), W=600, H=60, pad=6;
+        const pts = vals.map((v,i) => {
+          const x = vals.length===1 ? 0 : (i/(vals.length-1))*(W);
+          const y = H-pad - (v/max)*(H-2*pad);
+          return `${x.toFixed(1)},${y.toFixed(1)}`;
+        });
+        const area = `0,${H} ${pts.join(" ")} ${W},${H}`;
+        $("trend").innerHTML =
+          `<polygon points="${area}" fill="rgba(79,142,247,.15)"/>` +
+          `<polyline points="${pts.join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
+      }
+
+      // Per-repo table, worst (most critical) first.
+      repos.sort((a,b)=> crit(b.summary)-crit(a.summary) || total(b.summary)-total(a.summary));
+      const rows = repos.map(r => {
+        const s = r.summary||{};
+        const when = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate().toLocaleDateString() : "—";
+        const c = crit(s), col = c>0?"var(--danger)":"var(--ok)";
+        return `<tr>
+          <td class="mono">${esc((r.repo||"").replace(/^https?:\/\//,""))}</td>
+          <td>${esc(when)}</td>
+          <td class="num" style="color:${col};font-weight:700">${c}</td>
+          <td class="num" style="color:var(--warn)">${warn(s)}</td>
+          <td class="num" style="color:var(--accent)">${cve(s)}</td>
+          <td class="num">${total(s)}</td>
+          <td class="num"><button class="link-btn" data-id="${esc(r.id)}">Open</button></td>
+        </tr>`;
+      }).join("");
+      $("repoTbl").querySelector("tbody").innerHTML = rows;
+      $("repoTbl").querySelectorAll(".link-btn").forEach(b => b.onclick = () => openReport(byId[b.dataset.id]));
+    }
+
+    async function ungz(b64){
+      const bin=atob(b64), u=new Uint8Array(bin.length);
+      for (let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+      const ds=new DecompressionStream("gzip"), w=ds.writable.getWriter();
+      w.write(u); w.close();
+      const buf=await new Response(ds.readable).arrayBuffer();
+      return new TextDecoder().decode(buf);
+    }
+    async function openReport(r){
+      if (!r) return;
+      if (r.htmlz) {
+        try {
+          const html = await ungz(r.htmlz);
+          const url = URL.createObjectURL(new Blob([html], {type:"text/html"}));
+          window.open(url, "_blank"); setTimeout(()=>URL.revokeObjectURL(url), 5000); return;
+        } catch (e) { /* fall through to link */ }
+      }
+      const link = r.gist_url || r.report_url;
+      if (link) window.open(link, "_blank");
+      else alert("This report's stored copy is unavailable. Re-run the scan to regenerate it.");
+    }
+  </script>
+</body>
+</html>

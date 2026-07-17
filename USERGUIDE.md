@@ -408,6 +408,13 @@ The HTML report includes:
 > "Governance" and "Supply Chain" navigation groups. The compliance mapping and
 > license summary also appear in the exported PDF.
 
+> **Portfolio dashboard** — signed-in users get a
+> [portfolio view](https://omarrao.github.io/secure-scope/portfolio.html)
+> (topbar → Portfolio) aggregating posture across every repository they've
+> scanned: repository count, total scans, open criticals, dependency CVEs, a
+> findings-over-time trend, and a worst-offenders-first table linking to each
+> report.
+
 **Screenshot:** `docs/screenshots/06_report_overview.png`
 
 ### 6.2 JSON Report

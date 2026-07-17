@@ -18,6 +18,7 @@ One scan fires signals from the core across seven fronts of security — each ma
 | Document | Description |
 |----------|-------------|
 | [USERGUIDE.md](USERGUIDE.md) | Full technical user guide — installation, all flags, integrations, CI/CD, K8s, troubleshooting |
+| [ROADMAP.md](ROADMAP.md) | Forward-looking plan — phased next steps with impact/effort ratings |
 | [SECURITY.md](SECURITY.md) | Security policy and responsible disclosure |
 | [docs/exploits/](docs/exploits/) | Per-vulnerability writeups (SecureScope self-scan) |
 | [.github/workflows/secscope.yml](.github/workflows/secscope.yml) | CI/CD self-scan pipeline |
@@ -52,6 +53,7 @@ One scan fires signals from the core across seven fronts of security — each ma
 | Project health | OpenSSF Scorecard (maintenance, branch protection, signed releases, etc.) shown per scan |
 | Container scanning | Trivy Dockerfile/image findings in the report (CLI / self-hosted; requires the Trivy binary) |
 | Mobile responsive | Landing page, dashboard, and reports are fully responsive on iOS and Android phones (tested at 375 px / 412 px) |
+| Portfolio dashboard | Signed-in view aggregating security posture across every repo you've scanned — totals, worst offenders, and a findings-over-time trend ([portfolio](https://omarrao.github.io/secure-scope/portfolio.html)) |
 
 **[View Sample Report — interactive HTML](https://omarrao.github.io/secure-scope/sample_report.html)** · **[PDF version](https://github.com/OmarRao/secure-scope/blob/main/docs/sample_report.pdf)**
 
