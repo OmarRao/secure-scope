@@ -6,7 +6,8 @@
   <title>SecureScope — My Portfolio</title>
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;900&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    :root{--ink:#0a0c0f;--ink2:#111419;--ink3:#181c23;--rule:#252b35;--rule2:#2e3540;--muted:#6b7785;--dim:#6b7785;--sub:#a0aec0;--body:#e2e8f0;--head:#fff;--accent:#4f8ef7;--danger:#f25757;--warn:#e6a817;--ok:#3ecf79}
+    :root{--ink:#0a0c0f;--ink2:#111419;--ink3:#181c23;--rule:#252b35;--rule2:#2e3540;--muted:#6b7785;--dim:#6b7785;--sub:#a0aec0;--body:#e2e8f0;--head:#fff;--accent:#4f8ef7;--danger:#f25757;--warn:#e6a817;--ok:#3ecf79;--trend-fill:rgba(79,142,247,.15)}
+    html.light{--ink:#f4f6f9;--ink2:#ffffff;--ink3:#eef1f5;--rule:#d5dae4;--rule2:#c4cad6;--muted:#7a8494;--dim:#5e6878;--sub:#3d4756;--body:#1a2030;--head:#000000;--accent:#2563eb;--warn:#b45309;--ok:#0d9488;--trend-fill:rgba(37,99,235,.12)}
     *{box-sizing:border-box;margin:0;padding:0}
     body{background:var(--ink);color:var(--body);font-family:'Geist',sans-serif;min-height:100vh;line-height:1.6}
     a{color:var(--accent);text-decoration:none}
@@ -51,6 +52,15 @@
     }
     @media (max-width:420px){ .stats{grid-template-columns:1fr} }
   </style>
+  <script>
+    // No-flash theme init (shared 'theme' key with the rest of the site).
+    if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light');
+    function toggleTheme(){
+      var h=document.documentElement, b=document.getElementById('themeBtn');
+      if(h.classList.toggle('light')){localStorage.setItem('theme','light'); if(b)b.innerHTML='&#x2600;&#xFE0F;';}
+      else{localStorage.setItem('theme','dark'); if(b)b.innerHTML='&#x1F319;';}
+    }
+  </script>
 </head>
 <body>
   <div class="top">
@@ -59,8 +69,14 @@
     <div class="spacer"></div>
     <a class="btn" href="./index.html">&larr; Home</a>
     <span class="mono" id="who" style="color:var(--sub)"></span>
+    <button class="btn" id="themeBtn" onclick="toggleTheme()" title="Toggle light/dark mode">&#x1F319;</button>
     <button class="btn hidden" id="signout">Sign out</button>
   </div>
+  <script>
+    if (document.documentElement.classList.contains('light')) {
+      document.getElementById('themeBtn').innerHTML = '&#x2600;&#xFE0F;';
+    }
+  </script>
 
   <div class="wrap">
     <div class="gate" id="gate">
@@ -166,7 +182,7 @@
         });
         const area = `0,${H} ${pts.join(" ")} ${W},${H}`;
         $("trend").innerHTML =
-          `<polygon points="${area}" fill="rgba(79,142,247,.15)"/>` +
+          `<polygon points="${area}" fill="var(--trend-fill)"/>` +
           `<polyline points="${pts.join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
       }
 
