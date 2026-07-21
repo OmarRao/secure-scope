@@ -385,7 +385,7 @@ def handle_scan(data):
     sid = request.sid
 
     if not repo_url or not parse_repo_url(repo_url):
-        emit("error", {"message": "Invalid GitHub URL. Please use https://github.com/owner/repo"})
+        emit("error", {"message": "Invalid repository URL. Use a GitHub, GitLab, or Bitbucket URL like https://github.com/owner/repo"})
         return
 
     def run():

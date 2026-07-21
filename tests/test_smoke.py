@@ -215,3 +215,15 @@ def test_sbom_generates_cyclonedx():
     os.unlink(out)
     assert bom["bomFormat"] == "CycloneDX"
     assert len(bom["components"]) >= 1
+
+
+def test_multi_platform_repo_parsing():
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "ui"))
+    from github_info import parse_repo_url, repo_host
+    assert repo_host("https://github.com/OmarRao/analyzer") == "github"
+    assert repo_host("https://gitlab.com/group/project") == "gitlab"
+    assert repo_host("https://bitbucket.org/team/repo") == "bitbucket"
+    assert parse_repo_url("https://gitlab.com/group/project") == ("group", "project")
+    assert parse_repo_url("git@github.com:foo/bar.git") == ("foo", "bar")
+    assert parse_repo_url("https://example.com/not/a/repo") is None

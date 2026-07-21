@@ -1377,7 +1377,7 @@
       <div class="modal-sub">Enter the GitHub repository you want to scan for security vulnerabilities.</div>
       <div class="field-label">GitHub URL</div>
       <input class="modal-input" id="wizRepoUrl" type="text"
-        placeholder="https://github.com/owner/repository"
+        placeholder="https://github.com/owner/repo (GitLab & Bitbucket supported)"
         value="https://github.com/OmarRao/analyzer"
         autocomplete="off" spellcheck="false">
       <div class="field-label">Branch</div>
@@ -1571,7 +1571,7 @@
     <div class="modal-sub" id="scanModalSub">Enter the GitHub repository you want to scan.</div>
     <div class="field-label">GitHub URL</div>
     <input class="modal-input" id="scanRepoUrl" type="text"
-      placeholder="https://github.com/owner/repository"
+      placeholder="https://github.com/owner/repo (GitLab & Bitbucket supported)"
       value="https://github.com/OmarRao/analyzer"
       autocomplete="off" spellcheck="false">
     <div class="field-label">Branch</div>
@@ -1778,7 +1778,7 @@ function runFocusedScan() {
 // ── Start scan (Analyze Repository wizard) ─────────────────────────
 function startScan() {
   const url = document.getElementById('wizRepoUrl').value.trim();
-  if (!url) { toast('Enter a GitHub repository URL'); goStep(1); return; }
+  if (!url) { toast('Enter a repository URL (GitHub, GitLab, or Bitbucket)'); goStep(1); return; }
 
   const selectedProvider = getSelectedProvider();
   closeModal();
