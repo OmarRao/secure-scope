@@ -27,7 +27,19 @@
 
 ## 1. Overview
 
-SecureScope is an AI-powered security scanner for GitHub repositories. It combines static analysis, dynamic testing, software composition analysis, and AI-generated fix advisories into a single unified workflow — from a single command or the web UI.
+SecureScope is an AI-powered security scanner for **GitHub, GitLab, and Bitbucket** repositories. It combines static analysis, dynamic testing, software composition analysis, and AI-generated fix advisories into a single unified workflow — from a single command or the web UI.
+
+**Supported repository hosts:** paste any public `github.com`, `gitlab.com`, or `bitbucket.org` URL (the `git@…` SSH form works too). GitHub repos get the richest header metadata (commits, contributors, file tree); GitLab and Bitbucket get core metadata. Some GitHub-only conveniences (auto-created Issues/PRs, one-click dependency-fix PRs) apply only to GitHub.
+
+**The web app** ([secure-scope.onrender.com](https://secure-scope.onrender.com) · landing on [GitHub Pages](https://omarrao.github.io/secure-scope/)) adds, on top of the CLI:
+
+- **Light & dark themes** — a topbar toggle on every page (landing, dashboard, reports, portfolio, admin, shared views), remembered across visits.
+- **Fully mobile responsive** — landing, dashboard, and reports work on iOS and Android phones.
+- **Capability constellation** — an interactive map of everything SecureScope does (home page → "What SecureScope does").
+- **Accounts & history** — free Firebase sign-in; every scan is saved to your report history.
+- **Portfolio dashboard** — aggregate security posture across all repositories you've scanned (topbar → Portfolio).
+- **Sharing** — view-only share links and email delivery for any report.
+- **Admin console** — for the maintainer: all-user activity with summary stats, a 14-day scans chart, scan-type breakdown, and search / type / timeframe filters.
 
 **What it scans:**
 
