@@ -258,7 +258,7 @@ Filterable by severity (All / Critical / Warning) with a live search box across 
 
 Full ransomware intelligence breakdown: hero KPI cards (risk score, blast radius, APT likelihood), behavioural pattern table, family match cards with origin/CVE/confidence data, a canvas-rendered global impact map, CVE cross-reference table, and affected code sections list.
 
-![Ransomware Intelligence](docs/screenshots/11_report_ransomware.png)
+![Ransomware Intelligence](docs/screenshots/11_report_ransomware_v2.png)
 
 ---
 
