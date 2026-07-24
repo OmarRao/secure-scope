@@ -2,7 +2,8 @@ name: Watch Monitor — dependency CVE alerts
 
 # Continuously monitors the repos in watchlist.json for newly-appearing
 # dependency CVEs (OSV + EPSS + CISA KEV) and opens a GitHub Issue when new
-# ones show up. State is committed back to watch_state.json. No external infra.
+# ones show up. State persists via the Actions cache (main is protected, so we
+# don't commit it back). No external infra or secrets.
 
 on:
   schedule:
@@ -10,8 +11,8 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: write   # commit updated watch_state.json
-  issues: write     # open an alert issue
+  contents: read
+  issues: write
 
 concurrency:
   group: watch-monitor
@@ -29,6 +30,16 @@ jobs:
         with:
           python-version: "3.11"
 
+      # Carry watch_state.json forward between runs (falls back to the committed
+      # baseline on a cache miss). Rolling key: exact miss -> newest prefix hit.
+      - name: Restore watch state
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: watch_state.json
+          key: watch-state-${{ github.run_id }}
+          restore-keys: |
+            watch-state-
+
       - name: Install dependencies
         run: pip install requests
 
@@ -43,15 +54,5 @@ jobs:
         run: |
           python -c "import json,watch_check; print(watch_check.to_markdown(json.load(open('watch_alerts.json'))))" > body.md
           TITLE="[watch] $(jq -r '.alert_count' watch_alerts.json) new dependency CVE(s) — $(jq -r '.kev_count' watch_alerts.json) KEV"
-          gh issue create --title "$TITLE" --body-file body.md --label "watch-alert" || \
-            gh issue create --title "$TITLE" --body-file body.md
-
-      - name: Commit updated state
-        run: |
-          git config user.name "SecureScope Watch"
-          git config user.email "securescope@users.noreply.github.com"
-          git add watch_state.json watch_alerts.json
-          if ! git diff --cached --quiet; then
-            git commit -m "chore(watch): update monitor state [skip ci]"
-            git push
-          fi
+          gh issue create --title "$TITLE" --body-file body.md --label "watch-alert" \
+            || gh issue create --title "$TITLE" --body-file body.md
