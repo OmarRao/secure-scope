@@ -133,7 +133,7 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     const $ = (id) => document.getElementById(id);
-    const esc = (s) => (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    const esc = (s) => (s==null?"":String(s)).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
 
     $("signin").onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => $("gateMsg").textContent = e.message);
     $("signout").onclick = () => signOut(auth);
