@@ -1,0 +1,57 @@
+name: Watch Monitor — dependency CVE alerts
+
+# Continuously monitors the repos in watchlist.json for newly-appearing
+# dependency CVEs (OSV + EPSS + CISA KEV) and opens a GitHub Issue when new
+# ones show up. State is committed back to watch_state.json. No external infra.
+
+on:
+  schedule:
+    - cron: "17 6 * * *"   # daily at 06:17 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write   # commit updated watch_state.json
+  issues: write     # open an alert issue
+
+concurrency:
+  group: watch-monitor
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run watch monitor
+        id: watch
+        run: python watch_check.py
+
+      - name: Open alert issue
+        if: steps.watch.outputs.alert_count != '0' && steps.watch.outputs.alert_count != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -c "import json,watch_check; print(watch_check.to_markdown(json.load(open('watch_alerts.json'))))" > body.md
+          TITLE="[watch] $(jq -r '.alert_count' watch_alerts.json) new dependency CVE(s) — $(jq -r '.kev_count' watch_alerts.json) KEV"
+          gh issue create --title "$TITLE" --body-file body.md --label "watch-alert" || \
+            gh issue create --title "$TITLE" --body-file body.md
+
+      - name: Commit updated state
+        run: |
+          git config user.name "SecureScope Watch"
+          git config user.email "securescope@users.noreply.github.com"
+          git add watch_state.json watch_alerts.json
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(watch): update monitor state [skip ci]"
+            git push
+          fi

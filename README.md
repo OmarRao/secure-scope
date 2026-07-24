@@ -54,6 +54,7 @@ One scan fires signals from the core across seven fronts of security — each ma
 | Container scanning | Trivy Dockerfile/image findings in the report (CLI / self-hosted; requires the Trivy binary) |
 | Mobile responsive | Landing page, dashboard, and reports are fully responsive on iOS and Android phones (tested at 375 px / 412 px) |
 | Multi-platform repos | Scan repositories from GitHub, GitLab, and Bitbucket (public repos) — not just GitHub |
+| Continuous watch → alerts | Daily GitHub Actions cron monitors `watchlist.json` repos for new dependency CVEs (KEV-flagged) and opens a GitHub Issue — no external infra |
 | Portfolio dashboard | Signed-in view aggregating security posture across every repo you've scanned — totals, worst offenders, and a findings-over-time trend ([portfolio](https://omarrao.github.io/secure-scope/portfolio.html)) |
 
 **[View Sample Report — interactive HTML](https://omarrao.github.io/secure-scope/sample_report.html)** · **[PDF version](https://github.com/OmarRao/secure-scope/blob/main/docs/sample_report.pdf)**

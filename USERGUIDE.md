@@ -990,6 +990,28 @@ secscope:
   allow_failure: true
 ```
 
+### Continuous monitoring — "watch a repo → CVE alert"
+
+SecureScope can watch repositories on a schedule and raise an alert the moment a
+new dependency CVE appears — with **CISA KEV**-listed ones flagged as priority.
+It runs entirely on GitHub Actions with **no external infrastructure or secrets**:
+
+1. **List the repos to watch** in `watchlist.json` (repo root):
+   ```json
+   ["https://github.com/OmarRao/secure-scope", "https://gitlab.com/group/project"]
+   ```
+2. The scheduled workflow **`.github/workflows/watch-monitor.yml`** runs daily
+   (and on demand via *Run workflow*). Each run:
+   - scans every watched repo's dependencies (OSV.dev) and enriches with EPSS + KEV,
+   - diffs against the last saved `watch_state.json`,
+   - opens a **GitHub Issue** listing any *new* CVEs (using the built-in
+     `GITHUB_TOKEN` — no PAT needed), and
+   - commits the updated state back to the repo.
+3. Run it locally too: `python watch_check.py` (or `--dry-run` to skip writing state).
+
+> This is the repo-level monitor. Per-user "watch" from the web app is on the
+> roadmap and additionally requires a Firebase service-account secret.
+
 ---
 
 ## 11. Kubernetes & Helm Deployment

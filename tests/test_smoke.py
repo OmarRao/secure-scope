@@ -227,3 +227,19 @@ def test_multi_platform_repo_parsing():
     assert parse_repo_url("https://gitlab.com/group/project") == ("group", "project")
     assert parse_repo_url("git@github.com:foo/bar.git") == ("foo", "bar")
     assert parse_repo_url("https://example.com/not/a/repo") is None
+
+
+def test_watch_diff_cves():
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from watch_check import diff_cves, to_markdown
+    current = {
+        "CVE-2021-44228": {"package": "log4j", "severity": "CRITICAL", "kev": True, "epss": 0.97},
+        "CVE-2023-1": {"package": "x", "severity": "LOW", "kev": False, "epss": 0.01},
+        "CVE-OLD": {"package": "y", "severity": "HIGH", "kev": False, "epss": 0.2},
+    }
+    new = diff_cves(["CVE-OLD"], current)
+    assert [a["cve"] for a in new] == ["CVE-2021-44228", "CVE-2023-1"]  # KEV first, then EPSS
+    assert diff_cves(current.keys(), current) == []  # nothing new
+    md = to_markdown({"generated_at": "now", "repos": [{"repo": "https://github.com/o/r", "new": new, "error": None}], "alert_count": 2, "kev_count": 1})
+    assert "CVE-2021-44228" in md and "log4j" in md
