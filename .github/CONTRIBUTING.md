@@ -2,17 +2,35 @@
 
 Thanks for your interest in SecureScope.
 
-## Important: this is proprietary software
+## Licensing
 
-SecureScope is a **private application, © 2026 Omar Rao — all rights reserved**
-(see [LICENSE](../LICENSE)). It is **not** an open-source project and is **not
-open to external code contributions**. The source is published for transparency
-and portfolio purposes only; it may not be copied, modified, redistributed, or
-used to create derivative works without the prior written permission of Omar Rao.
+SecureScope is **dual-licensed**. The public repository is licensed under the
+[GNU Affero General Public License v3.0](../LICENSE); a separate
+[commercial license](../COMMERCIAL-LICENSE.md) is available for closed-source,
+SaaS/hosted, reseller, distributor, and white-label use. See the
+[Licensing section of the README](../README.md#licensing). Use under AGPL-3.0 is
+permitted subject to that license's terms.
 
-Unsolicited pull requests from third parties will generally be **closed without
-merge**. If you believe you have a change worth incorporating, please open an
-issue to discuss it first.
+## Contributions
+
+Bug reports and feature requests are always welcome. Code contributions are
+reviewed and merged **at the maintainer's discretion** — for anything larger than
+a small fix, please open an issue to discuss it first.
+
+### Contributor terms (important for the dual license)
+
+Because SecureScope is offered under both AGPL-3.0 and a commercial license, the
+maintainer must be able to include contributed code under **both**. By submitting
+a contribution (a pull request, patch, or any code or content), you represent that
+you have the right to do so and you agree that:
+
+- your contribution is provided under the **AGPL-3.0**; **and**
+- you grant **Omar Rao** a perpetual, irrevocable, worldwide, royalty-free right to
+  also license your contribution under the **commercial license** (and any future
+  license terms) for SecureScope.
+
+If you cannot agree to these terms, please do not submit code — open an issue to
+discuss the idea instead.
 
 ## How you can help
 
@@ -23,10 +41,14 @@ issue to discuss it first.
 - **Report a vulnerability** — do **not** open a public issue. Follow the private
   process in [SECURITY.md](../SECURITY.md).
 
+## Trademarks
+
+The license grants rights to the software, not to the SecureScope name, logos, or
+branding. See [TRADEMARKS.md](../TRADEMARKS.md).
+
 ## Versioning
 
-SecureScope uses semantic versioning on the **1.x line**; the current release is
-**v1.10.0**. The next feature release will begin the **v2.0** cycle. Please
+SecureScope uses semantic versioning; the current release is **v2.0.0**. Please
 reference the exact version when filing issues.
 
 ## Maintainer

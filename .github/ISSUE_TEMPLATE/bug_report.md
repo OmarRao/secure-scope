@@ -22,7 +22,7 @@ What you expected to happen.
 What actually happened (include error messages / screenshots if helpful).
 
 **Environment**
-- SecureScope version: [e.g. v1.10.0]
+- SecureScope version: [e.g. v2.0.0]
 - Where: [Live dashboard / self-hosted / CLI]
 - Browser / OS (if UI): [e.g. Edge on Windows 11]
 
