@@ -1,8 +1,8 @@
 # SecureScope / GitHub Security Review Tool
 
-![Version](https://img.shields.io/badge/version-v1.10.0-blue)
+![Version](https://img.shields.io/badge/version-v2.0.0-blue)
 ![MITRE ATT&CK](https://img.shields.io/badge/MITRE%20ATT%26CK-v14-red)
-![License](https://img.shields.io/badge/license-All%20Rights%20Reserved-red)
+![License](https://img.shields.io/badge/license-AGPL--3.0%20%2F%20Commercial-blue)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Firebase](https://img.shields.io/badge/telemetry-Firebase-orange)
 ![Platforms](https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey)
@@ -26,7 +26,9 @@ One scan fires signals from the core across seven fronts of security — each ma
 > AI-powered security analysis for any GitHub repository. Paste a URL, get a full threat report mapped to MITRE ATT&CK and CWE, with optional Docker sandbox execution and AI-generated fix diffs from your choice of LLM.
 > **v1.10.0** adds polyglot scanning, SQLite persistence, SLA tracking, Jira integration, PDF export, job queue, GitHub App auth, custom Semgrep rules, Kubernetes manifests, Helm chart, and anonymous Firebase telemetry. **v1.8.0** adds Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard integration, DAST (Nuclei + ZAP), license compliance scanning, supply-chain/typosquatting detection, PR diff mode, historical trend tracking, and false-positive suppression. **v1.7.0** added SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture (PCI DSS / NIST / OWASP / SANS Top 25), multi-repo scanning, and a GitHub webhook server. **v1.6.2** completed the security report — Secrets Detection and Dependency Vulnerability sections. **v1.6.0** added IaC Misconfiguration Scanner. **v1.5.0** expanded YARA to 11 rule sets. **v1.4.0** added OSV.dev dependency scanning. **v1.3.0** added Secrets Detection.
 
-## What's New in v1.10.0
+## What's New in v2.0.0
+
+**Licensing change:** SecureScope moves to a **dual license** — [AGPL-3.0](LICENSE) for public use, or a separate [commercial license](COMMERCIAL-LICENSE.md). See [Licensing](#licensing).
 
 | Feature | Description |
 |---------|-------------|
@@ -894,6 +896,7 @@ progress modal shows a per-step timer plus the total scan time on completion.
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.0.0 | 2026-07 | **Dual licensing (AGPL-3.0 + commercial)**; GitLab & Bitbucket scanning; continuous dependency-CVE watch (GitHub Actions); portfolio & enhanced admin dashboards; interactive capability constellation; light/dark themes across all pages; fully mobile-responsive |
 | [v1.10.0](https://github.com/OmarRao/secure-scope/releases/tag/v1.10.0) | 2026-06-26 | Polyglot scanning, SQLite persistence, SLA tracking, Jira integration, PDF export, job queue, GitHub App auth, custom Semgrep rules, K8s manifests, Helm chart, Firebase anonymous telemetry |
 | [v1.8.0](https://github.com/OmarRao/secure-scope/releases/tag/v1.8.0) | 2026-06-24 | Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard, DAST (Nuclei + ZAP), license compliance, supply chain/typosquatting detection, PR diff mode, historical trend tracking, false-positive suppression, GitHub Actions CI workflow |
 | [v1.7.0](https://github.com/OmarRao/secure-scope/releases/tag/v1.7.0) | 2026-06-23 | SARIF 2.1.0 export, Trivy container scanning, CycloneDX SBOM, compliance posture report (PCI DSS/NIST/OWASP/SANS Top 25), multi-repo scanning, GitHub webhook trigger server |
@@ -905,10 +908,11 @@ progress modal shows a per-step timer plus the total scan time on completion.
 | [v1.2.0](https://github.com/OmarRao/secure-scope/releases/tag/v1.2.0) | 2026-06-12 | Threat Intelligence Dashboard, YARA scanner, enterprise prevention guide, DR checklist, collapsible report sections |
 | v1.0.0 | 2026-06-09 | Initial release: Semgrep scan, Docker sandbox, multi-LLM advisor, ransomware engine, visual report |
 
-> **Versioning.** SecureScope follows semantic versioning on the **1.x line**, with
-> **v1.10.0** as the current release. The next feature release will begin the
-> **v2.0** cycle. (Earlier development milestones were renormalised into the 1.x
-> line for consistency.)
+> **Versioning.** SecureScope follows semantic versioning. The current release is
+> **v2.0.0**, a major version that adopts the AGPL-3.0 + commercial dual-license
+> model (a licensing change that downstream users must act on) alongside the
+> features listed above. Earlier development milestones were renormalised into the
+> 1.x line for consistency.
 
 ---
 
@@ -931,7 +935,9 @@ progress modal shows a per-step timer plus the total scan time on completion.
 
 ### Protecting this solution's source / IP
 
-SecureScope is a **private application, © Omar Rao, all rights reserved** (see `LICENSE`).
+SecureScope is **dual-licensed** — AGPL-3.0 for public use, or a separate
+commercial license (© 2026 Omar Rao; see [`LICENSE`](LICENSE) and
+[`COMMERCIAL-LICENSE.md`](COMMERCIAL-LICENSE.md)).
 Because it is a web app, the client-side HTML/JS is delivered to browsers and is
 therefore inherently viewable; the server-side engine and any keys stay on the
 host. For maximum source protection, keep the GitHub repository **private**
@@ -940,6 +946,37 @@ on private repos) and rotate the `SECRET_KEY` and any provider keys via the host
 environment variables.
 
 ---
+
+## Licensing
+
+**Copyright © 2026 Omar Rao.**
+
+SecureScope uses a **dual-license model**:
+
+- **Public / open-source use — [AGPL-3.0](LICENSE).** This public repository is
+  licensed under the GNU Affero General Public License v3.0. If you use, modify,
+  host, or distribute the software, you must comply with **all** AGPL-3.0 terms,
+  including its network-use (§13) source-disclosure requirement — if you run a
+  modified version as a network service, you must offer users its source code.
+- **Commercial license — [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md).**
+  Organizations that want **closed-source**, **proprietary**, **internal
+  enterprise**, **SaaS/hosted**, **integration**, **redistribution**, **resale**,
+  **reseller/distributor**, or **white-label** rights — i.e. that do not want to
+  comply with the AGPL-3.0 — must purchase a separate commercial license. Contact
+  **omarsrao@gmail.com**.
+
+**Trademarks.** These licenses cover the software only. They do **not** grant any
+right to the SecureScope name, the owner's name, logos, or branding. See
+[TRADEMARKS.md](TRADEMARKS.md).
+
+**Prior releases.** Adopting AGPL-3.0 for the current and future versions does
+**not** retroactively change past releases: any version previously distributed
+under different license terms remains governed by the terms under which that
+version was originally distributed. This licensing change applies to the current
+version and future changes.
+
+See also: [`LICENSE`](LICENSE) · [`COMMERCIAL-LICENSE.md`](COMMERCIAL-LICENSE.md)
+· [`TRADEMARKS.md`](TRADEMARKS.md) · [`DEPENDENCY-LICENSE-REVIEW.md`](DEPENDENCY-LICENSE-REVIEW.md)
 
 ---
 

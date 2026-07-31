@@ -108,7 +108,7 @@ jobs:
             org.opencontainers.image.title=SecureScope
             org.opencontainers.image.description=AI-powered security analysis for any GitHub repository — MITRE ATT&CK mapping, ransomware detection, YARA scanning, multi-LLM fix advisor.
             org.opencontainers.image.vendor=Omar Rao
-            org.opencontainers.image.licenses=MIT
+            org.opencontainers.image.licenses=AGPL-3.0-only
 
       # ── 6. Build and push ────────────────────────────────────────────────
       # Builds for both amd64 (standard cloud VMs) and arm64 (Apple Silicon,

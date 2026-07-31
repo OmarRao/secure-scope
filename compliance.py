@@ -1,3 +1,8 @@
+# Copyright (c) 2026 Omar Rao
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+# Available under the GNU Affero General Public License v3.0, or under a
+# separate commercial license. See LICENSE and COMMERCIAL-LICENSE.md.
+
 """
 Compliance posture report: maps SecureScope findings to PCI DSS v4.0, NIST SP 800-53 Rev 5,
 OWASP Top 10, and SANS/CWE Top 25 controls.
