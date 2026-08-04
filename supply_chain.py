@@ -4,6 +4,8 @@ Supply-chain security: dependency confusion and typosquatting detection.
 
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
+from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 import requests
@@ -63,8 +65,9 @@ def _looks_internal(name: str) -> bool:
     return any(p.search(n) for p in _INTERNAL_PATTERNS)
 
 
+@lru_cache(maxsize=512)
 def _pypi_exists(package: str) -> Optional[str]:
-    """Return the latest public PyPI version, or None if not found."""
+    """Return the latest public PyPI version, or None if not found. Cached."""
     try:
         resp = requests.get(
             f"https://pypi.org/pypi/{package}/json",
@@ -77,8 +80,9 @@ def _pypi_exists(package: str) -> Optional[str]:
     return None
 
 
+@lru_cache(maxsize=512)
 def _npm_exists(package: str) -> Optional[str]:
-    """Return the latest public npm version, or None if not found."""
+    """Return the latest public npm version, or None if not found. Cached."""
     try:
         resp = requests.get(
             f"https://registry.npmjs.org/{package}/latest",
@@ -144,11 +148,19 @@ def check_dependency_confusion(repo_path: str) -> list[dict]:
     """
     findings: list[dict] = []
 
-    py_pkgs = _parse_requirements_txt(repo_path)
-    for name, req_ver in py_pkgs:
-        if not _looks_internal(name):
-            continue
-        pub_ver = _pypi_exists(name)
+    # Only internal-looking packages need a (network) registry check — collect
+    # them first, then look them up concurrently. Order is preserved so the
+    # resulting findings are identical to the sequential version.
+    py_internal = [(n, v) for n, v in _parse_requirements_txt(repo_path) if _looks_internal(n)]
+    node_internal = [(n, v) for n, v in _parse_package_json(repo_path) if _looks_internal(n)]
+    if not py_internal and not node_internal:
+        return findings
+
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        py_versions = list(ex.map(_pypi_exists, [n for n, _ in py_internal]))
+        node_versions = list(ex.map(_npm_exists, [n for n, _ in node_internal]))
+
+    for (name, req_ver), pub_ver in zip(py_internal, py_versions):
         if pub_ver:
             findings.append({
                 "package": name,
@@ -158,12 +170,7 @@ def check_dependency_confusion(repo_path: str) -> list[dict]:
                 "required_version": req_ver,
                 "risk": "high",
             })
-
-    node_pkgs = _parse_package_json(repo_path)
-    for name, req_ver in node_pkgs:
-        if not _looks_internal(name):
-            continue
-        pub_ver = _npm_exists(name)
+    for (name, req_ver), pub_ver in zip(node_internal, node_versions):
         if pub_ver:
             findings.append({
                 "package": name,

@@ -9,6 +9,7 @@ import os
 import re
 import urllib.parse
 import requests
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from typing import Optional
 
@@ -117,25 +118,38 @@ def _github(s: dict, info: dict) -> dict:
         "avatar_url": d.get("owner", {}).get("avatar_url"),
         "owner_type": d.get("owner", {}).get("type"),
     })
-    lr = requests.get(f"{GH_API}/repos/{owner}/{repo}/languages", headers=h, timeout=10)
-    if lr.ok:
+    # The four secondary calls are independent — fetch them concurrently (I/O
+    # bound) to cut ~4 sequential round-trips down to ~1. Results are identical.
+    def _get(url):
+        try:
+            resp = requests.get(url, headers=h, timeout=10)
+            return resp if resp.ok else None
+        except Exception:
+            return None
+    _urls = [
+        f"{GH_API}/repos/{owner}/{repo}/languages",
+        f"{GH_API}/repos/{owner}/{repo}/commits?per_page=7",
+        f"{GH_API}/repos/{owner}/{repo}/contributors?per_page=8",
+        f"{GH_API}/repos/{owner}/{repo}/contents",
+    ]
+    with ThreadPoolExecutor(max_workers=4) as _ex:
+        lr, cr, contr, tr = list(_ex.map(_get, _urls))
+
+    if lr:
         langs = lr.json(); total = sum(langs.values()) or 1
         info["languages"] = {k: round(v / total * 100, 1) for k, v in sorted(langs.items(), key=lambda x: -x[1])}
-    cr = requests.get(f"{GH_API}/repos/{owner}/{repo}/commits?per_page=7", headers=h, timeout=10)
-    if cr.ok:
+    if cr:
         info["recent_commits"] = [{
             "sha": c["sha"][:7], "message": c["commit"]["message"].splitlines()[0][:72],
             "author": c["commit"]["author"].get("name", "unknown"),
             "date": _fmt_date(c["commit"]["author"].get("date")),
         } for c in cr.json()]
-    contr = requests.get(f"{GH_API}/repos/{owner}/{repo}/contributors?per_page=8", headers=h, timeout=10)
-    if contr.ok:
+    if contr:
         info["contributors"] = [{
             "login": c.get("login"), "contributions": c.get("contributions"),
             "avatar": c.get("avatar_url"), "url": c.get("html_url"),
         } for c in contr.json() if isinstance(c, dict)]
-    tr = requests.get(f"{GH_API}/repos/{owner}/{repo}/contents", headers=h, timeout=10)
-    if tr.ok:
+    if tr:
         info["file_tree"] = [{"name": f["name"], "type": f["type"], "size": f.get("size", 0)} for f in tr.json()]
     return info
 
