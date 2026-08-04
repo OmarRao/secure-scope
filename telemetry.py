@@ -1,3 +1,8 @@
+# Copyright (c) 2026 Omar Rao
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+# Available under the GNU Affero General Public License v3.0, or under a
+# separate commercial license. See LICENSE and COMMERCIAL-LICENSE.md.
+
 """
 Anonymous opt-in usage telemetry via Firebase Measurement Protocol.
 No personal data collected. Disable with --no-telemetry or SECSCOPE_NO_TELEMETRY=1.
@@ -101,7 +106,7 @@ def track_scan_start(features: list[str]) -> float:
         "python_version": f"{sys.version_info.major}.{sys.version_info.minor}",
         "os_type": platform.system(),
         "feature_flags": ",".join(sorted(features)),
-        "version": "1.10.0",
+        "version": "2.0.0",
     })
     return time.monotonic()
 
@@ -117,7 +122,7 @@ def track_scan_complete(start_ts: float, finding_counts: dict, features: list[st
         "low": finding_counts.get("LOW", 0),
         "dep_vulns": finding_counts.get("dep_vulns", 0),
         "feature_flags": ",".join(sorted(features)),
-        "version": "1.10.0",
+        "version": "2.0.0",
     })
 
 
@@ -126,5 +131,5 @@ def track_error(error_type: str, features: list[str]) -> None:
     _send("scan_error", {
         "error_type": error_type,
         "feature_flags": ",".join(sorted(features)),
-        "version": "1.10.0",
+        "version": "2.0.0",
     })

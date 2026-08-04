@@ -1,3 +1,8 @@
+# Copyright (c) 2026 Omar Rao
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+# Available under the GNU Affero General Public License v3.0, or under a
+# separate commercial license. See LICENSE and COMMERCIAL-LICENSE.md.
+
 """
 Live threat intelligence — pulls real, current data from free public sources and
 caches it so the dashboard's "Live Threat Feed" reflects what is happening now,

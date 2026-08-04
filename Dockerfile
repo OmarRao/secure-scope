@@ -1,3 +1,8 @@
+# Copyright (c) 2026 Omar Rao
+# SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+# Available under the GNU Affero General Public License v3.0, or under a
+# separate commercial license. See LICENSE and COMMERCIAL-LICENSE.md.
+
 # ════════════════════════════════════════════════════════════════════════════
 # SecureScope — Dockerfile
 # Multi-stage build: keeps the final image lean by separating build-time
@@ -71,7 +76,7 @@ LABEL org.opencontainers.image.title="SecureScope"
 LABEL org.opencontainers.image.description="AI-powered security analysis for any GitHub repository. MITRE ATT&CK mapping, ransomware detection, YARA scanning, and multi-LLM fix advisor."
 LABEL org.opencontainers.image.url="https://github.com/OmarRao/secure-scope"
 LABEL org.opencontainers.image.source="https://github.com/OmarRao/secure-scope"
-LABEL org.opencontainers.image.licenses="LicenseRef-Proprietary-AllRightsReserved"
+LABEL org.opencontainers.image.licenses="AGPL-3.0-only"
 LABEL org.opencontainers.image.vendor="Omar Rao"
 LABEL org.opencontainers.image.authors="Omar Rao — Cybersecurity, Privacy and Resilience Expert <https://www.linkedin.com/in/omarrao/>"
 

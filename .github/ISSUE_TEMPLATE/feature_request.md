@@ -18,5 +18,5 @@ Any alternative approaches or workarounds you've thought about.
 **Additional context**
 Mockups, examples, or references that help explain the request.
 
-> Note: SecureScope is proprietary and maintained solely by Omar Rao. Feature
+> Note: SecureScope is dual-licensed (AGPL-3.0 + commercial) and maintained solely by Omar Rao. Feature
 > requests are welcome as input, but there is no guarantee of implementation.

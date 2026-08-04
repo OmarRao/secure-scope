@@ -1,6 +1,6 @@
 # SecureScope Technical User Guide
 
-> **Version:** v1.10.0 | **Last Updated:** 2026-06-26 | **Maintained with each release**
+> **Version:** v2.0.0 | **Last Updated:** 2026-07 | **License:** AGPL-3.0 / Commercial | **Maintained with each release**
 
 ---
 
@@ -1261,6 +1261,7 @@ python main.py --repo https://github.com/owner/repo --no-advisor --no-sandbox
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| v2.0.0 | 2026-07 | **Dual licensing (AGPL-3.0 + commercial)**; GitLab & Bitbucket repository scanning; continuous dependency-CVE watch (GitHub Actions); portfolio + enhanced admin dashboards; capability constellation; light/dark themes; mobile-responsive UI |
 | v1.10.0 | 2026-06-26 | Polyglot dependency scan (npm/cargo/go/gem/maven), SQLite persistence (`--use-db`), SLA breach tracking (`--sla-check`), Jira Cloud integration, PDF export (`--pdf`), SBOM diffing (`--sbom-diff`), Kubernetes + Helm deployment, custom Semgrep rules directory, GitHub App auth, telemetry opt-out |
 | v1.9.0 | 2026-06 | Secret scanning (`--secret-scan`), IaC scanning (`--iac-scan`), markdown PR comments (`--pr-comment`), `requirements.txt` overhaul, Python 3.12 f-string fix |
 | v1.8.0 | 2026-06-24 | Slack/Teams notifications, GitHub Issue auto-creation, OpenSSF Scorecard, DAST (Nuclei + ZAP), license compliance scan, supply-chain/typosquatting detection, PR diff mode, historical trend tracking, false-positive suppression, GitHub Actions CI self-scan |

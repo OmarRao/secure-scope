@@ -1,8 +1,9 @@
 <!--
-  SecureScope is proprietary software (© 2026 Omar Rao, all rights reserved).
-  It is not open to external contributions — unsolicited pull requests from
-  third parties will generally be closed without merge. Please open an issue
-  to discuss any proposed change first. See CONTRIBUTING.md.
+  SecureScope is dual-licensed (AGPL-3.0 + commercial — see LICENSE and
+  COMMERCIAL-LICENSE.md). By submitting this pull request you agree that your
+  contribution is provided under AGPL-3.0 and may also be licensed by Omar Rao
+  under the commercial license (see CONTRIBUTING.md → Contributor terms).
+  Please open an issue to discuss larger changes first.
 -->
 
 ## Summary
@@ -23,7 +24,7 @@ Closes #
 
 ## Checklist
 
-- [ ] I am the maintainer, or I have prior written authorization to contribute.
+- [ ] I agree to the [Contributor terms](CONTRIBUTING.md) (AGPL-3.0 + commercial dual-license grant).
 - [ ] `python -m pytest -q` passes.
 - [ ] No secrets, tokens, or credentials are included.
 - [ ] Documentation (README/USERGUIDE) updated if behaviour changed.
