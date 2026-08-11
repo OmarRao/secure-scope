@@ -1826,7 +1826,12 @@ async function launchScan(payload) {
   document.getElementById('progCancel').textContent = '✕ Cancel';
   document.getElementById('progressOverlay').classList.add('open');
 
+  // Attach the signed-in user's Firebase ID token so the server can verify
+  // identity (enforced only when the server has REQUIRE_AUTH enabled).
+  const idToken = window.SS ? await window.SS.getIdToken() : null;
+
   socket.emit('start_scan', {
+    id_token:     idToken,
     repo_url:     payload.repo_url,
     branch:       payload.branch,
     sandbox:      payload.sandbox,

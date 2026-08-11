@@ -206,6 +206,58 @@ def _rate_check(ip: str) -> tuple[bool, int]:
         return True, 0
 
 
+# ── Auth: server-side Firebase ID-token verification (optional, fail-open) ────
+# Dormant by default. It only *enforces* when the operator both sets
+# REQUIRE_AUTH=true AND provides Firebase Admin credentials — otherwise every
+# scan proceeds exactly as before. Credentials come from either
+# FIREBASE_CREDENTIALS (the service-account JSON as a string, e.g. a Render
+# secret) or FIREBASE_CREDENTIALS_FILE (a path to the JSON on disk). The
+# service-account key never lives in the repo.
+_REQUIRE_AUTH = os.environ.get("REQUIRE_AUTH", "").strip().lower() in ("1", "true", "yes", "on")
+_fb_ready = None  # None=untried, True=initialized, False=unavailable
+_fb_lock = threading.Lock()
+
+
+def _firebase_ready() -> bool:
+    """Lazily initialize firebase-admin from env credentials. True if usable."""
+    global _fb_ready
+    if _fb_ready is not None:
+        return _fb_ready
+    with _fb_lock:
+        if _fb_ready is not None:
+            return _fb_ready
+        raw = os.environ.get("FIREBASE_CREDENTIALS", "").strip()
+        path = os.environ.get("FIREBASE_CREDENTIALS_FILE", "").strip()
+        if not raw and not (path and os.path.exists(path)):
+            _fb_ready = False  # not configured — stay dormant, no import needed
+            return False
+        try:
+            import firebase_admin
+            from firebase_admin import credentials
+            if raw:
+                cred = credentials.Certificate(json.loads(raw))
+            else:
+                cred = credentials.Certificate(path)
+            if not firebase_admin._apps:
+                firebase_admin.initialize_app(cred)
+            _fb_ready = True
+        except Exception:
+            logger.exception("Firebase admin init failed; token verification disabled")
+            _fb_ready = False
+    return _fb_ready
+
+
+def verify_id_token(token: str):
+    """Verify a Firebase ID token → decoded claims dict, or None if invalid/off."""
+    if not token or not _firebase_ready():
+        return None
+    try:
+        from firebase_admin import auth as fb_auth
+        return fb_auth.verify_id_token(token)
+    except Exception:
+        return None
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.route("/")
@@ -444,6 +496,16 @@ def handle_scan(data):
         mins = retry_after // 60 + 1
         emit("error", {"message": f"Rate limit reached — too many scans from your network. Please wait about {mins} minute(s) and try again."})
         return
+
+    # Identity check. Verification runs whenever it's configured (so we log who
+    # scanned), but it only *blocks* when the operator has both turned auth on
+    # and provided credentials — otherwise it fails open and changes nothing.
+    user_claims = verify_id_token(data.get("id_token") or "")
+    if _REQUIRE_AUTH and _firebase_ready() and not user_claims:
+        emit("error", {"message": "Please sign in to run a scan."})
+        return
+    if user_claims:
+        logger.info("scan authorized for %s", user_claims.get("email") or user_claims.get("uid"))
 
     def run():
         with app.app_context():

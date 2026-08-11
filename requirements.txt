@@ -16,6 +16,7 @@ urllib3>=2.7.0  # CVE fix: GHSA-pq67-6m6q-mj2v et al. (was 1.26.19)
 pyjwt>=2.13.0   # CVE fix: GHSA-w7vc-732c-9m39 et al. (was 2.11.0)
 requests>=2.33.0 # CVE fix: GHSA-9hjg-9r4m-mvj7, GHSA-gc5v-m9x4-r6x2 (was 2.32.2)
 idna>=3.15 # not directly required, pinned to avoid a vulnerability
+firebase-admin>=6.5.0  # server-side Firebase ID-token verification (optional; auth stays off until configured)
 
 # Optional — install for additional scan capabilities
 # detect-secrets>=1.4.0    # secret scanning (--secret-scan)

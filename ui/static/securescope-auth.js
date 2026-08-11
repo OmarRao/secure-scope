@@ -256,6 +256,13 @@ window.SS = {
   signIn() { openAuth(); },
   signOutUser() { return signOut(auth); },
 
+  // Current user's Firebase ID token (JWT) for server-side verification, or
+  // null when signed out / on error. The server treats null as anonymous.
+  async getIdToken() {
+    try { return _user ? await _user.getIdToken() : null; }
+    catch { return null; }
+  },
+
   // Resolve once the user is signed in; opens the auth modal if needed.
   requireSignIn() {
     return new Promise((resolve) => {

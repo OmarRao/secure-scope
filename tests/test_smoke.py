@@ -274,3 +274,20 @@ def test_rate_check_sliding_window():
         assert all(server._rate_check("1.2.3.4")[0] for _ in range(20))
     finally:
         server._RATE_LIMIT, server._RATE_WINDOW, server._rate_hits = orig_limit, orig_window, orig_hits
+
+
+def test_firebase_auth_fails_open_when_unconfigured():
+    import sys
+    root = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(root / "ui"))
+    import server
+
+    orig_ready = server._fb_ready
+    try:
+        server._fb_ready = None  # force a fresh probe
+        # No FIREBASE_CREDENTIALS in the test env → dormant, never raises.
+        assert server._firebase_ready() is False
+        assert server.verify_id_token("") is None
+        assert server.verify_id_token("not.a.real.token") is None
+    finally:
+        server._fb_ready = orig_ready
