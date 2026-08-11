@@ -335,6 +335,10 @@ python -m ui.server
 # Open http://localhost:5001
 ```
 
+> `python -m ui.server` runs Flask's **development** server (local use only). For hosting, run under gunicorn's threaded worker:
+> `gunicorn -k gthread -w 1 --threads 8 --timeout 120 --bind 0.0.0.0:$PORT ui.server:app`
+> (already wired into the `Dockerfile`, `render.yaml`, and `Procfile`). Optional hardening env vars — `SCAN_RATE_LIMIT`, `REQUIRE_AUTH`, `FIREBASE_CREDENTIALS` — are documented in [USERGUIDE §11](USERGUIDE.md#11-kubernetes--helm-deployment).
+
 Click **Analyze Repository** and follow the 3-step wizard:
 1. Enter GitHub URL and branch
 2. Choose your AI provider (or skip)

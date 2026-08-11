@@ -1067,6 +1067,29 @@ python webhook.py --port 8080 --secret $env:WEBHOOK_SECRET
 
 Each triggered scan produces JSON, HTML, SARIF, SBOM, and compliance reports automatically under `--out-dir`.
 
+### Hosting the Web UI in production (Render / Docker)
+
+`python -m ui.server` starts Flask's **development** server — fine for local use, not for hosting. In production run the app under a threaded WSGI server. The app uses Flask-SocketIO in `async_mode="threading"` and runs each scan in its own background thread, so it needs gunicorn's **gthread** worker (not eventlet/gevent):
+
+```bash
+gunicorn -k gthread -w 1 --threads 8 --timeout 120 --bind 0.0.0.0:$PORT ui.server:app
+```
+
+This command ships in three places so it applies however the app is deployed: the `Dockerfile` `CMD` (used by Docker/Render Docker services), `render.yaml` `startCommand` (Render Blueprints), and the `Procfile` (native buildpacks). `simple-websocket` (in `requirements.txt`) gives threading mode a real WebSocket transport; without it Socket.IO still works over long-polling.
+
+**Optional production env vars:**
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `PORT` | `5001` | Port to bind (Render sets this automatically) |
+| `SCAN_RATE_LIMIT` | `10` | Max scans per window per source IP (`0` disables) |
+| `SCAN_RATE_WINDOW` | `600` | Rate-limit window in seconds |
+| `REQUIRE_AUTH` | `false` | When `true` **and** Firebase creds are set, only signed-in users may scan |
+| `FIREBASE_CREDENTIALS` | `""` | Service-account JSON (as a string/secret) for server-side ID-token verification |
+| `FIREBASE_CREDENTIALS_FILE` | `""` | Alternative: path to the service-account JSON on disk |
+
+Auth verification is **fail-open**: unless both `REQUIRE_AUTH=true` and valid Firebase credentials are present, every scan proceeds unchanged. The service-account key lives only in the host's secrets — never in the repository.
+
 ---
 
 ## 12. Multi-Repo Scanning
