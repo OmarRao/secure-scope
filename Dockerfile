@@ -179,5 +179,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -fs http://localhost:5001/ || exit 1
 
-# Default command — start the web UI server
-CMD ["python", "-m", "ui.server"]
+# Default command — start the web UI under a production WSGI server.
+# The app uses Flask-SocketIO async_mode="threading" with per-scan background
+# threads, so it needs a threaded worker (gthread), NOT eventlet/gevent. Shell
+# form so ${PORT} (set by Render) expands; falls back to 5001 for local runs.
+CMD gunicorn -k gthread -w 1 --threads 8 --timeout 120 --bind 0.0.0.0:${PORT:-5001} ui.server:app
