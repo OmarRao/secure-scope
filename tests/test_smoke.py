@@ -248,3 +248,29 @@ def test_watch_diff_cves():
     assert diff_cves(current.keys(), current) == []  # nothing new
     md = to_markdown({"generated_at": "now", "repos": [{"repo": "https://github.com/o/r", "new": new, "error": None}], "alert_count": 2, "kev_count": 1})
     assert "CVE-2021-44228" in md and "log4j" in md
+
+
+def test_rate_check_sliding_window():
+    import sys
+    root = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(root / "ui"))
+    import server
+
+    orig_limit, orig_window, orig_hits = server._RATE_LIMIT, server._RATE_WINDOW, server._rate_hits
+    try:
+        server._RATE_LIMIT = 3
+        server._RATE_WINDOW = 600
+        server._rate_hits = server.collections.defaultdict(list)
+
+        # First 3 are allowed, 4th is blocked with a retry hint.
+        assert [server._rate_check("1.2.3.4")[0] for _ in range(3)] == [True, True, True]
+        blocked, retry = server._rate_check("1.2.3.4")
+        assert blocked is False and retry > 0
+        # A different IP is unaffected.
+        assert server._rate_check("9.9.9.9")[0] is True
+
+        # Disabled (<=0) always fails open.
+        server._RATE_LIMIT = 0
+        assert all(server._rate_check("1.2.3.4")[0] for _ in range(20))
+    finally:
+        server._RATE_LIMIT, server._RATE_WINDOW, server._rate_hits = orig_limit, orig_window, orig_hits

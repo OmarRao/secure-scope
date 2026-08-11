@@ -44,6 +44,7 @@ import os
 import re
 import sys
 import json
+import collections
 import threading
 import time
 from pathlib import Path
@@ -158,6 +159,51 @@ _jobs: dict[str, dict] = {}
 
 # History file (local fallback when Gist is unavailable)
 _HISTORY_FILE = REPORTS_DIR / "scan_history.jsonl"
+
+
+# ── Rate limiting (per-IP, in-memory, fail-open) ──────────────────────────────
+# A single free Render instance runs the scanner; a scan is CPU-heavy. To keep
+# one client from monopolising it (accidental loops or abuse), each source IP
+# gets a generous sliding-window quota. Everything here fails OPEN: any error,
+# or a limit of 0, lets the scan through — normal users never notice it.
+_RATE_LIMIT = int(os.environ.get("SCAN_RATE_LIMIT", "10"))      # scans per window (<=0 disables)
+_RATE_WINDOW = int(os.environ.get("SCAN_RATE_WINDOW", "600"))   # window length, seconds (default 10 min)
+_rate_hits: dict[str, list] = collections.defaultdict(list)     # ip -> [timestamps]
+_rate_lock = threading.Lock()
+
+
+def _client_ip() -> str:
+    """Best-effort source IP behind Render's proxy (X-Forwarded-For first hop)."""
+    try:
+        xff = request.headers.get("X-Forwarded-For", "") or ""
+        return xff.split(",")[0].strip() or request.remote_addr or "unknown"
+    except Exception:
+        return "unknown"
+
+
+def _rate_check(ip: str) -> tuple[bool, int]:
+    """Sliding-window quota for one IP. Returns (allowed, retry_after_seconds).
+
+    Fail-open: any exception, or a non-positive limit, returns allowed=True.
+    """
+    if _RATE_LIMIT <= 0:
+        return True, 0
+    try:
+        now = time.time()
+        cutoff = now - _RATE_WINDOW
+        with _rate_lock:
+            hits = _rate_hits[ip]
+            hits[:] = [t for t in hits if t > cutoff]
+            if len(hits) >= _RATE_LIMIT:
+                return False, max(int(hits[0] + _RATE_WINDOW - now), 1)
+            hits.append(now)
+            # Opportunistic cleanup so the table can't grow unbounded.
+            if len(_rate_hits) > 4096:
+                for k in [k for k, v in list(_rate_hits.items()) if not v or v[-1] < cutoff]:
+                    _rate_hits.pop(k, None)
+        return True, 0
+    except Exception:
+        return True, 0
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -391,6 +437,12 @@ def handle_scan(data):
 
     if not repo_url or not parse_repo_url(repo_url):
         emit("error", {"message": "Invalid repository URL. Use a GitHub, GitLab, or Bitbucket URL like https://github.com/owner/repo"})
+        return
+
+    allowed, retry_after = _rate_check(_client_ip())
+    if not allowed:
+        mins = retry_after // 60 + 1
+        emit("error", {"message": f"Rate limit reached — too many scans from your network. Please wait about {mins} minute(s) and try again."})
         return
 
     def run():
