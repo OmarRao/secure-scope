@@ -480,6 +480,12 @@
     <div class="nav-item" onclick="go('mitre',this)"><span class="nav-ic">&#x1F6E1;</span> MITRE ATT&CK <span class="nav-ct ct-b">{{ tcounts|length }}</span></div>
 
     <div class="nav-grp">Findings</div>
+    {% if attack_paths %}
+    <div class="nav-item" onclick="go('attackpaths',this)">
+      <span class="nav-ic">&#x2694;&#xFE0F;</span> Attack Paths
+      <span class="nav-ct ct-r">{{ attack_paths|length }}</span>
+    </div>
+    {% endif %}
     <div class="nav-item" onclick="go('findings',this)">
       <span class="nav-ic">&#x1F50D;</span> Vulnerabilities
       <span class="nav-ct {% if errs %}ct-r{% else %}ct-w{% endif %}">{{ findings|length }}</span>
@@ -971,6 +977,65 @@
       </div>
       </div><!-- /sec-body mitre -->
     </div>
+
+    <!-- Attack Paths -->
+    {% if attack_paths %}
+    <style>
+      .apc{border:1px solid var(--rule,#252b35);border-left-width:4px;border-radius:10px;
+           background:var(--card,#0f1319);padding:16px 18px;margin:0 0 16px}
+      .apc-critical{border-left-color:#dc2626}.apc-high{border-left-color:#d97706}
+      .apc-medium{border-left-color:#2563eb}.apc-low{border-left-color:#16a34a}
+      .apc-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+      .apc-chip{font-size:10px;font-weight:800;letter-spacing:.04em;padding:3px 8px;border-radius:5px;color:#fff}
+      .apc-title{font-weight:700;color:var(--head,#fff);font-size:14px}
+      .apc-like{margin-left:auto;font-size:11px;color:var(--muted,#6b7785);font-family:'Geist Mono',monospace}
+      .apc-sum{color:var(--sub,#a0aec0);font-size:12.5px;line-height:1.5;margin-bottom:14px}
+      .apc-flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}
+      .apstep{flex:1 1 200px;min-width:180px;background:var(--ink,#0a0c0f);border:1px solid var(--rule,#252b35);
+              border-radius:8px;padding:11px 12px}
+      .apstage{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent,#4f8ef7);margin-bottom:5px}
+      .apstep-title{font-weight:600;color:var(--head,#fff);font-size:12.5px;margin-bottom:4px}
+      .apstep-detail{color:var(--sub,#a0aec0);font-size:11.5px;line-height:1.45;margin-bottom:7px}
+      .apstep-ev{font-size:10.5px;font-family:'Geist Mono',monospace;color:var(--muted,#6b7785);
+                 border-top:1px dashed var(--rule,#252b35);padding-top:6px;word-break:break-all}
+      .aparrow{display:flex;align-items:center;color:var(--muted,#6b7785);font-size:18px;font-weight:700}
+      @media (max-width:640px){.apc-flow{flex-direction:column}.aparrow{transform:rotate(90deg);justify-content:center}}
+    </style>
+    <div class="sec" id="attackpaths">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x2694;&#xFE0F; Attack Paths</div>
+        <div class="sec-count">{{ attack_paths|length }} chains</div>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+        <p style="color:var(--sub);font-size:13px;margin:0 0 16px;line-height:1.5">
+          How isolated findings compose into real attacks. Each chain stitches evidence from this scan
+          into a staged path &mdash; from initial access to impact.</p>
+        {% for c in attack_paths %}
+        {% set chipcolor = '#dc2626' if c.severity == 'CRITICAL' else '#d97706' if c.severity == 'HIGH' else '#2563eb' if c.severity == 'MEDIUM' else '#16a34a' %}
+        <div class="apc apc-{{ c.severity|lower }}">
+          <div class="apc-top">
+            <span class="apc-chip" style="background:{{ chipcolor }}">{{ c.severity }}</span>
+            <span class="apc-title">{{ c.title }}</span>
+            <span class="apc-like">Likelihood: {{ c.likelihood }}</span>
+          </div>
+          <div class="apc-sum">{{ c.summary }}</div>
+          <div class="apc-flow">
+            {% for s in c.steps %}
+            <div class="apstep">
+              <div class="apstage">{{ s.stage }}</div>
+              <div class="apstep-title">{{ s.title }}</div>
+              <div class="apstep-detail">{{ s.detail }}</div>
+              <div class="apstep-ev">{{ s.evidence }}</div>
+            </div>
+            {% if not loop.last %}<div class="aparrow">&#x2192;</div>{% endif %}
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
 
     <!-- Findings -->
     <div class="sec" id="findings">

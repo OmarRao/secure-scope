@@ -301,6 +301,62 @@ def test_badge_score_slug_and_svg():
     assert "CRITICAL 100" in badge_for(crit)
 
 
+def test_attack_paths_build():
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from attack_path import build_attack_paths, _is_injection
+
+    deps = {"vulnerabilities": [
+        {"package_name": "log4j", "primary_cve": "CVE-2021-44228", "severity": "CRITICAL",
+         "kev": True, "epss": 0.97, "reachable": True, "reachable_files": 3, "ecosystem": "PyPI"},
+        {"package_name": "leftpad", "vuln_id": "GHSA-x", "severity": "LOW",
+         "kev": False, "epss": 0.01, "reachable": False, "ecosystem": "npm"},
+    ]}
+    secrets = {"findings": [{"type": "AWS Access Key", "file": "config.py", "line": 12}]}
+    findings = [{"rule_id": "python.sqli", "message": "SQL injection", "severity": "ERROR",
+                 "cwe": "CWE-89", "file": "app.py", "line_start": 40}]
+
+    chains = build_attack_paths(deps, secrets, findings)
+    ids = [c["id"] for c in chains]
+    # The reachable KEV dep, the injection, the secret, and a combined chain all appear.
+    assert any("log4j" in i for i in ids)
+    assert any(i.startswith("secret-") for i in ids)
+    assert any(i.startswith("inj-") for i in ids)
+    assert "combined-kill-chain" in ids
+    # The low, unreachable, non-KEV dep is NOT an attack path.
+    assert not any("leftpad" in i for i in ids)
+    # Combined/critical chain sorts to the top; every step cites evidence.
+    assert chains[0]["severity"] == "CRITICAL"
+    for c in chains:
+        assert c["steps"] and all(s.get("evidence") for s in c["steps"])
+    # Injection classifier recognises CWE + keyword forms.
+    assert _is_injection({"cwe": "CWE-79"})
+    assert _is_injection({"message": "possible SSRF here"})
+    assert _is_injection({"cwe": "CWE-16", "message": "misconfig"}) is None
+    # Empty inputs are safe.
+    assert build_attack_paths() == []
+
+
+def test_report_template_and_pdf_render_attack_paths():
+    import sys
+    root = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(root))
+    # Jinja template compiles (catches section syntax errors).
+    from jinja2 import Environment, FileSystemLoader
+    env = Environment(loader=FileSystemLoader(str(root / "ui" / "templates")))
+    env.get_template("report.html")  # raises TemplateSyntaxError on bad markup
+    # PDF builder accepts attack_paths without error and includes the section.
+    from report_html import build_html
+    result = build_html({
+        "repo": "https://github.com/o/r", "findings": [], "summary": {},
+        "attack_paths": [{"id": "x", "title": "Full kill-chain", "severity": "CRITICAL",
+                          "likelihood": "High", "summary": "demo",
+                          "steps": [{"stage": "Entry", "title": "t", "detail": "d", "evidence": "e"}]}],
+    })
+    html = result[0] if isinstance(result, tuple) else result
+    assert "Attack Paths" in html and "Full kill-chain" in html
+
+
 def test_firebase_auth_fails_open_when_unconfigured():
     import sys
     root = Path(__file__).resolve().parent.parent

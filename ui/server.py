@@ -763,6 +763,19 @@ def handle_scan(data):
 
                     to_json(result, obs, enriched, json_path)
 
+                    # Synthesise attack paths / kill-chains from the collected
+                    # signals (reachable dep CVEs + injection SAST + secrets).
+                    attack_paths = []
+                    try:
+                        from attack_path import build_attack_paths
+                        attack_paths = build_attack_paths(
+                            deps_dict if deps_dict is not None else (deps_result.to_dict() if deps_result else None),
+                            secrets_result.to_dict() if secrets_result else None,
+                            findings_dicts,
+                        )
+                    except Exception:
+                        logger.exception("attack-path synthesis failed")
+
                     # Enrich the saved JSON with governance data so the PDF (built
                     # from this JSON) can render the compliance + license summaries.
                     try:
@@ -771,6 +784,7 @@ def handle_scan(data):
                         _jd["compliance"] = compliance_data
                         _jd["licenses"] = license_data
                         _jd["sbom_components"] = len(sbom_data.get("components", [])) if sbom_data else 0
+                        _jd["attack_paths"] = attack_paths
                         Path(json_path).write_text(_json_enrich.dumps(_jd), encoding="utf-8")
                     except Exception:
                         logger.exception("enriching report JSON failed")
@@ -784,6 +798,7 @@ def handle_scan(data):
                         "gh_info": gh_info,
                         "summary": result.summary(),
                         "findings": findings_dicts,
+                        "attack_paths": attack_paths,
                         "dependency_vulns": result.dependency_vulns,
                         "ransomware": rw_report,
                         "secrets": secrets_result.to_dict() if secrets_result else None,

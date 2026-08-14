@@ -281,6 +281,44 @@ def build_html(data: dict) -> tuple:
             {lic_table}""")
         return f'<div class="pb-before">{"".join(parts)}</div>' if parts else ""
 
+    def attack_paths_section():
+        """Narrated exploit-chains (Entry → Execution → Impact) for the PDF."""
+        chains = data.get("attack_paths") or []
+        if not chains:
+            return ""
+        cards = []
+        for c in chains:
+            sev = str(c.get("severity", "")).upper()
+            col = ("#dc2626" if sev == "CRITICAL" else "#d97706" if sev == "HIGH"
+                   else "#2563eb" if sev == "MEDIUM" else "#16a34a")
+            steps = "".join(
+                f'<td style="vertical-align:top;padding:6pt 8pt;border:1px solid #e5e7eb;">'
+                f'<div style="font-size:7.5pt;font-weight:800;letter-spacing:.4pt;color:{col};text-transform:uppercase;">{esc(s.get("stage",""))}</div>'
+                f'<div style="font-size:9.5pt;font-weight:700;color:#111827;margin:2pt 0;">{esc(s.get("title",""))}</div>'
+                f'<div style="font-size:8.5pt;color:#4b5563;line-height:1.4;">{esc(s.get("detail",""))}</div>'
+                f'<div style="font-size:7.5pt;color:#9ca3af;font-family:monospace;margin-top:3pt;">{esc(s.get("evidence",""))}</div>'
+                f'</td>'
+                for s in c.get("steps", []))
+            cards.append(f"""
+            <div style="border:1px solid #e5e7eb;border-left:3pt solid {col};border-radius:6pt;padding:10pt 12pt;margin-bottom:10pt;">
+              <div style="font-size:11pt;font-weight:800;color:#111827;">
+                <span style="background:{col};color:#fff;font-size:8pt;padding:1pt 6pt;border-radius:3pt;vertical-align:middle;">{esc(sev)}</span>
+                &nbsp;{esc(c.get('title',''))}
+                <span style="float:right;font-size:8.5pt;color:#6b7280;font-weight:500;">Likelihood: {esc(c.get('likelihood',''))}</span>
+              </div>
+              <p style="font-size:9.5pt;color:#4b5563;margin:6pt 0 10pt;line-height:1.5;">{esc(c.get('summary',''))}</p>
+              <table style="width:100%;border-collapse:collapse;table-layout:fixed;"><tr>{steps}</tr></table>
+            </div>""")
+        return f"""
+        <div class="pb-before">
+          <div class="section-eye">Exploitability</div>
+          <div class="section-title">Attack Paths &amp; Kill-Chains</div>
+          <p style="font-size:10.5pt;color:#6b7280;margin-bottom:12pt;line-height:1.6;">
+            How isolated findings compose into real attacks — {len(chains)} chain{'s' if len(chains) != 1 else ''}
+            stitched from reachable dependency CVEs, injection sinks, and exposed secrets.</p>
+          {"".join(cards)}
+        </div>"""
+
     HTML = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -501,6 +539,8 @@ def build_html(data: dict) -> tuple:
 </div>
 
 {ransomware_section()}
+
+{attack_paths_section()}
 
 {governance_section()}
 

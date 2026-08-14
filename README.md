@@ -182,6 +182,7 @@ The 3-2-1-1-0 backup rule visualised with an interactive DR testing checklist (s
 | **DAST** | Run Nuclei (preferred) or OWASP ZAP baseline scan against a live URL. Falls back gracefully if tools not installed. |
 | **License Compliance** | Classify dependency licenses (high/medium/low/ok risk) using pip-licenses / license-checker with heuristic fallback. |
 | **Supply Chain** | Detect dependency confusion attacks (internal names on public registries) and known typosquats. |
+| **Attack Paths** | Stitch reachable dependency CVEs, injection sinks, and exposed secrets into narrated, evidence-cited kill-chains (Entry → Execution → Impact) in the report and PDF. |
 | **PR Diff Mode** | Only scan files changed vs the base branch — ideal for pull request CI integration. |
 | **Trend Tracking** | Append per-scan metrics to `trend.jsonl` and render an SVG sparkline of findings over time. |
 | **False Positive Suppression** | Accept-risk workflow: store suppressions in `.secscope-suppressions.json`, applied before report generation. |
