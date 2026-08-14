@@ -67,6 +67,7 @@ class AnalysisResult:
     scan_errors: list[str] = field(default_factory=list)
     pr_diff_mode: bool = False
     changed_files: list[str] = field(default_factory=list)
+    finding_classes: Optional[dict] = None  # {new, fixed, pre_existing, counts} in PR-classify mode
 
     def summary(self) -> dict:
         by_severity = {}
@@ -334,6 +335,51 @@ def analyze_pr(repo_url: str, base_branch: str = "main",
         print(f"[*] PR diff mode: {len(result.changed_files)} changed files")
         result.findings = run_semgrep_diff(repo_path, result.changed_files)
         result.dependency_vulns = check_dependency_vulns(repo_path)
+    except Exception as e:
+        result.scan_errors.append(str(e))
+
+    return result
+
+
+def analyze_pr_classified(repo_url: str, base_branch: str = "main",
+                          workdir: Optional[str] = None) -> AnalysisResult:
+    """Scan HEAD and the base ref, then classify findings as new/fixed/pre-existing.
+
+    Unlike analyze_pr (which scans only changed files), this runs a full scan on
+    both refs so it can tell which findings the change *introduced*, *resolved*,
+    or left untouched — the signal a PR reviewer actually wants.
+    """
+    repo_path = clone_repo(repo_url, workdir)
+    result = AnalysisResult(repo_url=repo_url, repo_path=repo_path, pr_diff_mode=True)
+    try:
+        head_findings = run_semgrep(repo_path, fast=True)
+        result.findings = head_findings
+        result.dependency_vulns = check_dependency_vulns(repo_path)
+
+        base_findings: list[Finding] = []
+        try:
+            subprocess.run(["git", "fetch", "--depth", "50", "origin", base_branch],
+                           capture_output=True, cwd=repo_path)
+            cur = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True,
+                                 text=True, cwd=repo_path).stdout.strip()
+            co = subprocess.run(["git", "checkout", "-q", f"origin/{base_branch}"],
+                                capture_output=True, text=True, cwd=repo_path)
+            if co.returncode == 0:
+                base_findings = run_semgrep(repo_path, fast=True)
+                if cur:
+                    subprocess.run(["git", "checkout", "-q", cur],
+                                   capture_output=True, cwd=repo_path)
+            else:
+                result.scan_errors.append(f"could not check out base '{base_branch}'")
+        except Exception as e:
+            result.scan_errors.append(f"base scan failed: {e}")
+
+        from diff_scan import classify_findings
+        result.changed_files = get_pr_changed_files(repo_path, base_branch)
+        result.finding_classes = classify_findings(
+            [f.to_dict() for f in base_findings],
+            [f.to_dict() for f in head_findings],
+        )
     except Exception as e:
         result.scan_errors.append(str(e))
 

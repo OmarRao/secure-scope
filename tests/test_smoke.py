@@ -301,6 +301,34 @@ def test_badge_score_slug_and_svg():
     assert "CRITICAL 100" in badge_for(crit)
 
 
+def test_diff_scan_classify():
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from diff_scan import classify_findings, finding_fingerprint, classification_markdown
+
+    def mk(rule, file, snippet, line):
+        return {"rule_id": rule, "file": file, "code_snippet": snippet,
+                "line_start": line, "severity": "ERROR"}
+
+    # Same finding shifted by lines → same fingerprint (not new/fixed).
+    shifted_base = mk("sqli", "app.py", "  query(x)  ", 10)
+    shifted_head = mk("sqli", "app.py", "query(x)", 42)
+    assert finding_fingerprint(shifted_base) == finding_fingerprint(shifted_head)
+
+    base = [shifted_base, mk("xss", "old.py", "render(y)", 5)]     # xss will be fixed
+    head = [shifted_head, mk("cmdi", "new.py", "os.system(z)", 3)]  # cmdi is new
+    cls = classify_findings(base, head)
+    assert cls["counts"] == {"new": 1, "fixed": 1, "pre_existing": 1}
+    assert cls["new"][0]["rule_id"] == "cmdi"
+    assert cls["fixed"][0]["rule_id"] == "xss"
+    assert cls["pre_existing"][0]["rule_id"] == "sqli"
+
+    # Empty inputs are safe; markdown renders the counts.
+    assert classify_findings([], [])["counts"] == {"new": 0, "fixed": 0, "pre_existing": 0}
+    md = classification_markdown(cls, "main")
+    assert "New" in md and "cmdi" in md
+
+
 def test_attack_paths_build():
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

@@ -57,7 +57,14 @@ def _scan_one(repo_url: str, args, out_dir: Path) -> None:
     print(f"{'='*60}\n")
 
     # ── 1. Static Analysis ──────────────────────────────────────
-    if args.pr_diff:
+    if getattr(args, "pr_classify", False):
+        from analyzer import analyze_pr_classified
+        result = analyze_pr_classified(repo_url, base_branch=args.base_branch)
+        c = (result.finding_classes or {}).get("counts", {})
+        print(f"\n[+] PR classify scan vs '{args.base_branch}': "
+              f"{c.get('new', 0)} new, {c.get('fixed', 0)} fixed, "
+              f"{c.get('pre_existing', 0)} pre-existing")
+    elif args.pr_diff:
         from analyzer import analyze_pr
         result = analyze_pr(repo_url, base_branch=args.base_branch)
         print(f"\n[+] PR diff scan ({len(result.changed_files)} changed files):")
@@ -398,8 +405,10 @@ def main():
                         help="Open a PR upgrading vulnerable deps to CVE-clearing versions (requires --github-token)")
     parser.add_argument("--pr-diff", action="store_true",
                         help="Only scan files changed vs base branch (PR diff mode)")
+    parser.add_argument("--pr-classify", action="store_true",
+                        help="Scan HEAD and base branch, classifying findings as new/fixed/pre-existing")
     parser.add_argument("--base-branch", default="main",
-                        help="Base branch for PR diff mode (default: main)")
+                        help="Base branch for PR diff / classify mode (default: main)")
     parser.add_argument("--suppress-fp", nargs=3, metavar=("RULE_ID", "FILE", "REASON"),
                         help="Add a false positive suppression to .secscope-suppressions.json")
 

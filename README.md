@@ -184,6 +184,7 @@ The 3-2-1-1-0 backup rule visualised with an interactive DR testing checklist (s
 | **Supply Chain** | Detect dependency confusion attacks (internal names on public registries) and known typosquats. |
 | **Attack Paths** | Stitch reachable dependency CVEs, injection sinks, and exposed secrets into narrated, evidence-cited kill-chains (Entry → Execution → Impact) in the report and PDF. |
 | **PR Diff Mode** | Only scan files changed vs the base branch — ideal for pull request CI integration. |
+| **PR Classify Mode** | Scan HEAD *and* the base ref, then classify every finding as **new / fixed / pre-existing** (line-independent fingerprints). `--pr-classify --base-branch main`. |
 | **Trend Tracking** | Append per-scan metrics to `trend.jsonl` and render an SVG sparkline of findings over time. |
 | **False Positive Suppression** | Accept-risk workflow: store suppressions in `.secscope-suppressions.json`, applied before report generation. |
 
