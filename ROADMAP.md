@@ -3,19 +3,20 @@
 Forward-looking plan for SecureScope. Ratings are rough: **Impact** and **Effort**
 are Low / Med / High. Items are grouped by phase; within a phase, ordered by value.
 
-> SecureScope is proprietary software — © 2026 Omar Rao, all rights reserved.
+> SecureScope is dual-licensed: **AGPL-3.0-or-later OR a commercial license**
+> — © 2026 Omar Rao. See `LICENSE` and `COMMERCIAL-LICENSE.md`.
 > This roadmap is indicative and may change without notice.
 
 ---
 
 ## Phase 0 — Hardening (do before promoting the public app)
 
-| Item | Impact | Effort | Notes |
+| Item | Impact | Effort | Status |
 |---|---|---|---|
-| Server-side auth on `start_scan` | High | Med | Verify a Firebase ID token in the backend; today the sign-in gate is client-side only and bypassable. |
-| Rate limiting + per-user/IP quotas | High | Med | Prevent abuse/cost on the free instance. Optional Cloudflare Turnstile. |
+| Server-side auth on `start_scan` | High | Med | ✅ Firebase ID token verified server-side (`firebase-admin`); enforcement auto-enables when credentials are configured. Verified live. |
+| Rate limiting + per-user/IP quotas | High | Med | ✅ Per-IP sliding-window limiter on `start_scan` (`SCAN_RATE_LIMIT`/`SCAN_RATE_WINDOW`), fail-open. |
+| Rotate exposed secrets | High | Low | ✅ Firebase service-account key rotated; Render secrets updated. |
 | Finish durable report storage (read side) | High | Low | Write side done (gzip HTML in Firestore); make history/share links open the stored blob so they survive redeploys. |
-| Rotate exposed secrets | High | Low | Rotate the Render API key + any GitHub token that ever left a secure channel. |
 
 ## Phase 1 — Platform foundations *(in progress)*
 
