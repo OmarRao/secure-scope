@@ -289,5 +289,10 @@ def test_firebase_auth_fails_open_when_unconfigured():
         assert server._firebase_ready() is False
         assert server.verify_id_token("") is None
         assert server.verify_id_token("not.a.real.token") is None
+        # With no creds, enforcement is off → anonymous scans allowed.
+        assert server._auth_enforced() is False
+        # Simulate creds present: enforcement follows unless explicitly disabled.
+        server._fb_ready = True
+        assert server._auth_enforced() is True
     finally:
         server._fb_ready = orig_ready

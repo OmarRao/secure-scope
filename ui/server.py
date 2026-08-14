@@ -207,13 +207,19 @@ def _rate_check(ip: str) -> tuple[bool, int]:
 
 
 # ── Auth: server-side Firebase ID-token verification (optional, fail-open) ────
-# Dormant by default. It only *enforces* when the operator both sets
-# REQUIRE_AUTH=true AND provides Firebase Admin credentials — otherwise every
-# scan proceeds exactly as before. Credentials come from either
-# FIREBASE_CREDENTIALS (the service-account JSON as a string, e.g. a Render
-# secret) or FIREBASE_CREDENTIALS_FILE (a path to the JSON on disk). The
+# Enforcement is automatic: whenever valid Firebase Admin credentials are
+# configured, signed-in-only scanning turns ON. With no credentials it stays
+# dormant and every scan proceeds as before (fail-open). Set REQUIRE_AUTH=false
+# to force it off even when credentials are present (kill-switch). Credentials
+# come from either FIREBASE_CREDENTIALS (the service-account JSON as a string,
+# e.g. a Render secret) or FIREBASE_CREDENTIALS_FILE (a path on disk). The
 # service-account key never lives in the repo.
-_REQUIRE_AUTH = os.environ.get("REQUIRE_AUTH", "").strip().lower() in ("1", "true", "yes", "on")
+_AUTH_OFF = os.environ.get("REQUIRE_AUTH", "").strip().lower() in ("0", "false", "no", "off")
+
+
+def _auth_enforced() -> bool:
+    """True when scans require a verified sign-in (creds present, not disabled)."""
+    return (not _AUTH_OFF) and _firebase_ready()
 _fb_ready = None  # None=untried, True=initialized, False=unavailable
 _fb_lock = threading.Lock()
 
@@ -498,10 +504,10 @@ def handle_scan(data):
         return
 
     # Identity check. Verification runs whenever it's configured (so we log who
-    # scanned), but it only *blocks* when the operator has both turned auth on
-    # and provided credentials — otherwise it fails open and changes nothing.
+    # scanned) and blocks anonymous scans once credentials are present — unless
+    # explicitly disabled. With no credentials it fails open and changes nothing.
     user_claims = verify_id_token(data.get("id_token") or "")
-    if _REQUIRE_AUTH and _firebase_ready() and not user_claims:
+    if _auth_enforced() and not user_claims:
         emit("error", {"message": "Please sign in to run a scan."})
         return
     if user_claims:

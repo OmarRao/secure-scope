@@ -1084,11 +1084,11 @@ This command ships in three places so it applies however the app is deployed: th
 | `PORT` | `5001` | Port to bind (Render sets this automatically) |
 | `SCAN_RATE_LIMIT` | `10` | Max scans per window per source IP (`0` disables) |
 | `SCAN_RATE_WINDOW` | `600` | Rate-limit window in seconds |
-| `REQUIRE_AUTH` | `false` | When `true` **and** Firebase creds are set, only signed-in users may scan |
-| `FIREBASE_CREDENTIALS` | `""` | Service-account JSON (as a string/secret) for server-side ID-token verification |
+| `FIREBASE_CREDENTIALS` | `""` | Service-account JSON (as a string/secret) for server-side ID-token verification. **Setting this turns on signed-in-only scanning automatically.** |
 | `FIREBASE_CREDENTIALS_FILE` | `""` | Alternative: path to the service-account JSON on disk |
+| `REQUIRE_AUTH` | *(auto)* | Kill-switch. Set to `false` to force auth **off** even when credentials are present |
 
-Auth verification is **fail-open**: unless both `REQUIRE_AUTH=true` and valid Firebase credentials are present, every scan proceeds unchanged. The service-account key lives only in the host's secrets — never in the repository.
+Auth verification is **fail-open by absence**: with no Firebase credentials configured, every scan proceeds unchanged. Once valid credentials are set, anonymous scans are rejected with *"Please sign in to run a scan"* — unless `REQUIRE_AUTH=false` is set to disable it. The service-account key lives only in the host's secrets — never in the repository.
 
 ---
 
