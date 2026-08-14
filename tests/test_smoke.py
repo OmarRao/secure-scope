@@ -276,6 +276,31 @@ def test_rate_check_sliding_window():
         server._RATE_LIMIT, server._RATE_WINDOW, server._rate_hits = orig_limit, orig_window, orig_hits
 
 
+def test_badge_score_slug_and_svg():
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from badge import compute_score, badge_slug, grade_color, render_svg, badge_for
+
+    # Scoring: errors*10 + warnings*3 + dep_vulns*8, capped, with grade bands.
+    low = {"by_severity": {"WARNING": 1}, "dependency_vulns": 0}
+    crit = {"by_severity": {"ERROR": 8}, "dependency_vulns": 3}
+    assert compute_score(low) == (3, "LOW", "#4c1")
+    s, g, c = compute_score(crit)
+    assert s == 100 and g == "CRITICAL"
+    assert compute_score({}) == (0, "LOW", "#4c1")
+
+    # Slug is stable and Firestore-safe (no slashes) across URL forms.
+    assert badge_slug("https://github.com/o/r") == badge_slug("http://github.com/o/r.git")
+    assert "/" not in badge_slug("git@github.com:o/r.git")
+
+    assert grade_color("HIGH") == "#fe7d37"
+    assert grade_color("nonsense") == "#9f9f9f"
+
+    svg = render_svg("security", "LOW 3", "#4c1")
+    assert svg.startswith("<svg") and svg.rstrip().endswith("</svg>") and "LOW 3" in svg
+    assert "CRITICAL 100" in badge_for(crit)
+
+
 def test_firebase_auth_fails_open_when_unconfigured():
     import sys
     root = Path(__file__).resolve().parent.parent

@@ -264,6 +264,39 @@ def verify_id_token(token: str):
         return None
 
 
+def _firestore():
+    """Firestore client via firebase-admin, or None when auth isn't configured."""
+    if not _firebase_ready():
+        return None
+    try:
+        from firebase_admin import firestore
+        return firestore.client()
+    except Exception:
+        return None
+
+
+def _write_badge(repo_url: str, summary: dict) -> None:
+    """Persist the latest score for a repo so /badge can serve it. Best-effort."""
+    db = _firestore()
+    if not db:
+        return
+    try:
+        from badge import compute_score, badge_slug
+        from datetime import datetime, timezone
+        score, grade, _color = compute_score(summary)
+        sev = (summary or {}).get("by_severity", {}) or {}
+        db.collection("badges").document(badge_slug(repo_url)).set({
+            "repo": repo_url,
+            "score": score,
+            "grade": grade,
+            "total": (summary or {}).get("total_findings", 0),
+            "critical": sev.get("ERROR", 0),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        })
+    except Exception:
+        logger.exception("badge write failed for %s", repo_url)
+
+
 # ── Routes ────────────────────────────────────────────────────────────────────
 
 @app.route("/")
@@ -406,6 +439,35 @@ def api_secrets_patterns():
     except Exception as exc:
         logger.exception("Error listing secret pattern categories")
         return jsonify({"error": "Failed to list secret pattern categories"}), 500
+
+
+@app.route("/badge")
+def serve_badge():
+    """Shields-style SVG of a repo's latest risk score.
+
+    Embed with: ![security](https://<host>/badge?repo=https://github.com/o/r)
+    Reads the durable per-repo record written on each scan; if the repo has not
+    been scanned (or storage is unconfigured) it serves a grey "unknown" badge.
+    """
+    from badge import badge_slug, grade_color, render_svg
+    repo = request.args.get("repo", "").strip()
+    slug = badge_slug(repo) if repo else request.args.get("slug", "").strip()
+    value, color = "unknown", grade_color("")
+    try:
+        db = _firestore()
+        if db and slug:
+            snap = db.collection("badges").document(slug).get()
+            if snap.exists:
+                d = snap.to_dict() or {}
+                grade = d.get("grade", "")
+                value = f"{grade} {d.get('score', '?')}".strip()
+                color = grade_color(grade)
+    except Exception:
+        logger.exception("badge read failed")
+    resp = app.response_class(render_svg("security", value, color), mimetype="image/svg+xml")
+    # Short cache; badges change only when a repo is re-scanned.
+    resp.headers["Cache-Control"] = "public, max-age=300, no-transform"
+    return resp
 
 
 @app.route("/report/<filename>")
@@ -775,6 +837,10 @@ def handle_scan(data):
                             fix_pr_url = create_fix_pr(repo_url, gh_token, workdir, findings_dicts, ts)
                         except Exception as _fe:
                             logger.warning("Auto-fix PR failed: %s", _fe)
+
+                    # Persist the latest score so the public /badge endpoint can
+                    # serve a shields-style SVG for this repo (durable, best-effort).
+                    _write_badge(repo_url, result.summary())
 
                     _emit(sid, "progress", {"step": "done", "message": "✅ Scan complete!", "pct": 100})
                     _emit(sid, "scan_complete", {

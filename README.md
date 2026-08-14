@@ -464,6 +464,18 @@ python main.py --repo https://github.com/owner/repo --no-advisor \
 
 ---
 
+## Repo Security Badge
+
+Every scan publishes a shields-style badge for the scanned repository. Embed the latest risk grade in any README:
+
+```markdown
+![security](https://secure-scope.onrender.com/badge?repo=https://github.com/OWNER/REPO)
+```
+
+The badge shows the grade and score from the most recent scan (`LOW`/`MEDIUM`/`HIGH`/`CRITICAL`, colour-coded). A repo that hasn't been scanned yet — or when durable storage isn't configured — renders a grey `unknown`. The score record is stored durably (Firestore), so badges survive redeploys. See [USERGUIDE §11](USERGUIDE.md#11-kubernetes--helm-deployment).
+
+---
+
 ## CI/CD Integration
 
 ### GitHub Actions

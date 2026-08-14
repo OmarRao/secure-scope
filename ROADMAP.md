@@ -16,7 +16,7 @@ are Low / Med / High. Items are grouped by phase; within a phase, ordered by val
 | Server-side auth on `start_scan` | High | Med | ✅ Firebase ID token verified server-side (`firebase-admin`); enforcement auto-enables when credentials are configured. Verified live. |
 | Rate limiting + per-user/IP quotas | High | Med | ✅ Per-IP sliding-window limiter on `start_scan` (`SCAN_RATE_LIMIT`/`SCAN_RATE_WINDOW`), fail-open. |
 | Rotate exposed secrets | High | Low | ✅ Firebase service-account key rotated; Render secrets updated. |
-| Finish durable report storage (read side) | High | Low | Write side done (gzip HTML in Firestore); make history/share links open the stored blob so they survive redeploys. |
+| Durable report storage (read side) | High | Low | ✅ History drawer, portfolio, and `view.html` all decompress and open the gzip'd report stored in Firestore (`htmlz`), falling back to any external URL — survives redeploys. |
 
 ## Phase 1 — Platform foundations *(in progress)*
 
@@ -59,7 +59,7 @@ are Low / Med / High. Items are grouped by phase; within a phase, ordered by val
 | Item | Impact | Effort | Notes / blockers |
 |---|---|---|---|
 | Public REST API + API keys | Med | Med | Gate behind Phase 0 auth first. |
-| Repo security badge (shields-style SVG) | Med | Low | Reads latest stored score. |
+| Repo security badge (shields-style SVG) | Med | Low | ✅ `GET /badge?repo=…` serves a shields-style SVG of the latest grade/score from the durable per-repo record. |
 | Slack / Teams bot + ChatOps | Med | Med | **Needs user action:** create a Slack/Teams app. |
 | VS Code / JetBrains extension | High | High | Separate project + marketplace publishing. |
 

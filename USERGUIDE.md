@@ -1090,6 +1090,16 @@ This command ships in three places so it applies however the app is deployed: th
 
 Auth verification is **fail-open by absence**: with no Firebase credentials configured, every scan proceeds unchanged. Once valid credentials are set, anonymous scans are rejected with *"Please sign in to run a scan"* — unless `REQUIRE_AUTH=false` is set to disable it. The service-account key lives only in the host's secrets — never in the repository.
 
+### Repo security badge
+
+Each completed scan writes a compact score record to Firestore (`badges/{slug}`), served as a shields-style SVG from `GET /badge?repo=<repo-url>`:
+
+```markdown
+![security](https://<your-host>/badge?repo=https://github.com/OWNER/REPO)
+```
+
+The badge reflects the latest scan's grade + score (`LOW`/`MEDIUM`/`HIGH`/`CRITICAL`). Repos with no scan on record — or when Firebase credentials aren't configured — render a grey `unknown` badge. Because the record is stored durably, badges survive redeploys. The badge response is cached for 5 minutes.
+
 ---
 
 ## 12. Multi-Repo Scanning
