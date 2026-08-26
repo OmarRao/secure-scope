@@ -50,7 +50,7 @@ are Low / Med / High. Items are grouped by phase; within a phase, ordered by val
 
 | Item | Impact | Effort | Notes |
 |---|---|---|---|
-| ZIP / folder / snippet upload (no repo needed) | Med | Low | |
+| ZIP / folder / snippet upload (no repo needed) | Med | Low | ✅ "Scan a ZIP / Snippet" on the home page + `POST /api/scan-upload`; `upload_scan.py` extracts defensively (zip-slip / zip-bomb guarded). |
 | Container images & registries directly | Med | Med | Needs Trivy binary in the image / a daemon. |
 | Mobile apps (APK/IPA static analysis) | Med | High | |
 | Cloud posture (CSPM) — read-only AWS/GCP | High | High | **Needs user action:** cloud credentials/roles. |

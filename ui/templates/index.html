@@ -980,6 +980,9 @@
       <button class="hero-cta" onclick="openModal()">
         Analyze Repository &nbsp;&#x2192;
       </button>
+      <button class="hero-cta-alt" onclick="openUpload()">
+        &#x1F4E6; Scan a ZIP / Snippet
+      </button>
     </div>
 
     <!-- ── Capability constellation ───────────────────────────────── -->
@@ -1365,6 +1368,42 @@
 <!-- ── Toast ─────────────────────────────────────────────────────── -->
 <div class="toast" id="toast"></div>
 
+<!-- ── Upload Scan Modal (ZIP / snippet — no repo needed) ─────────── -->
+<style>
+  .hero-cta-alt{margin-top:12px;margin-left:10px;background:transparent;border:1px solid var(--rule2,#2e3540);
+    color:var(--sub,#a0aec0);border-radius:10px;padding:13px 22px;font-size:15px;font-weight:600;
+    font-family:inherit;cursor:pointer;transition:all .15s}
+  .hero-cta-alt:hover{color:var(--head,#fff);border-color:var(--accent,#4f8ef7)}
+  #upDrop{border:1.5px dashed var(--rule2,#2e3540);border-radius:10px;padding:22px;text-align:center;
+    color:var(--sub,#a0aec0);font-size:13px;cursor:pointer;transition:all .15s}
+  #upDrop:hover,#upDrop.drag{border-color:var(--accent,#4f8ef7);color:var(--head,#fff)}
+  #upResult{margin-top:14px;font-size:13px}
+  .up-or{display:flex;align-items:center;gap:10px;color:var(--muted,#6b7785);font-size:11px;margin:14px 0}
+  .up-or::before,.up-or::after{content:'';flex:1;height:1px;background:var(--rule,#252b35)}
+</style>
+<div class="modal-overlay" id="uploadOverlay" onclick="if(event.target===this)closeUpload()">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="upTitle">
+    <button class="modal-close" onclick="closeUpload()" aria-label="Close">&times;</button>
+    <div class="step-ind">No repository required</div>
+    <div class="modal-title" id="upTitle">Scan a ZIP or Snippet</div>
+    <div class="modal-sub">Upload a <code>.zip</code> of your code, or paste a snippet. SecureScope runs a static + secret scan and returns a report.</div>
+    <div id="upDrop" onclick="document.getElementById('upFile').click()">
+      &#x1F4E6; Click to choose a <strong>.zip</strong> file — or drop it here
+      <div id="upFileName" style="margin-top:8px;color:var(--accent,#4f8ef7)"></div>
+    </div>
+    <input type="file" id="upFile" accept=".zip" style="display:none" onchange="upPickFile()">
+    <div class="up-or">OR PASTE CODE</div>
+    <div class="field-label">Filename (optional)</div>
+    <input class="modal-input" id="upSnippetName" type="text" placeholder="snippet.py" autocomplete="off" spellcheck="false">
+    <textarea class="modal-input" id="upSnippet" rows="6" placeholder="Paste code here..." spellcheck="false" style="resize:vertical;font-family:'Geist Mono',monospace"></textarea>
+    <div class="wizard-footer">
+      <button class="btn-back" onclick="closeUpload()">Cancel</button>
+      <button class="btn-next" id="upRunBtn" onclick="submitUpload()">Run Scan &nbsp;&#x2192;</button>
+    </div>
+    <div id="upResult"></div>
+  </div>
+</div>
+
 <!-- ── Modal Wizard ──────────────────────────────────────────────── -->
 <div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -1675,6 +1714,58 @@ function closeModal() {
 }
 function handleOverlayClick(e) {
   if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+// ── Upload scan (ZIP / snippet) ────────────────────────────────────────
+function openUpload() {
+  document.getElementById('uploadOverlay').classList.add('open');
+  document.getElementById('upResult').innerHTML = '';
+}
+function closeUpload() {
+  document.getElementById('uploadOverlay').classList.remove('open');
+}
+function upPickFile() {
+  const f = document.getElementById('upFile').files[0];
+  document.getElementById('upFileName').textContent = f ? f.name : '';
+}
+(function upDragInit(){
+  const drop = document.getElementById('upDrop');
+  if (!drop) return;
+  ['dragover','dragenter'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('drag'); }));
+  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('drag'); }));
+  drop.addEventListener('drop', e => {
+    const f = e.dataTransfer.files[0];
+    if (f) { document.getElementById('upFile').files = e.dataTransfer.files; upPickFile(); }
+  });
+})();
+async function submitUpload() {
+  const btn = document.getElementById('upRunBtn');
+  const res = document.getElementById('upResult');
+  const file = document.getElementById('upFile').files[0];
+  const code = document.getElementById('upSnippet').value.trim();
+  if (!file && !code) { res.innerHTML = '<span style="color:#fca5a5">Choose a .zip or paste some code first.</span>'; return; }
+  // Require sign-in (same gate as repo scans).
+  if (window.SS) { await window.SS.requireSignIn(); if (!window.SS.user) return; }
+  const fd = new FormData();
+  if (file) fd.append('file', file);
+  if (code) { fd.append('code', code); fd.append('filename', document.getElementById('upSnippetName').value || 'snippet.txt'); }
+  if (window.SS) { const t = await window.SS.getIdToken(); if (t) fd.append('id_token', t); }
+  btn.disabled = true; btn.textContent = 'Scanning…';
+  res.innerHTML = '<span style="color:var(--sub)">Running static + secret scan…</span>';
+  try {
+    const r = await fetch('/api/scan-upload', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Scan failed');
+    const s = d.summary || {};
+    const sev = s.by_severity || {};
+    res.innerHTML = `<div style="color:var(--head);font-weight:600;margin-bottom:6px">Scan complete</div>
+      <div style="color:var(--sub)">${s.total_findings || 0} findings · ${sev.ERROR || 0} critical · ${d.secrets || 0} secrets · ${s.dependency_vulns || 0} dep CVEs</div>
+      <a class="hero-cta" style="display:inline-block;margin-top:12px;padding:9px 18px;font-size:14px" href="${d.report_url}" target="_blank" rel="noopener">Open report &nbsp;&#x2192;</a>`;
+  } catch (e) {
+    res.innerHTML = `<span style="color:#fca5a5">${e.message}</span>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Run Scan →';
+  }
 }
 document.addEventListener('keydown', e => {
   const scanOpen = document.getElementById('scanModalOverlay').classList.contains('open');

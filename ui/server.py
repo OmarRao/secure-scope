@@ -470,6 +470,67 @@ def serve_badge():
     return resp
 
 
+@app.route("/api/scan-upload", methods=["POST"])
+def scan_upload():
+    """Scan an uploaded ZIP or a pasted code snippet — no repo URL required.
+
+    Accepts multipart form: a `file` (.zip) OR `code` (+ optional `filename`).
+    Same rate-limit + optional auth gate as socket scans. Returns a report URL.
+    """
+    import tempfile
+    ok, retry = _rate_check(_client_ip())
+    if not ok:
+        return jsonify({"error": f"Rate limit reached — wait {retry // 60 + 1} min."}), 429
+    token = (request.form.get("id_token", "")
+             or request.headers.get("Authorization", "").replace("Bearer ", ""))
+    if _auth_enforced() and not verify_id_token(token):
+        return jsonify({"error": "Please sign in to run a scan."}), 401
+
+    workdir = tempfile.mkdtemp(prefix="upload_")
+    try:
+        from upload_scan import safe_extract_zip, write_snippet, UploadError
+        f = request.files.get("file")
+        try:
+            if f and (f.filename or "").lower().endswith(".zip"):
+                safe_extract_zip(f.read(), workdir)
+            elif request.form.get("code"):
+                write_snippet(request.form["code"], request.form.get("filename", "snippet.txt"), workdir)
+            else:
+                return jsonify({"error": "Provide a .zip file or a code snippet."}), 400
+        except UploadError as ue:
+            return jsonify({"error": str(ue)}), 400
+
+        from analyzer import analyze_path
+        from report import to_html
+        from datetime import datetime
+        result = analyze_path(workdir, label="uploaded")
+
+        # Best-effort secret scan over the uploaded content.
+        secret_findings = None
+        if _SECRETS_AVAILABLE:
+            try:
+                sres = secrets_scan_repo(repo_path=workdir, include_history=False,
+                                         entropy_check=True, progress_cb=None)
+                secret_findings = sres.to_dict().get("findings") if sres else None
+            except Exception:
+                logger.exception("upload secret scan failed")
+
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        slug = f"upload_{ts}"
+        html_path = REPORTS_DIR / f"{slug}.html"
+        to_html(result, path=str(html_path), secret_findings=secret_findings)
+        return jsonify({
+            "report_url": f"/report/{slug}.html",
+            "summary": result.summary(),
+            "secrets": len(secret_findings or []),
+        })
+    except Exception:
+        logger.exception("upload scan failed")
+        return jsonify({"error": "Scan failed. Please try a different upload."}), 500
+    finally:
+        _shutil.rmtree(workdir, ignore_errors=True)
+
+
 @app.route("/report/<filename>")
 def serve_report(filename):
     return send_from_directory(REPORTS_DIR, filename)

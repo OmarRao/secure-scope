@@ -183,6 +183,7 @@ The 3-2-1-1-0 backup rule visualised with an interactive DR testing checklist (s
 | **License Compliance** | Classify dependency licenses (high/medium/low/ok risk) using pip-licenses / license-checker with heuristic fallback. |
 | **Supply Chain** | Detect dependency confusion attacks (internal names on public registries) and known typosquats. |
 | **Attack Paths** | Stitch reachable dependency CVEs, injection sinks, and exposed secrets into narrated, evidence-cited kill-chains (Entry → Execution → Impact) in the report and PDF. |
+| **Upload Scan** | Scan a `.zip` of code or a pasted snippet — no repo URL needed. Safe extraction (zip-slip / zip-bomb guarded), static + secret scan, instant report. |
 | **PR Diff Mode** | Only scan files changed vs the base branch — ideal for pull request CI integration. |
 | **PR Classify Mode** | Scan HEAD *and* the base ref, then classify every finding as **new / fixed / pre-existing** (line-independent fingerprints). `--pr-classify --base-branch main`. |
 | **PR Review Bot** | Webhook bot that auto-comments new/fixed/pre-existing findings on each pull request via the GitHub REST API (no GitHub App needed). |

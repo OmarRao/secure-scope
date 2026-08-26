@@ -301,6 +301,56 @@ def test_badge_score_slug_and_svg():
     assert "CRITICAL 100" in badge_for(crit)
 
 
+def test_upload_safe_extract():
+    import sys, io, zipfile, tempfile, shutil
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from upload_scan import safe_extract_zip, write_snippet, UploadError
+
+    # Happy path: a normal small zip extracts.
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("app.py", "import os\nos.system('x')\n")
+        z.writestr("sub/util.py", "y = 1\n")
+    d = tempfile.mkdtemp()
+    try:
+        assert safe_extract_zip(buf.getvalue(), d) == 2
+        assert (Path(d) / "app.py").exists() and (Path(d) / "sub" / "util.py").exists()
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+    # Zip-slip is rejected.
+    evil = io.BytesIO()
+    with zipfile.ZipFile(evil, "w") as z:
+        z.writestr("../../escape.py", "pwned")
+    d2 = tempfile.mkdtemp()
+    try:
+        try:
+            safe_extract_zip(evil.getvalue(), d2)
+            assert False, "zip-slip should have been rejected"
+        except UploadError:
+            pass
+    finally:
+        shutil.rmtree(d2, ignore_errors=True)
+
+    # Snippet + guards.
+    d3 = tempfile.mkdtemp()
+    try:
+        p = write_snippet("print('hi')", "test.py", d3)
+        assert Path(p).exists()
+        try:
+            write_snippet("", "x.py", d3); assert False
+        except UploadError:
+            pass
+    finally:
+        shutil.rmtree(d3, ignore_errors=True)
+
+    # Not a zip.
+    try:
+        safe_extract_zip(b"not a zip", tempfile.mkdtemp()); assert False
+    except UploadError:
+        pass
+
+
 def test_pr_event_parsing():
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

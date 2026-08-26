@@ -284,6 +284,14 @@ python main.py `
   --max-workers 8
 ```
 
+### Example 6 — Scan without a repository (ZIP / snippet upload)
+
+From the web app home page, click **📦 Scan a ZIP / Snippet** — no Git URL required. Upload a `.zip` of your source (or drag-and-drop it) or paste a code snippet, and SecureScope runs a static + secret scan and links you straight to the report.
+
+Uploads are ingested defensively: archive members are confined to the extraction directory (zip-slip protection) and total size / file count / compression ratio are capped (zip-bomb protection). The same rate-limit and sign-in gate as repo scans apply. Programmatic access: `POST /api/scan-upload` (multipart `file=<zip>` or form `code=<snippet>`), which returns `{report_url, summary, secrets}`.
+
+**Screenshots:** `docs/screenshots/17_upload_scan.png` (dark) / `17_upload_scan_light.png` (light)
+
 ---
 
 ## 5. Core Scanning

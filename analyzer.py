@@ -398,3 +398,17 @@ def analyze(repo_url: str, workdir: Optional[str] = None) -> AnalysisResult:
         result.scan_errors.append(str(e))
 
     return result
+
+
+def analyze_path(local_path: str, label: str = "uploaded") -> AnalysisResult:
+    """Static analysis over an existing local directory (no clone).
+
+    Used by the upload flow (ZIP / folder / snippet) where there is no repo URL.
+    """
+    result = AnalysisResult(repo_url=label, repo_path=local_path)
+    try:
+        result.findings = run_semgrep(local_path)
+        result.dependency_vulns = check_dependency_vulns(local_path)
+    except Exception as e:
+        result.scan_errors.append(str(e))
+    return result
