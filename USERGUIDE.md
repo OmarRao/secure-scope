@@ -1091,6 +1091,14 @@ python webhook.py --port 8080 --secret $env:WEBHOOK_SECRET
 
 **pull_request** events run the **PR review bot**: SecureScope scans the PR's HEAD and base ref, classifies findings as new / fixed / pre-existing (`diff_scan`), and posts a single summary comment on the PR with a table of newly-introduced findings. It authenticates with `GITHUB_TOKEN` via the REST API — no GitHub App needed — and is fail-safe (a missing token or API error skips the comment without affecting the server). Only actionable PR actions (`opened`, `synchronize`, `reopened`, `ready_for_review`) trigger a review.
 
+### Integrations that need one-time setup
+
+These are built and dormant until you supply the account/credential (details + code snippets in the README "Integrations that need one-time setup" section):
+
+- **GitHub App** (`github_app.py`) — an installable PR bot using JWT + installation-token auth; reuses the diff-aware PR review. Register an App and set app id / private key / webhook secret.
+- **Slack ChatOps** (`chatops.py`) — a `/scan <repo-url> [branch]` slash command with signed-request verification. Create a Slack app and set `SLACK_SIGNING_SECRET`. (Scan-completion Slack/Teams notifications already work via `notifications.py`.)
+- **CSPM** (`cspm.py`) — read-only AWS posture checks (public S3, IAM users without MFA, world-open security groups). `pip install boto3` and provide read-only AWS credentials.
+
 ### Hosting the Web UI in production (Render / Docker)
 
 `python -m ui.server` starts Flask's **development** server — fine for local use, not for hosting. In production run the app under a threaded WSGI server. The app uses Flask-SocketIO in `async_mode="threading"` and runs each scan in its own background thread, so it needs gunicorn's **gthread** worker (not eventlet/gevent):

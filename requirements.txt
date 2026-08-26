@@ -27,3 +27,4 @@ simple-websocket>=1.0.0  # WebSocket transport for Flask-SocketIO threading mode
 # weasyprint>=60.0         # PDF report export (--pdf)
 # rq>=1.16.0               # Redis job queue (optional upgrade from threading queue)
 # redis>=5.0.0             # Redis backend for rq
+# boto3>=1.34.0            # CSPM — read-only AWS posture checks (cspm.py)

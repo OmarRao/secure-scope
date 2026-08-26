@@ -568,6 +568,37 @@ Labels are color-coded (error=red, warning=orange, info=blue) and created automa
 
 ---
 
+## Integrations that need one-time setup
+
+These ship ready in code and activate once you provide the account/credential — each is isolated and dormant until configured.
+
+### GitHub App (installable PR bot)
+
+`github_app.py` provides JWT + installation-token auth and a webhook server that reuses the diff-aware PR bot. Register a GitHub App (Pull requests: Read & Write; subscribe to `pull_request`), then run:
+
+```python
+from github_app import GitHubAppWebhookServer
+GitHubAppWebhookServer(app_id, private_key_pem, installation_id,
+                       port=8080, secret=WEBHOOK_SECRET).run()
+```
+
+### Slack ChatOps (`/scan`)
+
+`chatops.py` implements a Slack slash command: signed-request verification, `/scan <repo-url> [branch]` parsing, and result formatting. Create a Slack app with a `/scan` command pointing at your endpoint and set `SLACK_SIGNING_SECRET`. (Scan-completion notifications to Slack/Teams already work via `notifications.py`.)
+
+### CSPM — read-only AWS posture
+
+`cspm.py` runs read-only AWS checks (public S3 buckets, IAM users without MFA, security groups open to `0.0.0.0/0`). Install boto3 and provide read-only credentials:
+
+```bash
+pip install boto3
+python -c "import cspm, json; print(json.dumps(cspm.scan_aws(region='us-east-1'), indent=2))"
+```
+
+It's strictly read-only and degrades gracefully (no boto3 / no credentials → an explanatory result, never an error).
+
+---
+
 ## Advanced Scanning
 
 ### DAST — Dynamic Application Security Testing

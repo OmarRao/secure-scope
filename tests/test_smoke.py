@@ -301,6 +301,55 @@ def test_badge_score_slug_and_svg():
     assert "CRITICAL 100" in badge_for(crit)
 
 
+def test_chatops_pure():
+    import sys, hashlib, hmac, time
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from chatops import verify_slack_signature, parse_scan_command, format_scan_result, ack_message
+
+    # Command parsing.
+    assert parse_scan_command("https://github.com/o/r dev") == {"repo_url": "https://github.com/o/r", "branch": "dev"}
+    assert parse_scan_command("https://github.com/o/r")["branch"] == "main"
+    assert parse_scan_command("not-a-url") is None
+    assert parse_scan_command("") is None
+
+    # Signature verification (v0 scheme), valid + tampered + stale.
+    secret, ts, body = "shhh", str(int(time.time())), "token=x&text=y"
+    sig = "v0=" + hmac.new(secret.encode(), f"v0:{ts}:{body}".encode(), hashlib.sha256).hexdigest()
+    assert verify_slack_signature(secret, ts, body, sig) is True
+    assert verify_slack_signature(secret, ts, body, "v0=deadbeef") is False
+    assert verify_slack_signature(secret, "1", body, sig) is False  # stale timestamp
+    assert verify_slack_signature("", ts, body, sig) is False
+
+    msg = format_scan_result("o/r", {"by_severity": {"ERROR": 2}, "total_findings": 5}, "http://x/r")
+    assert msg["response_type"] == "in_channel" and "2" in msg["text"] and "Open full report" in msg["text"]
+    assert "Scanning" in ack_message("o/r")["text"]
+
+
+def test_cspm_pure():
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    import cspm
+
+    assert cspm.summarize([{"severity": "HIGH"}, {"severity": "HIGH"}, {"severity": "MEDIUM"}]) == {"HIGH": 2, "MEDIUM": 1}
+    assert cspm.summarize([]) == {}
+    f = cspm._finding("S3 public access", "s3://b", "high", "detail")
+    assert f["severity"] == "HIGH" and f["check"] == "S3 public access"
+    # scan_aws never raises; without boto3/creds it reports unavailable.
+    res = cspm.scan_aws()
+    assert res["findings"] == [] and "available" in res
+
+
+def test_github_app_signature():
+    import sys, hashlib, hmac
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from github_app import verify_webhook_signature
+    body, secret = b'{"a":1}', "s3cr3t"
+    sig = "sha256=" + hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
+    assert verify_webhook_signature(body, secret, sig) is True
+    assert verify_webhook_signature(body, secret, "sha256=bad") is False
+    assert verify_webhook_signature(body, secret, "nope") is False
+
+
 def test_evidence_pack():
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

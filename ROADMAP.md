@@ -32,7 +32,7 @@ are Low / Med / High. Items are grouped by phase; within a phase, ordered by val
 |---|---|---|---|
 | **Watch a repo → KEV/CVE alerts** | High | Med | ✅ Repo-level watchlist (`watchlist.json`) monitored daily by a GitHub Actions cron (`watch-monitor.yml`); new dependency CVEs — KEV-flagged — open a GitHub Issue, state committed to `watch_state.json`. No external infra. *Next:* per-user watches from the web app (needs a Firebase service-account secret). |
 | **Diff-aware PR bot (webhook)** | High | Med | ✅ `pr_comment.py` + `webhook.py` auto-comment new/fixed/pre-existing on each PR via the REST API + `GITHUB_TOKEN` (set `WEBHOOK_SECRET`). No GitHub App needed. |
-| **GitHub App (marketplace-installable)** | High | High | Optional upgrade to the webhook bot with a nicer install UX. **Needs user action:** register a GitHub App + webhook secret. `github_app.py` is a starting point. |
+| **GitHub App (marketplace-installable)** | High | High | ✅ Code ready: `github_app.py` (JWT + installation-token auth + webhook server) delegates to the shared webhook handler, so an installed App gets the diff-aware PR bot automatically. **Needs user action:** register the App + set app id / private key / webhook secret. |
 | Diff / PR-aware scanning | High | Med | ✅ `--pr-diff` scans changed files; `--pr-classify` scans HEAD + base and classifies findings as new / fixed / pre-existing (`diff_scan.py`, line-independent fingerprints, PR-comment Markdown). |
 | Multi-platform repos (GitLab, Bitbucket, Azure DevOps) | Med | Low–Med | Extend clone + URL parsing beyond GitHub. |
 
@@ -54,7 +54,7 @@ are Low / Med / High. Items are grouped by phase; within a phase, ordered by val
 | ZIP / folder / snippet upload (no repo needed) | Med | Low | ✅ "Scan a ZIP / Snippet" on the home page + `POST /api/scan-upload`; `upload_scan.py` extracts defensively (zip-slip / zip-bomb guarded). |
 | Container images & registries directly | Med | Med | Needs Trivy binary in the image / a daemon. |
 | Mobile apps (APK/IPA static analysis) | Med | High | |
-| Cloud posture (CSPM) — read-only AWS/GCP | High | High | **Needs user action:** cloud credentials/roles. |
+| Cloud posture (CSPM) — read-only AWS | High | High | ✅ Code ready: `cspm.py` runs read-only AWS checks (public S3, IAM users without MFA, world-open security groups), degrading gracefully without boto3/creds. **Needs user action:** `pip install boto3` + read-only AWS credentials. GCP/Azure to follow. |
 
 ## Phase 5 — Workflow & integrations
 
@@ -62,7 +62,7 @@ are Low / Med / High. Items are grouped by phase; within a phase, ordered by val
 |---|---|---|---|
 | Public REST API + API keys | Med | Med | Gate behind Phase 0 auth first. |
 | Repo security badge (shields-style SVG) | Med | Low | ✅ `GET /badge?repo=…` serves a shields-style SVG of the latest grade/score from the durable per-repo record. |
-| Slack / Teams bot + ChatOps | Med | Med | **Needs user action:** create a Slack/Teams app. |
+| Slack / Teams bot + ChatOps | Med | Med | ✅ Code ready: `chatops.py` (`/scan` slash command — signed-request verification, command parsing, result formatting). Slack/Teams scan-summary notifications already ship in `notifications.py`. **Needs user action:** create a Slack app + set signing secret. |
 | VS Code / JetBrains extension | High | High | Separate project + marketplace publishing. |
 
 ## Phase 6 — GRC & collaboration
