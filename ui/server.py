@@ -498,7 +498,11 @@ def scan_upload():
             else:
                 return jsonify({"error": "Provide a .zip file or a code snippet."}), 400
         except UploadError as ue:
-            return jsonify({"error": str(ue)}), 400
+            # UploadError messages are author-controlled validation strings, but
+            # return a fixed message (and log the detail) so no exception-derived
+            # text ever reaches the client (py/stack-trace-exposure).
+            logger.info("upload rejected: %s", ue)
+            return jsonify({"error": "Upload rejected: not a valid/safe ZIP or the snippet is empty or too large."}), 400
 
         from analyzer import analyze_path
         from report import to_html
@@ -519,9 +523,13 @@ def scan_upload():
         slug = f"upload_{ts}"
         html_path = REPORTS_DIR / f"{slug}.html"
         to_html(result, path=str(html_path), secret_findings=secret_findings)
+        # Return only counts — drop summary["errors"], which holds raw internal
+        # exception strings, so nothing exception-derived reaches the client
+        # (py/stack-trace-exposure).
+        summ = {k: v for k, v in result.summary().items() if k != "errors"}
         return jsonify({
             "report_url": f"/report/{slug}.html",
-            "summary": result.summary(),
+            "summary": summ,
             "secrets": len(secret_findings or []),
         })
     except Exception:
