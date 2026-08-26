@@ -301,6 +301,29 @@ def test_badge_score_slug_and_svg():
     assert "CRITICAL 100" in badge_for(crit)
 
 
+def test_pr_event_parsing():
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from pr_comment import parse_pr_event
+
+    event = {
+        "action": "opened", "number": 7,
+        "repository": {"full_name": "o/r", "clone_url": "https://github.com/o/r.git"},
+        "pull_request": {"base": {"ref": "main"}, "head": {"ref": "feature-x"}},
+    }
+    info = parse_pr_event(event)
+    assert info["repo_full"] == "o/r" and info["pr_number"] == 7
+    assert info["base_branch"] == "main" and info["head_branch"] == "feature-x"
+
+    # Non-actionable actions and non-PR events are ignored.
+    assert parse_pr_event({**event, "action": "labeled"}) is None
+    assert parse_pr_event({"repository": {"full_name": "o/r"}}) is None
+    assert parse_pr_event({}) is None
+    # Missing PR number is rejected.
+    assert parse_pr_event({"action": "opened", "pull_request": {"base": {"ref": "main"}},
+                           "repository": {"full_name": "o/r"}}) is None
+
+
 def test_diff_scan_classify():
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

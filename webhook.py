@@ -119,18 +119,36 @@ def _make_handler(secret: str, out_dir: str, github_token: str | None):
 
             event_type = self.headers.get("X-GitHub-Event", "")
             repo_url = event.get("repository", {}).get("clone_url", "")
-            branch = (
-                event.get("ref", "refs/heads/main").replace("refs/heads/", "")
-                if event_type == "push"
-                else event.get("pull_request", {}).get("head", {}).get("ref", "main")
-            )
+
+            # Pull requests get the diff-aware bot: scan HEAD + base, classify
+            # new/fixed/pre-existing, and post a summary comment on the PR.
+            if event_type == "pull_request":
+                from pr_comment import parse_pr_event, review_pull_request
+                info = parse_pr_event(event)
+                if not info:
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(b'{"accepted":false,"reason":"non-reviewable PR event"}')
+                    return
+                threading.Thread(
+                    target=review_pull_request, args=(info, github_token), daemon=True,
+                ).start()
+                self.send_response(202)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps(
+                    {"accepted": True, "mode": "pr-review",
+                     "repo": info["repo_full"], "pr": info["pr_number"]}).encode())
+                return
+
+            branch = event.get("ref", "refs/heads/main").replace("refs/heads/", "")
 
             if not repo_url:
                 self.send_response(422)
                 self.end_headers()
                 return
 
-            if event_type in ("push", "pull_request"):
+            if event_type == "push":
                 t = threading.Thread(
                     target=_trigger_scan,
                     args=(repo_url, branch, out_dir, github_token),

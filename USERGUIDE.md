@@ -1065,7 +1065,9 @@ python webhook.py --port 8080 --secret $env:WEBHOOK_SECRET
 - Secret: your `WEBHOOK_SECRET` value
 - Events: `push`, `pull_request`
 
-Each triggered scan produces JSON, HTML, SARIF, SBOM, and compliance reports automatically under `--out-dir`.
+**push** events run a full scan (JSON, HTML, SARIF, SBOM, compliance under `--out-dir`).
+
+**pull_request** events run the **PR review bot**: SecureScope scans the PR's HEAD and base ref, classifies findings as new / fixed / pre-existing (`diff_scan`), and posts a single summary comment on the PR with a table of newly-introduced findings. It authenticates with `GITHUB_TOKEN` via the REST API — no GitHub App needed — and is fail-safe (a missing token or API error skips the comment without affecting the server). Only actionable PR actions (`opened`, `synchronize`, `reopened`, `ready_for_review`) trigger a review.
 
 ### Hosting the Web UI in production (Render / Docker)
 

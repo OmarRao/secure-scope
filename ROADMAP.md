@@ -30,7 +30,8 @@ are Low / Med / High. Items are grouped by phase; within a phase, ordered by val
 | Item | Impact | Effort | Notes / blockers |
 |---|---|---|---|
 | **Watch a repo → KEV/CVE alerts** | High | Med | ✅ Repo-level watchlist (`watchlist.json`) monitored daily by a GitHub Actions cron (`watch-monitor.yml`); new dependency CVEs — KEV-flagged — open a GitHub Issue, state committed to `watch_state.json`. No external infra. *Next:* per-user watches from the web app (needs a Firebase service-account secret). |
-| **GitHub App + diff-aware PR bot** | High | High | Comment new-vs-fixed findings on each PR. **Needs user action:** register a GitHub App + webhook secret. `github_app.py` is a starting point. |
+| **Diff-aware PR bot (webhook)** | High | Med | ✅ `pr_comment.py` + `webhook.py` auto-comment new/fixed/pre-existing on each PR via the REST API + `GITHUB_TOKEN` (set `WEBHOOK_SECRET`). No GitHub App needed. |
+| **GitHub App (marketplace-installable)** | High | High | Optional upgrade to the webhook bot with a nicer install UX. **Needs user action:** register a GitHub App + webhook secret. `github_app.py` is a starting point. |
 | Diff / PR-aware scanning | High | Med | ✅ `--pr-diff` scans changed files; `--pr-classify` scans HEAD + base and classifies findings as new / fixed / pre-existing (`diff_scan.py`, line-independent fingerprints, PR-comment Markdown). |
 | Multi-platform repos (GitLab, Bitbucket, Azure DevOps) | Med | Low–Med | Extend clone + URL parsing beyond GitHub. |
 

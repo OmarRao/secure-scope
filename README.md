@@ -185,6 +185,7 @@ The 3-2-1-1-0 backup rule visualised with an interactive DR testing checklist (s
 | **Attack Paths** | Stitch reachable dependency CVEs, injection sinks, and exposed secrets into narrated, evidence-cited kill-chains (Entry → Execution → Impact) in the report and PDF. |
 | **PR Diff Mode** | Only scan files changed vs the base branch — ideal for pull request CI integration. |
 | **PR Classify Mode** | Scan HEAD *and* the base ref, then classify every finding as **new / fixed / pre-existing** (line-independent fingerprints). `--pr-classify --base-branch main`. |
+| **PR Review Bot** | Webhook bot that auto-comments new/fixed/pre-existing findings on each pull request via the GitHub REST API (no GitHub App needed). |
 | **Trend Tracking** | Append per-scan metrics to `trend.jsonl` and render an SVG sparkline of findings over time. |
 | **False Positive Suppression** | Accept-risk workflow: store suppressions in `.secscope-suppressions.json`, applied before report generation. |
 
@@ -510,6 +511,21 @@ For PR-only scanning (scan only changed files):
       --pr-diff --base-branch main \
       --out-dir ./secscope-reports
 ```
+
+### PR Review Bot (auto-comment)
+
+Run the webhook server and point a GitHub webhook (`pull_request` events) at it. On every PR, SecureScope scans HEAD and the base ref, classifies findings, and posts a single summary comment — **🆕 new / ✅ fixed / ➖ pre-existing** with a table of any newly-introduced findings:
+
+```bash
+python webhook.py --port 8080 --secret "$WEBHOOK_SECRET"
+# GitHub → Settings → Webhooks → Add webhook
+#   Payload URL : https://your-host:8080/webhook
+#   Content type: application/json
+#   Secret      : $WEBHOOK_SECRET
+#   Events      : pull_request (and push, if you want full scans on push)
+```
+
+The bot uses the standard REST API with `GITHUB_TOKEN` — no GitHub App registration required. It's fail-safe: a missing token or API error logs and skips the comment without affecting the server.
 
 ---
 
