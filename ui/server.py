@@ -531,6 +531,39 @@ def scan_upload():
         _shutil.rmtree(workdir, ignore_errors=True)
 
 
+@app.route("/gh-webhook", methods=["POST"])
+def gh_webhook():
+    """GitHub webhook endpoint for the PR review bot (runs on the main app).
+
+    Point a repo/org webhook (pull_request events) here. On each PR it scans
+    HEAD + base, classifies findings, and comments new/fixed/pre-existing.
+    Verifies the HMAC signature with GH_WEBHOOK_SECRET and comments using
+    GITHUB_TOKEN. Fail-safe: never raises into GitHub.
+    """
+    from github_app import verify_webhook_signature
+    secret = os.environ.get("GH_WEBHOOK_SECRET", "")
+    raw = request.get_data()
+    sig = request.headers.get("X-Hub-Signature-256", "")
+    if secret and not verify_webhook_signature(raw, secret, sig):
+        return jsonify({"error": "invalid signature"}), 401
+
+    event = request.headers.get("X-GitHub-Event", "")
+    if event == "ping":
+        return jsonify({"ok": True, "pong": True})
+    if event != "pull_request":
+        return jsonify({"accepted": False, "reason": "unsupported event"}), 200
+
+    payload = request.get_json(force=True, silent=True) or {}
+    from pr_comment import parse_pr_event, review_pull_request
+    info = parse_pr_event(payload)
+    if not info:
+        return jsonify({"accepted": False, "reason": "non-reviewable PR event"}), 200
+
+    token = os.environ.get("GITHUB_TOKEN", "")
+    threading.Thread(target=review_pull_request, args=(info, token), daemon=True).start()
+    return jsonify({"accepted": True, "repo": info["repo_full"], "pr": info["pr_number"]}), 202
+
+
 @app.route("/report/<filename>")
 def serve_report(filename):
     return send_from_directory(REPORTS_DIR, filename)

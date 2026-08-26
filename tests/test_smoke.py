@@ -301,6 +301,34 @@ def test_badge_score_slug_and_svg():
     assert "CRITICAL 100" in badge_for(crit)
 
 
+def test_gh_webhook_endpoint():
+    import sys, os, json, hashlib, hmac
+    root = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(root / "ui"))
+    import server
+    c = server.app.test_client()
+
+    os.environ["GH_WEBHOOK_SECRET"] = "whsecret"
+    body = json.dumps({"zen": "hi"}).encode()
+    good = "sha256=" + hmac.new(b"whsecret", body, hashlib.sha256).hexdigest()
+    try:
+        # ping with a valid signature → pong.
+        r = c.post("/gh-webhook", data=body, headers={
+            "X-GitHub-Event": "ping", "X-Hub-Signature-256": good,
+            "Content-Type": "application/json"})
+        assert r.status_code == 200 and r.get_json().get("pong") is True
+        # bad signature → 401.
+        r2 = c.post("/gh-webhook", data=body, headers={
+            "X-GitHub-Event": "ping", "X-Hub-Signature-256": "sha256=bad"})
+        assert r2.status_code == 401
+        # unsupported event (valid sig) → 200 not-accepted.
+        r3 = c.post("/gh-webhook", data=body, headers={
+            "X-GitHub-Event": "push", "X-Hub-Signature-256": good})
+        assert r3.status_code == 200 and r3.get_json()["accepted"] is False
+    finally:
+        os.environ.pop("GH_WEBHOOK_SECRET", None)
+
+
 def test_chatops_pure():
     import sys, hashlib, hmac, time
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

@@ -1116,6 +1116,8 @@ This command ships in three places so it applies however the app is deployed: th
 | `PORT` | `5001` | Port to bind (Render sets this automatically) |
 | `SCAN_RATE_LIMIT` | `10` | Max scans per window per source IP (`0` disables) |
 | `SCAN_RATE_WINDOW` | `600` | Rate-limit window in seconds |
+| `GH_WEBHOOK_SECRET` | `""` | Shared secret for the `/gh-webhook` PR-bot endpoint (must match the GitHub webhook's secret) |
+| `GITHUB_TOKEN` | `""` | PAT (`repo` scope) the PR bot uses to post comments |
 | `FIREBASE_CREDENTIALS` | `""` | Service-account JSON (as a string/secret) for server-side ID-token verification. **Setting this turns on signed-in-only scanning automatically.** |
 | `FIREBASE_CREDENTIALS_FILE` | `""` | Alternative: path to the service-account JSON on disk |
 | `REQUIRE_AUTH` | *(auto)* | Kill-switch. Set to `false` to force auth **off** even when credentials are present |

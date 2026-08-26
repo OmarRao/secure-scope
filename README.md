@@ -518,18 +518,27 @@ For PR-only scanning (scan only changed files):
 
 ### PR Review Bot (auto-comment)
 
-Run the webhook server and point a GitHub webhook (`pull_request` events) at it. On every PR, SecureScope scans HEAD and the base ref, classifies findings, and posts a single summary comment — **🆕 new / ✅ fixed / ➖ pre-existing** with a table of any newly-introduced findings:
+On every pull request, SecureScope scans HEAD and the base ref, classifies findings, and posts a single summary comment — **🆕 new / ✅ fixed / ➖ pre-existing** with a table of any newly-introduced findings. Two ways to run it:
+
+**A) Built into the hosted app (recommended — no extra server).** The deployed app exposes `POST /gh-webhook`. Just add a repo/org webhook:
+
+```
+GitHub repo → Settings → Webhooks → Add webhook
+  Payload URL : https://secure-scope.onrender.com/gh-webhook
+  Content type: application/json
+  Secret      : <a secret you choose>
+  Events      : "Let me select individual events" → Pull requests
+```
+
+Then set two env vars on the host: `GH_WEBHOOK_SECRET` (the same secret) and `GITHUB_TOKEN` (a PAT with `repo` scope, used to post comments).
+
+**B) Standalone server** (separate host/port):
 
 ```bash
 python webhook.py --port 8080 --secret "$WEBHOOK_SECRET"
-# GitHub → Settings → Webhooks → Add webhook
-#   Payload URL : https://your-host:8080/webhook
-#   Content type: application/json
-#   Secret      : $WEBHOOK_SECRET
-#   Events      : pull_request (and push, if you want full scans on push)
 ```
 
-The bot uses the standard REST API with `GITHUB_TOKEN` — no GitHub App registration required. It's fail-safe: a missing token or API error logs and skips the comment without affecting the server.
+Either way the bot uses the REST API with `GITHUB_TOKEN` — no GitHub App registration required — and is fail-safe: a missing token or API error logs and skips the comment without affecting the server.
 
 ---
 
