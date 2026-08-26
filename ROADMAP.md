@@ -69,7 +69,7 @@ are Low / Med / High. Items are grouped by phase; within a phase, ordered by val
 
 | Item | Impact | Effort | Notes |
 |---|---|---|---|
-| Compliance evidence packs (SOC 2 / ISO 27001) | High | Med | Builds on existing PCI/NIST/OWASP mapping. |
+| Compliance evidence packs (SOC 2 / ISO 27001) | High | Med | ✅ `evidence_pack.py` maps OWASP findings to SOC 2 TSC + ISO 27001:2022 Annex A controls as an auditor-style HTML matrix; produced per scan (web) and via `--evidence-pack` (CLI). |
 | Team workspaces (roles, ownership, comments, accept-risk) | High | High | |
 | Bidirectional ticket sync (Jira / Linear / GitHub Issues) | Med | Med | |
 | SLSA provenance + SBOM attestation/sharing (VEX) | Med | Med | |

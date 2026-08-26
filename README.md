@@ -185,6 +185,7 @@ The 3-2-1-1-0 backup rule visualised with an interactive DR testing checklist (s
 | **Attack Paths** | Stitch reachable dependency CVEs, injection sinks, and exposed secrets into narrated, evidence-cited kill-chains (Entry → Execution → Impact) in the report and PDF. |
 | **Upload Scan** | Scan a `.zip` of code or a pasted snippet — no repo URL needed. Safe extraction (zip-slip / zip-bomb guarded), static + secret scan, instant report. |
 | **AI Auto-Fix PR** | With auto-fix enabled + an LLM key, generates real code patches per finding (conservative sanity checks) and opens a PR; falls back to inline fix comments when a safe patch isn't possible. |
+| **Compliance Evidence Pack** | Auditor-style control matrix mapping findings to SOC 2 Trust Services Criteria and ISO/IEC 27001:2022 Annex A. Generated per scan (web) and via `--evidence-pack` (CLI). |
 | **PR Diff Mode** | Only scan files changed vs the base branch — ideal for pull request CI integration. |
 | **PR Classify Mode** | Scan HEAD *and* the base ref, then classify every finding as **new / fixed / pre-existing** (line-independent fingerprints). `--pr-classify --base-branch main`. |
 | **PR Review Bot** | Webhook bot that auto-comments new/fixed/pre-existing findings on each pull request via the GitHub REST API (no GitHub App needed). |

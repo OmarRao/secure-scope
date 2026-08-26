@@ -301,6 +301,31 @@ def test_badge_score_slug_and_svg():
     assert "CRITICAL 100" in badge_for(crit)
 
 
+def test_evidence_pack():
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from evidence_pack import build_evidence_pack, evidence_pack_to_html
+
+    posture = {"owasp": {"A03:2021 - Injection": ["r1", "r2"],
+                         "A02:2021 - Cryptographic Failures": ["r3"]}}
+    pack = build_evidence_pack(posture, repo="github.com/o/r", generated_at="now")
+    assert {f["key"] for f in pack["frameworks"]} == {"soc2", "iso27001"}
+    soc2 = next(f for f in pack["frameworks"] if f["key"] == "soc2")
+    # Injection maps to CC6.8 → exception noted; unrelated controls stay clean.
+    cc68 = next(c for c in soc2["controls"] if c["control"] == "CC6.8")
+    assert cc68["status"] == "Exception(s) noted" and cc68["findings"] >= 2
+    cc72 = next(c for c in soc2["controls"] if c["control"] == "CC7.2")
+    assert cc72["status"] == "No exceptions noted" and cc72["findings"] == 0
+    assert soc2["exception_controls"] >= 1
+
+    # Clean posture → all "No exceptions noted".
+    clean = build_evidence_pack({"owasp": {}})
+    assert all(c["findings"] == 0 for f in clean["frameworks"] for c in f["controls"])
+
+    html = evidence_pack_to_html(pack)
+    assert html.startswith("<!DOCTYPE html>") and "ISO/IEC 27001" in html and "CC6.8" in html
+
+
 def test_autofix_llm_code_fix():
     import sys, tempfile, shutil
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

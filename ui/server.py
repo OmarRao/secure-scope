@@ -767,6 +767,22 @@ def handle_scan(data):
                     except Exception:
                         logger.exception("compliance mapping failed")
 
+                    # Compliance evidence pack (SOC 2 / ISO 27001) — standalone HTML.
+                    evidence_url = ""
+                    if compliance_data:
+                        try:
+                            from evidence_pack import build_evidence_pack, evidence_pack_to_html
+                            from datetime import datetime as _dt
+                            _pack = build_evidence_pack(
+                                compliance_data, repo=repo_url,
+                                generated_at=_dt.now().strftime("%Y-%m-%d %H:%M UTC"))
+                            _eslug = f"{repo_url.rstrip('/').split('/')[-1]}_{_dt.now().strftime('%Y%m%d_%H%M%S')}_evidence"
+                            (REPORTS_DIR / f"{_eslug}.html").write_text(
+                                evidence_pack_to_html(_pack), encoding="utf-8")
+                            evidence_url = f"/report/{_eslug}.html"
+                        except Exception:
+                            logger.exception("evidence pack generation failed")
+
                     license_data = None
                     try:
                         from license_scanner import scan_licenses
@@ -925,6 +941,7 @@ def handle_scan(data):
                         "json_url":   f"/report/{repo_slug}_{ts}.json",
                         "gist_url":   gist_url,
                         "fix_pr_url": fix_pr_url,
+                        "evidence_url": evidence_url,
                         "summary":    result.summary(),
                         "repo_slug":  repo_slug,
                         "ts":         ts,

@@ -144,6 +144,14 @@ def _scan_one(repo_url: str, args, out_dir: Path) -> None:
         }, indent=2))
         print(f"[+] Compliance posture: {posture.coverage_pct}% findings mapped ({posture_path})")
 
+        if getattr(args, "evidence_pack", False):
+            from evidence_pack import build_evidence_pack, evidence_pack_to_html
+            import dataclasses as _dc
+            pack = build_evidence_pack(_dc.asdict(posture), repo=repo_url, generated_at=ts)
+            ep_path = out_dir / f"{repo_slug}_{ts}_evidence.html"
+            ep_path.write_text(evidence_pack_to_html(pack), encoding="utf-8")
+            print(f"[+] Compliance evidence pack (SOC 2 / ISO 27001): {ep_path}")
+
     # ── 5. Trivy Container Scan ─────────────────────────────────
     container_vulns = []
     if args.image:
@@ -407,6 +415,8 @@ def main():
                         help="Only scan files changed vs base branch (PR diff mode)")
     parser.add_argument("--pr-classify", action="store_true",
                         help="Scan HEAD and base branch, classifying findings as new/fixed/pre-existing")
+    parser.add_argument("--evidence-pack", action="store_true",
+                        help="Write a SOC 2 / ISO 27001 compliance evidence pack (requires --compliance)")
     parser.add_argument("--base-branch", default="main",
                         help="Base branch for PR diff / classify mode (default: main)")
     parser.add_argument("--suppress-fp", nargs=3, metavar=("RULE_ID", "FILE", "REASON"),
