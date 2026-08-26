@@ -96,7 +96,7 @@
       <div class="sec">Repositories &mdash; current posture (latest scan)</div>
       <div class="tbl-scroll">
         <table id="repoTbl">
-          <thead><tr><th>Repository</th><th>Last scanned</th><th class="num">Critical</th><th class="num">Warnings</th><th class="num">Dep CVEs</th><th class="num">Total</th><th></th></tr></thead>
+          <thead><tr><th>Repository</th><th>Last scanned</th><th class="num">Critical</th><th class="num">Warnings</th><th class="num">Dep CVEs</th><th class="num">Total</th><th>Trend</th><th class="num">Δ</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -134,6 +134,20 @@
     function warn(s){ s=s||{}; const sev=s.by_severity||{}; return (s.warnings!=null)?s.warnings:(sev.WARNING||0); }
     function cve(s){ return (s&&s.dependency_vulns)||0; }
     function total(s){ s=s||{}; return (s.total_findings!=null)?s.total_findings:(crit(s)+warn(s)); }
+    // Tiny inline sparkline of a repo's total-findings history (oldest → newest).
+    function miniSpark(vals){
+      if (!vals || vals.length < 2) return '<span style="color:var(--dim);font-size:11px">single scan</span>';
+      const W=90, H=22, pad=3, max=Math.max(1,...vals), min=Math.min(...vals), rng=(max-min)||1;
+      const pts = vals.map((v,i)=>{
+        const x = (i/(vals.length-1))*(W-2*pad)+pad;
+        const y = H-pad-((v-min)/rng)*(H-2*pad);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(" ");
+      const up = vals[vals.length-1] > vals[0];
+      const stroke = up ? "var(--danger)" : "var(--ok)";
+      return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" aria-label="findings trend">`+
+        `<polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
+    }
 
     async function load(u) {
       let reports = [];
@@ -186,12 +200,26 @@
           `<polyline points="${pts.join(" ")}" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke"/>`;
       }
 
+      // Full per-repo history (oldest → newest) for trend + delta.
+      const history = {};
+      chrono.forEach(r => { const k=(r.repo||"").trim(); if (k) (history[k]=history[k]||[]).push(r); });
+
       // Per-repo table, worst (most critical) first.
       repos.sort((a,b)=> crit(b.summary)-crit(a.summary) || total(b.summary)-total(a.summary));
       const rows = repos.map(r => {
         const s = r.summary||{};
         const when = r.createdAt && r.createdAt.toDate ? r.createdAt.toDate().toLocaleDateString() : "—";
         const c = crit(s), col = c>0?"var(--danger)":"var(--ok)";
+        const hist = history[(r.repo||"").trim()] || [r];
+        const vals = hist.map(h => total(h.summary));
+        // Δ vs previous scan: +N means findings introduced, -N resolved.
+        let deltaCell = '<span style="color:var(--dim)">—</span>';
+        if (vals.length >= 2) {
+          const d = vals[vals.length-1] - vals[vals.length-2];
+          deltaCell = d>0 ? `<span style="color:var(--danger)">▲ ${d}</span>`
+                    : d<0 ? `<span style="color:var(--ok)">▼ ${Math.abs(d)}</span>`
+                    : `<span style="color:var(--dim)">0</span>`;
+        }
         return `<tr>
           <td class="mono">${esc((r.repo||"").replace(/^https?:\/\//,""))}</td>
           <td>${esc(when)}</td>
@@ -199,6 +227,8 @@
           <td class="num" style="color:var(--warn)">${warn(s)}</td>
           <td class="num" style="color:var(--accent)">${cve(s)}</td>
           <td class="num">${total(s)}</td>
+          <td>${miniSpark(vals)}</td>
+          <td class="num">${deltaCell}</td>
           <td class="num"><button class="link-btn" data-id="${esc(r.id)}">Open</button></td>
         </tr>`;
       }).join("");

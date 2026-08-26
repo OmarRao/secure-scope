@@ -23,6 +23,7 @@ are Low / Med / High. Items are grouped by phase; within a phase, ordered by val
 | Item | Impact | Effort | Status |
 |---|---|---|---|
 | **Portfolio dashboard** | High | Med | ✅ Aggregate posture across a signed-in user's scanned repos (per-repo latest state, totals, worst offenders). |
+| **Per-repo trend + Δ** | Med | Low | ✅ Portfolio shows each repo's findings-over-time sparkline and the change (▲/▼) since its previous scan. |
 | ROADMAP.md | Low | Low | ✅ This file. |
 
 ## Phase 2 — Continuous & in-flow

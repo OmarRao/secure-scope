@@ -41,7 +41,9 @@ SecureScope is an AI-powered security scanner for **GitHub, GitLab, and Bitbucke
 - **Sharing** — view-only share links and email delivery for any report.
 - **Admin console** — for the maintainer: all-user activity with summary stats, a 14-day scans chart, scan-type breakdown, and search / type / timeframe filters.
 
-**Screenshots:** capability constellation — `docs/screenshots/16_constellation.png` (dark) / `16_constellation_light.png` (light); portfolio — `docs/screenshots/14_portfolio.png` (light) / `14_portfolio_dark.png` (dark); admin console — `docs/screenshots/15_admin.png` (dark) / `15_admin_light.png` (light).
+**Screenshots:** capability constellation — `docs/screenshots/16_constellation.png` (dark) / `16_constellation_light.png` (light); portfolio — `docs/screenshots/14_portfolio.png` (light) / `14_portfolio_dark.png` (dark); portfolio per-repo trends — `docs/screenshots/18_portfolio_trend.png` (dark) / `18_portfolio_trend_light.png` (light); admin console — `docs/screenshots/15_admin.png` (dark) / `15_admin_light.png` (light).
+
+The **portfolio** aggregates the posture of every repository you've scanned while signed in. Beyond per-repo current counts (critical / warnings / dep CVEs / total), each row shows a **Trend** sparkline of that repo's total findings across all its scans and a **Δ** column with the change since its previous scan (▲ red = findings introduced, ▼ green = resolved).
 
 **What it scans:**
 

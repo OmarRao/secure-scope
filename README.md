@@ -188,6 +188,7 @@ The 3-2-1-1-0 backup rule visualised with an interactive DR testing checklist (s
 | **PR Classify Mode** | Scan HEAD *and* the base ref, then classify every finding as **new / fixed / pre-existing** (line-independent fingerprints). `--pr-classify --base-branch main`. |
 | **PR Review Bot** | Webhook bot that auto-comments new/fixed/pre-existing findings on each pull request via the GitHub REST API (no GitHub App needed). |
 | **Trend Tracking** | Append per-scan metrics to `trend.jsonl` and render an SVG sparkline of findings over time. |
+| **Portfolio Trends** | The portfolio shows a per-repo findings-over-time sparkline and the change (▲/▼) since each repo's previous scan. |
 | **False Positive Suppression** | Accept-risk workflow: store suppressions in `.secscope-suppressions.json`, applied before report generation. |
 
 ### YARA Rule Sets
