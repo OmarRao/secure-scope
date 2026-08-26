@@ -910,7 +910,8 @@ def handle_scan(data):
                         _emit(sid, "progress", {"step": "done", "message": "🔧 Creating fix PR...", "pct": 97})
                         try:
                             from autofix import create_fix_pr
-                            fix_pr_url = create_fix_pr(repo_url, gh_token, workdir, findings_dicts, ts)
+                            fix_pr_url = create_fix_pr(repo_url, gh_token, workdir, findings_dicts, ts,
+                                                       llm_provider=llm_provider, llm_api_key=llm_api_key)
                         except Exception as _fe:
                             logger.warning("Auto-fix PR failed: %s", _fe)
 

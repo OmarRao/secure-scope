@@ -301,6 +301,37 @@ def test_badge_score_slug_and_svg():
     assert "CRITICAL 100" in badge_for(crit)
 
 
+def test_autofix_llm_code_fix():
+    import sys, tempfile, shutil
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from autofix import _strip_code_fences, _llm_code_fix
+
+    assert _strip_code_fences("```python\nx=1\n```") == "x=1"
+    assert _strip_code_fences("plain") == "plain"
+
+    d = tempfile.mkdtemp()
+    try:
+        fp = Path(d) / "app.py"
+        fp.write_text("a = 1\nquery('SELECT ' + user)\nb = 2\n", encoding="utf-8")
+        finding = {"file": "app.py", "line_start": 2, "line_end": 2,
+                   "rule_id": "sqli", "message": "SQL injection", "cwe": "CWE-89"}
+
+        # A well-behaved model returns a safe replacement → applied.
+        good = lambda system, user: "query('SELECT ?', [user])"
+        assert _llm_code_fix(d, finding, good) is True
+        assert "SELECT ?" in fp.read_text()
+
+        # Reset; an empty / identical / oversized response is rejected (no write).
+        fp.write_text("a = 1\nquery('SELECT ' + user)\nb = 2\n", encoding="utf-8")
+        assert _llm_code_fix(d, finding, lambda s, u: "") is False
+        assert _llm_code_fix(d, finding, lambda s, u: "\n".join(str(i) for i in range(100))) is False
+        assert "SELECT ' + user" in fp.read_text()  # unchanged
+        # No client → no-op.
+        assert _llm_code_fix(d, finding, None) is False
+    finally:
+        shutil.rmtree(d, ignore_errors=True)
+
+
 def test_upload_safe_extract():
     import sys, io, zipfile, tempfile, shutil
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))

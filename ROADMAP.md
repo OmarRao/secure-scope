@@ -41,7 +41,7 @@ are Low / Med / High. Items are grouped by phase; within a phase, ordered by val
 | Item | Impact | Effort | Notes |
 |---|---|---|---|
 | **Attack-path / exploit-chain view** | High | Med | ✅ `attack_path.py` stitches reachable dep CVEs + injection SAST + exposed secrets into staged, evidence-cited kill-chains (Entry→Execution→Impact), rendered in the HTML report and PDF. |
-| AI auto-fix for SAST findings (not just deps) | High | High | Generate patch + test, open a PR. Extends `autofix.py`. |
+| AI auto-fix for SAST findings (not just deps) | High | High | ✅ `autofix.py` generates real LLM code patches per finding (conservative sanity checks) and opens a PR; falls back to inline fix comments when no key or an unsafe suggestion. *Next:* auto-generate a regression test per fix. |
 | Interprocedural taint / data-flow | High | High | "Is this injection reachable from real user input?" — extends reachability to SAST. |
 | Auto threat model (data-flow + STRIDE) | Med | Med | Generate from code structure + findings. |
 | Business-logic / broken-auth detection (LLM) | Med | Med | The class pattern scanners miss. |
