@@ -523,10 +523,18 @@ def scan_upload():
         slug = f"upload_{ts}"
         html_path = REPORTS_DIR / f"{slug}.html"
         to_html(result, path=str(html_path), secret_findings=secret_findings)
-        # Return only counts — drop summary["errors"], which holds raw internal
-        # exception strings, so nothing exception-derived reaches the client
+        # Build counts directly from findings rather than result.summary(), whose
+        # "errors" field holds raw internal exception strings. This keeps any
+        # exception-derived text out of the client response entirely
         # (py/stack-trace-exposure).
-        summ = {k: v for k, v in result.summary().items() if k != "errors"}
+        by_sev: dict = {}
+        for _f in result.findings:
+            by_sev[_f.severity] = by_sev.get(_f.severity, 0) + 1
+        summ = {
+            "total_findings": len(result.findings),
+            "by_severity": by_sev,
+            "dependency_vulns": len(result.dependency_vulns),
+        }
         return jsonify({
             "report_url": f"/report/{slug}.html",
             "summary": summ,
