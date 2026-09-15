@@ -53,6 +53,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           python -c "import json,watch_check; print(watch_check.to_markdown(json.load(open('watch_alerts.json'))))" > body.md
-          TITLE="[watch] $(jq -r '.alert_count' watch_alerts.json) new dependency CVE(s) — $(jq -r '.kev_count' watch_alerts.json) KEV"
+          TITLE="[watch] $(jq -r '.new_count' watch_alerts.json) new + $(jq -r '.escalation_count' watch_alerts.json) escalated dependency CVE(s) — $(jq -r '.kev_count' watch_alerts.json) KEV"
           gh issue create --title "$TITLE" --body-file body.md --label "watch-alert" \
             || gh issue create --title "$TITLE" --body-file body.md

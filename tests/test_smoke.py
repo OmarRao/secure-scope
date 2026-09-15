@@ -250,6 +250,36 @@ def test_watch_diff_cves():
     assert "CVE-2021-44228" in md and "log4j" in md
 
 
+def test_watch_escalations():
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    from watch_check import diff_escalations, _prev_ids, _prev_meta
+
+    current = {
+        "CVE-A": {"package": "p", "severity": "HIGH", "kev": True, "epss": 0.6},   # was non-KEV → escalates
+        "CVE-B": {"package": "q", "severity": "MEDIUM", "kev": False, "epss": 0.5}, # EPSS jumped 0.1→0.5 → escalates
+        "CVE-C": {"package": "r", "severity": "LOW", "kev": False, "epss": 0.02},   # unchanged
+    }
+    prev_meta = {
+        "CVE-A": {"kev": False, "epss": 0.55},
+        "CVE-B": {"kev": False, "epss": 0.10},
+        "CVE-C": {"kev": False, "epss": 0.02},
+    }
+    esc = diff_escalations(prev_meta, current)
+    ids = [e["cve"] for e in esc]
+    assert "CVE-A" in ids and "CVE-B" in ids and "CVE-C" not in ids
+    assert "CISA KEV" in next(e for e in esc if e["cve"] == "CVE-A")["escalation"]
+    assert "EPSS" in next(e for e in esc if e["cve"] == "CVE-B")["escalation"]
+    # A brand-new CVE (no prev entry) is not an escalation.
+    assert diff_escalations({}, current) == []
+
+    # State helpers: back-compat with the legacy list format and the new dict format.
+    assert _prev_ids({"cves": ["CVE-X", "CVE-Y"]}) == {"CVE-X", "CVE-Y"}
+    assert _prev_ids({"cves": {"CVE-X": {"kev": True, "epss": 0.9}}}) == {"CVE-X"}
+    assert _prev_meta({"cves": ["CVE-X"]}) == {}          # legacy → no meta
+    assert _prev_meta({"cves": {"CVE-X": {"kev": True}}}) == {"CVE-X": {"kev": True}}
+
+
 def test_rate_check_sliding_window():
     import sys
     root = Path(__file__).resolve().parent.parent

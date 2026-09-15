@@ -1025,11 +1025,12 @@ It runs entirely on GitHub Actions with **no external infrastructure or secrets*
 2. The scheduled workflow **`.github/workflows/watch-monitor.yml`** runs daily
    (and on demand via *Run workflow*). Each run:
    - scans every watched repo's dependencies (OSV.dev) and enriches with EPSS + KEV,
-   - diffs against the last saved `watch_state.json`,
-   - opens a **GitHub Issue** listing any *new* CVEs (using the built-in
-     `GITHUB_TOKEN` — no PAT needed), and
-   - commits the updated state back to the repo.
-3. Run it locally too: `python watch_check.py` (or `--dry-run` to skip writing state).
+   - diffs against the last saved `watch_state.json` (which stores per-CVE KEV/EPSS), and
+   - opens a **GitHub Issue** using the built-in `GITHUB_TOKEN` (no PAT needed) whenever it finds either:
+     - **🆕 new CVEs** — a vulnerability that wasn't present last run, or
+     - **⚠️ escalations** — an already-present CVE that was **added to CISA KEV** (now actively exploited) or whose **EPSS jumped ≥ 20 points** (an early-warning that a dependency you already shipped just got a lot more dangerous),
+   - then commits the updated state back to the repo.
+3. Run it locally too: `python watch_check.py` (or `--dry-run` to skip writing state). Escalation detection needs at least one prior run (to have a baseline to compare against); it's back-compatible with older list-format state files.
 
 > This is the repo-level monitor. Per-user "watch" from the web app is on the
 > roadmap and additionally requires a Firebase service-account secret.
