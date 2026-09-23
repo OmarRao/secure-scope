@@ -80,6 +80,24 @@ are Low / Med / High. Items are grouped by phase; within a phase, ordered by val
 |---|---|---|---|
 | Autonomous security agent | High | High | Watches a repo, scans on push, prioritises by exploitability, opens fix PRs, follows up to resolution. The natural end-state. |
 
+## Phase 8 — Infrastructure security assessment (datacenter)
+
+Extend SecureScope from code + cloud into a **full-stack infrastructure posture
+platform** — on-prem hypervisors, storage, physical/BMC, network, live K8s,
+identity, and OS/DB — led by a **data-protection / ransomware-resilience** focus.
+Uses an in-network **collector** (credentials never leave the network; read-only
+only) that ships findings to the hosted dashboard. Full design:
+[docs/INFRASTRUCTURE-ASSESSMENT.md](docs/INFRASTRUCTURE-ASSESSMENT.md).
+
+| Item | Impact | Effort | Status |
+|---|---|---|---|
+| Assessor framework + VMware ESXi/vSphere assessor + Infrastructure Posture report section (dormant) | High | Med | Phase 1 — designed, awaiting build approval |
+| Collector runtime + ingest API; activate CSPM (AWS) through the framework | High | Med | Phase 2 — needs a read-only cloud/vCenter target |
+| ⭐ Data-protection & resilience assessors (immutability, 3-2-1-1-0, recovery readiness) | High | Med | Phase 3 — the differentiator |
+| Storage + BMC/physical + network device assessors | Med | High | Phase 4 |
+| Identity (AD/Entra, ADCS) + OS/DB assessors | High | High | Phase 5 |
+| Cross-cutting: compliance overlay (CIS/NIST/ISO/DORA/NIS2), KEV-for-infra, drift alerts, evidence packs, unified resilience score | High | Med | Phase 6 — reuses existing modules |
+
 ---
 
 ### Items that require the maintainer's action to build

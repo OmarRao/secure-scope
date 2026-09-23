@@ -19,6 +19,7 @@ One scan fires signals from the core across seven fronts of security — each ma
 |----------|-------------|
 | [USERGUIDE.md](USERGUIDE.md) | Full technical user guide — installation, all flags, integrations, CI/CD, K8s, troubleshooting |
 | [ROADMAP.md](ROADMAP.md) | Forward-looking plan — phased next steps with impact/effort ratings |
+| [docs/INFRASTRUCTURE-ASSESSMENT.md](docs/INFRASTRUCTURE-ASSESSMENT.md) | Design (draft) — extending SecureScope into full-stack infrastructure security posture (hypervisors, storage, physical/BMC, data-protection resilience) |
 | [SECURITY.md](SECURITY.md) | Security policy and responsible disclosure |
 | [docs/exploits/](docs/exploits/) | Per-vulnerability writeups (SecureScope self-scan) |
 | [.github/workflows/secscope.yml](.github/workflows/secscope.yml) | CI/CD self-scan pipeline |
