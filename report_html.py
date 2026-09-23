@@ -281,6 +281,46 @@ def build_html(data: dict) -> tuple:
             {lic_table}""")
         return f'<div class="pb-before">{"".join(parts)}</div>' if parts else ""
 
+    def infra_section():
+        """Infrastructure posture (hypervisors/etc.) for the PDF, when present."""
+        infra = data.get("infra") or {}
+        targets = infra.get("targets") or []
+        if not targets:
+            return ""
+        tot = infra.get("totals", {})
+        gcol = {"CRITICAL": "#dc2626", "HIGH": "#d97706", "MEDIUM": "#2563eb", "LOW": "#16a34a"}
+        blocks = []
+        for t in targets:
+            col = gcol.get(str(t.get("grade", "")).upper(), "#6b7280")
+            rows = ""
+            for f in t.get("findings", []):
+                st = f.get("status", "")
+                sc = {"FAIL": "#dc2626", "WARN": "#d97706", "PASS": "#16a34a"}.get(st, "#6b7280")
+                fw = " ".join(f"{k} {v}" for k, v in (f.get("frameworks") or {}).items())
+                rows += (
+                    f'<tr><td style="width:52pt;"><span style="color:{sc};font-weight:800;font-size:8pt;">{esc(st)}</span></td>'
+                    f'<td><strong>{esc(f.get("title",""))}</strong> '
+                    f'<span style="color:#9ca3af;">· {esc(f.get("severity",""))}</span><br>'
+                    f'<span style="color:#4b5563;font-size:8.5pt;">{esc(f.get("detail",""))}</span>'
+                    + (f'<br><span style="color:#166534;font-size:8pt;">→ {esc(f.get("remediation",""))}</span>' if st in ("FAIL", "WARN") and f.get("remediation") else "")
+                    + (f'<br><span style="color:#9ca3af;font-size:7.5pt;font-family:monospace;">{esc(fw)}</span>' if fw else "")
+                    + "</td></tr>")
+            blocks.append(
+                f'<div style="margin-bottom:10pt;"><div style="font-weight:800;color:#111827;">'
+                f'{esc(t.get("target",{}).get("host") or t.get("target",{}).get("id",""))} '
+                f'<span style="background:{col};color:#fff;font-size:8pt;padding:1pt 6pt;border-radius:3pt;">{esc(str(t.get("grade","")))} · {t.get("score",0)}</span></div>'
+                f'<table class="data-table" style="margin-top:5pt;"><tbody>{rows}</tbody></table></div>')
+        return f"""
+        <div class="pb-before">
+          <div class="section-eye">Infrastructure</div>
+          <div class="section-title">Infrastructure Posture</div>
+          <p style="font-size:10.5pt;color:#6b7280;margin-bottom:12pt;line-height:1.6;">
+            {tot.get('targets', 0)} target(s) assessed — overall {esc(str(infra.get('overall_grade','')))}
+            posture risk ({infra.get('overall_score', 0)}/100). {tot.get('fail', 0)} failing checks,
+            {tot.get('critical', 0)} critical.</p>
+          {"".join(blocks)}
+        </div>"""
+
     def attack_paths_section():
         """Narrated exploit-chains (Entry → Execution → Impact) for the PDF."""
         chains = data.get("attack_paths") or []
@@ -541,6 +581,8 @@ def build_html(data: dict) -> tuple:
 {ransomware_section()}
 
 {attack_paths_section()}
+
+{infra_section()}
 
 {governance_section()}
 

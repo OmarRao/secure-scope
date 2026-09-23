@@ -1,0 +1,32 @@
+[
+  {
+    "kind": "vmware_esxi",
+    "id": "esxi01",
+    "host": "esxi01.lab.example.com",
+    "version": "7.0.3",
+    "build": "20842708",
+    "lockdown_mode": "disabled",
+    "ssh_enabled": true,
+    "shell_enabled": true,
+    "mob_enabled": true,
+    "ntp_configured": false,
+    "syslog_configured": false,
+    "tls_min": "1.0",
+    "known_cves": [{ "id": "CVE-2021-21974", "kev": true, "epss": 0.94 }]
+  },
+  {
+    "kind": "vmware_esxi",
+    "id": "esxi02",
+    "host": "esxi02.lab.example.com",
+    "version": "8.0.2",
+    "build": "22380479",
+    "lockdown_mode": "strict",
+    "ssh_enabled": false,
+    "shell_enabled": false,
+    "mob_enabled": false,
+    "ntp_configured": true,
+    "syslog_configured": true,
+    "tls_min": "1.2",
+    "outdated": false
+  }
+]

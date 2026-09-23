@@ -925,6 +925,10 @@ def handle_scan(data):
                         "summary": result.summary(),
                         "findings": findings_dicts,
                         "attack_paths": attack_paths,
+                        # Infrastructure posture is populated by the collector
+                        # ingest path (Phase 2); None here keeps the section
+                        # dormant for ordinary code scans.
+                        "infra": None,
                         "dependency_vulns": result.dependency_vulns,
                         "ransomware": rw_report,
                         "secrets": secrets_result.to_dict() if secrets_result else None,

@@ -19,9 +19,10 @@
 11. [Kubernetes & Helm Deployment](#11-kubernetes--helm-deployment)
 12. [Multi-Repo Scanning](#12-multi-repo-scanning)
 13. [Custom Semgrep Rules](#13-custom-semgrep-rules)
-14. [Telemetry](#14-telemetry)
-15. [Troubleshooting](#15-troubleshooting)
-16. [Version History](#16-version-history)
+14. [Infrastructure Posture Assessment (preview)](#14-infrastructure-posture-assessment-preview)
+15. [Telemetry](#15-telemetry)
+16. [Troubleshooting](#16-troubleshooting)
+17. [Version History](#17-version-history)
 
 ---
 
@@ -1260,7 +1261,31 @@ Once validated, place the file under `rules/` and SecureScope will pick it up au
 
 ---
 
-## 14. Telemetry
+## 14. Infrastructure Posture Assessment (preview)
+
+SecureScope can assess the security posture of *running* infrastructure, not just infra-as-code files. **Phase 1** ships the assessor framework and a **VMware vSphere/ESXi** hardening assessor; it is **dormant by default** and changes nothing about ordinary code scans. Full design and roadmap: [docs/INFRASTRUCTURE-ASSESSMENT.md](docs/INFRASTRUCTURE-ASSESSMENT.md).
+
+**How it works.** Assessors are pure, read-only checks over a normalized *snapshot* of a target. A snapshot can come from a live read-only connector (e.g. vSphere via `pyVmomi`, requiring only a vCenter *Read-only* role) or from a JSON file — so you can validate assessors without touching production.
+
+**Try it against a sample (no infra needed):**
+
+```bash
+python -m infra.cli --snapshot infra/examples/vsphere_sample.json
+```
+
+**Assess a live host read-only (needs `pyVmomi` + a read-only account):**
+
+```bash
+python -m infra.cli --vsphere esxi01.example.com --user readonly --password-env VS_PW
+```
+
+Each finding carries a status (PASS/FAIL/WARN/UNKNOWN), severity, remediation, and framework mappings (CIS ESXi, NIST 800-53), with outdated builds cross-referenced against CISA KEV / EPSS. When infrastructure findings are attached to a report they render as an **Infrastructure Posture** section (HTML + PDF):
+
+![Infrastructure Posture](docs/screenshots/20_infrastructure_posture.png)
+
+**Safety:** every assessor is strictly read-only (describe/get/list only), fails safe when a target is unreachable or an SDK is missing, and — in the planned collector model — credentials never leave your network (only findings are shipped to the dashboard).
+
+## 15. Telemetry
 
 SecureScope collects minimal anonymous usage telemetry to help prioritise development.
 
@@ -1294,7 +1319,7 @@ python main.py --repo https://github.com/owner/repo --no-advisor
 
 ---
 
-## 15. Troubleshooting
+## 16. Troubleshooting
 
 | Error | Cause | Fix |
 |-------|-------|-----|
@@ -1325,7 +1350,7 @@ python main.py --repo https://github.com/owner/repo --no-advisor --no-sandbox
 
 ---
 
-## 16. Version History
+## 17. Version History
 
 | Version | Date | Highlights |
 |---------|------|------------|

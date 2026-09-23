@@ -486,6 +486,12 @@
       <span class="nav-ct ct-r">{{ attack_paths|length }}</span>
     </div>
     {% endif %}
+    {% if infra and infra.targets %}
+    <div class="nav-item" onclick="go('infra',this)">
+      <span class="nav-ic">&#x1F3E2;</span> Infrastructure
+      <span class="nav-ct {% if infra.totals.fail %}ct-r{% else %}ct-w{% endif %}">{{ infra.totals.fail }}</span>
+    </div>
+    {% endif %}
     <div class="nav-item" onclick="go('findings',this)">
       <span class="nav-ic">&#x1F50D;</span> Vulnerabilities
       <span class="nav-ct {% if errs %}ct-r{% else %}ct-w{% endif %}">{{ findings|length }}</span>
@@ -1031,6 +1037,75 @@
             {% if not loop.last %}<div class="aparrow">&#x2192;</div>{% endif %}
             {% endfor %}
           </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Infrastructure Posture -->
+    {% if infra and infra.targets %}
+    <style>
+      .infra-hero{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:16px}
+      .infra-score{font-family:'Geist Mono',monospace;font-weight:900;font-size:34px;line-height:1}
+      .infra-g-critical{color:#dc2626}.infra-g-high{color:#d97706}.infra-g-medium{color:#2563eb}.infra-g-low{color:#16a34a}
+      .infra-pills{display:flex;gap:8px;flex-wrap:wrap}
+      .infra-pill{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid var(--rule,#252b35);color:var(--sub,#a0aec0)}
+      .itgt{border:1px solid var(--rule,#252b35);border-radius:10px;background:var(--card,#0f1319);margin:0 0 14px;overflow:hidden}
+      .itgt-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--rule,#252b35)}
+      .itgt-host{font-weight:700;color:var(--head,#fff);font-size:14px;font-family:'Geist Mono',monospace}
+      .itgt-kind{font-size:11px;color:var(--muted,#6b7785)}
+      .itgt-grade{margin-left:auto;font-size:11px;font-weight:800;padding:3px 9px;border-radius:5px;color:#fff}
+      .ifrow{display:flex;gap:10px;align-items:flex-start;padding:9px 16px;border-top:1px solid var(--rule2,#1c2029)}
+      .ifrow:first-child{border-top:none}
+      .ist{font-size:10px;font-weight:800;letter-spacing:.04em;padding:2px 7px;border-radius:4px;flex:none;margin-top:1px}
+      .ist-FAIL{background:#dc2626;color:#fff}.ist-WARN{background:#d97706;color:#fff}
+      .ist-PASS{background:rgba(22,163,74,.15);color:#4ade80}.ist-UNKNOWN{background:var(--rule2,#1c2029);color:var(--muted,#6b7785)}
+      .ifbody{min-width:0}
+      .iftitle{font-size:12.5px;color:var(--head,#fff);font-weight:600}
+      .ifdetail{font-size:11.5px;color:var(--sub,#a0aec0);line-height:1.45;margin-top:2px}
+      .iffix{font-size:11px;color:var(--teal,#4ade80);margin-top:3px}
+      .iffw{font-size:10px;color:var(--muted,#6b7785);font-family:'Geist Mono',monospace;margin-top:3px}
+    </style>
+    <div class="sec" id="infra">
+      <div class="sec-head" onclick="toggleSec(this)">
+        <div class="sec-title">&#x1F3E2; Infrastructure Posture</div>
+        <div class="sec-count">{{ infra.totals.targets }} target(s) · {{ infra.totals.fail }} failing</div>
+        <span class="sec-chevron">&#x25BC;</span>
+      </div>
+      <div class="sec-body">
+        <div class="infra-hero">
+          <div class="infra-score infra-g-{{ infra.overall_grade|lower }}">{{ infra.overall_score }}<span style="font-size:15px;color:var(--muted)">/100</span></div>
+          <div>
+            <div style="font-weight:800;color:var(--head)">{{ infra.overall_grade }} posture risk</div>
+            <div class="infra-pills" style="margin-top:6px">
+              <span class="infra-pill">🔴 {{ infra.totals.critical }} critical</span>
+              <span class="infra-pill">🟠 {{ infra.totals.high }} high</span>
+              <span class="infra-pill">✗ {{ infra.totals.fail }} fail</span>
+              <span class="infra-pill">⚠ {{ infra.totals.warn }} warn</span>
+              <span class="infra-pill">✓ {{ infra.totals.pass }} pass</span>
+            </div>
+          </div>
+        </div>
+        {% for t in infra.targets %}
+        {% set gcol = '#dc2626' if t.grade=='CRITICAL' else '#d97706' if t.grade=='HIGH' else '#2563eb' if t.grade=='MEDIUM' else '#16a34a' %}
+        <div class="itgt">
+          <div class="itgt-head">
+            <span class="itgt-host">{{ t.target.host or t.target.id }}</span>
+            <span class="itgt-kind">{{ t.target.kind }}</span>
+            <span class="itgt-grade" style="background:{{ gcol }}">{{ t.grade }} · {{ t.score }}</span>
+          </div>
+          {% for f in t.findings %}
+          <div class="ifrow">
+            <span class="ist ist-{{ f.status }}">{{ f.status }}</span>
+            <div class="ifbody">
+              <div class="iftitle">{{ f.title }} <span style="color:var(--muted);font-size:11px">· {{ f.severity }}</span></div>
+              {% if f.detail %}<div class="ifdetail">{{ f.detail }}</div>{% endif %}
+              {% if f.status in ['FAIL','WARN'] and f.remediation %}<div class="iffix">→ {{ f.remediation }}</div>{% endif %}
+              {% if f.frameworks %}<div class="iffw">{% for k,v in f.frameworks.items() %}{{ k }} {{ v }}&nbsp;&nbsp;{% endfor %}{% if f.cve %}· {{ f.cve }}{% if f.kev %} 🔴KEV{% endif %}{% endif %}</div>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
         </div>
         {% endfor %}
       </div>

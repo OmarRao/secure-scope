@@ -184,6 +184,7 @@ The 3-2-1-1-0 backup rule visualised with an interactive DR testing checklist (s
 | **License Compliance** | Classify dependency licenses (high/medium/low/ok risk) using pip-licenses / license-checker with heuristic fallback. |
 | **Supply Chain** | Detect dependency confusion attacks (internal names on public registries) and known typosquats. |
 | **Attack Paths** | Stitch reachable dependency CVEs, injection sinks, and exposed secrets into narrated, evidence-cited kill-chains (Entry → Execution → Impact) in the report and PDF. |
+| **Infrastructure Posture** *(preview)* | Read-only hardening assessment of running infrastructure — Phase 1 ships a VMware vSphere/ESXi assessor (CIS/NIST-mapped, KEV-cross-referenced) with an Infrastructure Posture report section. Dormant by default. See [design](docs/INFRASTRUCTURE-ASSESSMENT.md). |
 | **Upload Scan** | Scan a `.zip` of code or a pasted snippet — no repo URL needed. Safe extraction (zip-slip / zip-bomb guarded), static + secret scan, instant report. |
 | **AI Auto-Fix PR** | With auto-fix enabled + an LLM key, generates real code patches per finding (conservative sanity checks) and opens a PR; falls back to inline fix comments when a safe patch isn't possible. |
 | **Compliance Evidence Pack** | Auditor-style control matrix mapping findings to SOC 2 Trust Services Criteria and ISO/IEC 27001:2022 Annex A. Generated per scan (web) and via `--evidence-pack` (CLI). |

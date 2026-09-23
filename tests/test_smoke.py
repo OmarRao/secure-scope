@@ -514,6 +514,63 @@ def test_upload_safe_extract():
         pass
 
 
+def test_infra_vmware_assessor_and_scoring():
+    import sys
+    root = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(root))
+    from infra.report import assess_snapshots, build_infra_posture
+    from infra.base import posture_grade, Finding, assessors_for_kind
+
+    # The VMware assessor registers for these kinds.
+    assert any(a.id == "vmware.esxi" for a in assessors_for_kind("vmware_esxi"))
+
+    bad = {"kind": "vmware_esxi", "host": "esxi01", "build": "20842708",
+           "lockdown_mode": "disabled", "ssh_enabled": True, "shell_enabled": True,
+           "mob_enabled": True, "ntp_configured": False, "syslog_configured": False,
+           "tls_min": "1.0", "known_cves": [{"id": "CVE-2021-21974", "kev": True, "epss": 0.9}]}
+    good = {"kind": "vmware_esxi", "host": "esxi02", "build": "9", "lockdown_mode": "strict",
+            "ssh_enabled": False, "shell_enabled": False, "mob_enabled": False,
+            "ntp_configured": True, "syslog_configured": True, "tls_min": "1.2", "outdated": False}
+
+    posture = build_infra_posture(assess_snapshots([bad, good]))
+    assert posture["totals"]["targets"] == 2
+    assert posture["totals"]["critical"] >= 1          # the KEV CVE finding
+    assert posture["overall_grade"] == "CRITICAL"       # worst host drives overall
+
+    tgt = {t["target"]["host"]: t for t in posture["targets"]}
+    assert tgt["esxi01"]["grade"] == "CRITICAL" and tgt["esxi01"]["counts"]["by_status"]["FAIL"] >= 5
+    assert tgt["esxi02"]["counts"]["by_status"].get("FAIL", 0) == 0   # hardened host: no fails
+
+    # A FAIL finding carries remediation + a framework mapping.
+    fail = next(f for f in tgt["esxi01"]["findings"] if f["status"] == "FAIL")
+    assert fail["remediation"] and fail["frameworks"].get("CIS")
+
+    # Unknown fields (missing snapshot keys) → UNKNOWN, never a crash.
+    sparse = build_infra_posture(assess_snapshots([{"kind": "vmware_esxi", "host": "x"}]))
+    statuses = {f["status"] for f in sparse["targets"][0]["findings"]}
+    assert "UNKNOWN" in statuses
+
+    # Empty findings → clean LOW posture.
+    assert posture_grade([]) == (0, "LOW")
+
+
+def test_infra_report_section_renders():
+    import sys
+    root = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(root))
+    from jinja2 import Environment, FileSystemLoader
+    Environment(loader=FileSystemLoader(str(root / "ui" / "templates"))).get_template("report.html")
+
+    from report_html import build_html
+    from infra.report import assess_snapshots, build_infra_posture
+    infra = build_infra_posture(assess_snapshots([
+        {"kind": "vmware_esxi", "host": "esxi01", "lockdown_mode": "disabled",
+         "ssh_enabled": True, "tls_min": "1.0"}]))
+    result = build_html({"repo": "https://github.com/o/r", "findings": [], "summary": {}, "infra": infra})
+    html = result[0] if isinstance(result, tuple) else result
+    assert "Infrastructure Posture" in html and "esxi01" in html
+
+
 def test_pr_event_parsing():
     import sys
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
