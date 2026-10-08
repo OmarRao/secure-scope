@@ -547,6 +547,59 @@ def scan_upload():
         _shutil.rmtree(workdir, ignore_errors=True)
 
 
+@app.route("/api/infra/ingest", methods=["POST"])
+def infra_ingest():
+    """Receive an infrastructure posture batch from an in-network collector.
+
+    DORMANT until INFRA_INGEST_TOKEN is set. Authenticated by that shared token
+    (constant-time compare); the collector ships findings only — never
+    credentials. Stores the latest posture per target in Firestore (durable),
+    best-effort. Returns only counts; never echoes exception detail.
+    """
+    import hmac as _hmac
+    token = os.environ.get("INFRA_INGEST_TOKEN", "")
+    if not token:
+        return jsonify({"error": "infra ingest is not enabled"}), 503
+
+    presented = request.headers.get("X-Infra-Token", "")
+    if not presented or not _hmac.compare_digest(presented, token):
+        return jsonify({"error": "unauthorized"}), 401
+
+    # Bound the payload defensively (collectors send small JSON posture objects).
+    raw = request.get_data(cache=True) or b""
+    if len(raw) > 2_000_000:
+        return jsonify({"error": "payload too large"}), 413
+    try:
+        import json as _json
+        posture = _json.loads(raw or b"null")
+    except Exception:
+        posture = None
+    if not isinstance(posture, dict) or not isinstance(posture.get("targets"), list):
+        return jsonify({"error": "invalid posture payload"}), 400
+
+    stored = 0
+    try:
+        db = _firestore()
+        if db:
+            from datetime import datetime, timezone
+            from badge import badge_slug
+            now = datetime.now(timezone.utc).isoformat()
+            collector_id = str(posture.get("collector_id", ""))[:128]
+            for t in posture["targets"][:200]:
+                tgt = (t or {}).get("target", {}) or {}
+                slug = badge_slug(f"{tgt.get('kind','')}-{tgt.get('id') or tgt.get('host','')}")
+                db.collection("infra_posture").document(slug).set({
+                    "target": tgt, "score": t.get("score", 0), "grade": t.get("grade", ""),
+                    "counts": t.get("counts", {}), "findings": (t.get("findings") or [])[:300],
+                    "collector_id": collector_id, "updated_at": now,
+                })
+                stored += 1
+    except Exception:
+        logger.exception("infra ingest storage failed")
+
+    return jsonify({"accepted": True, "targets": len(posture["targets"]), "stored": stored}), 202
+
+
 @app.route("/gh-webhook", methods=["POST"])
 def gh_webhook():
     """GitHub webhook endpoint for the PR review bot (runs on the main app).

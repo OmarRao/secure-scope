@@ -23,6 +23,7 @@ from .base import (
 
 # Importing an assessor module registers it (side effect).
 from . import vmware  # noqa: F401
+from . import aws      # noqa: F401
 
 __all__ = [
     "Finding", "Target", "Assessor", "register", "get_assessors",

@@ -554,6 +554,83 @@ def test_infra_vmware_assessor_and_scoring():
     assert posture_grade([]) == (0, "LOW")
 
 
+def test_infra_aws_cspm_assessor():
+    import sys
+    root = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(root))
+    from infra.report import assess_snapshots, build_infra_posture
+    from infra.base import assessors_for_kind
+
+    assert any(a.id == "aws.cspm" for a in assessors_for_kind("aws_account"))
+
+    snap = {"kind": "aws_account", "host": "aws:us-east-1", "cspm": {"available": True, "error": "",
+            "findings": [
+                {"check": "S3 public access", "resource": "s3://logs", "severity": "HIGH", "detail": "public"},
+                {"check": "Security group open to the world", "resource": "sg-1", "severity": "HIGH", "detail": "0.0.0.0/0"}]}}
+    p = build_infra_posture(assess_snapshots([snap]))
+    t = p["targets"][0]
+    titles = {(f["title"], f["status"]) for f in t["findings"]}
+    assert ("S3 bucket public access", "FAIL") in titles
+    assert ("Security group open to 0.0.0.0/0", "FAIL") in titles
+    # The clean category (IAM MFA) is synthesized as PASS; every FAIL maps a control.
+    assert ("All IAM users have MFA", "PASS") in titles
+    assert all(f["frameworks"].get("CIS") for f in t["findings"] if f["status"] == "FAIL")
+
+    # No creds / boto3 → a single UNKNOWN finding, never a crash.
+    u = build_infra_posture(assess_snapshots([{"kind": "aws_account", "host": "x",
+                                               "cspm": {"available": False, "error": "no creds"}}]))
+    assert [f["status"] for f in u["targets"][0]["findings"]] == ["UNKNOWN"]
+
+
+def test_infra_collector_run_fixture():
+    import sys, json, tempfile, os
+    root = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(root))
+    from infra import collector
+    # A config whose targets can't be reached here (no pyVmomi/boto3/creds) must
+    # still produce a valid posture with UNKNOWN findings — never raise.
+    cfg = [{"id": "esxi-x", "kind": "vmware_esxi", "host": "203.0.113.9", "user": "ro", "password_env": "NOPE"},
+           {"id": "aws-x", "kind": "aws_account", "region": "us-east-1"}]
+    fd, path = tempfile.mkstemp(suffix=".json")
+    os.close(fd)
+    try:
+        open(path, "w").write(json.dumps(cfg))
+        posture = collector.run(path)
+        assert posture["totals"]["targets"] == 2
+        assert "overall_grade" in posture
+    finally:
+        os.unlink(path)
+
+
+def test_infra_ingest_endpoint_auth():
+    import sys, os, json
+    root = Path(__file__).resolve().parent.parent
+    sys.path.insert(0, str(root / "ui"))
+    import server
+    c = server.app.test_client()
+    body = json.dumps({"targets": [], "totals": {}}).encode()
+
+    # Dormant: no token configured → 503.
+    os.environ.pop("INFRA_INGEST_TOKEN", None)
+    assert c.post("/api/infra/ingest", data=body, content_type="application/json").status_code == 503
+
+    os.environ["INFRA_INGEST_TOKEN"] = "sekret"
+    try:
+        # Missing/bad token → 401.
+        assert c.post("/api/infra/ingest", data=body, content_type="application/json").status_code == 401
+        assert c.post("/api/infra/ingest", data=body,
+                      headers={"X-Infra-Token": "wrong"}).status_code == 401
+        # Correct token, valid shape → 202 (stored 0 in test env with no Firestore).
+        r = c.post("/api/infra/ingest", data=body, headers={"X-Infra-Token": "sekret"},
+                   content_type="application/json")
+        assert r.status_code == 202 and r.get_json()["accepted"] is True
+        # Correct token, bad shape → 400.
+        assert c.post("/api/infra/ingest", data=b"{}", headers={"X-Infra-Token": "sekret"},
+                      content_type="application/json").status_code == 400
+    finally:
+        os.environ.pop("INFRA_INGEST_TOKEN", None)
+
+
 def test_infra_report_section_renders():
     import sys
     root = Path(__file__).resolve().parent.parent

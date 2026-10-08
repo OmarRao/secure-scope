@@ -92,7 +92,7 @@ only) that ships findings to the hosted dashboard. Full design:
 | Item | Impact | Effort | Status |
 |---|---|---|---|
 | Assessor framework + VMware ESXi/vSphere assessor + Infrastructure Posture report section (dormant) | High | Med | ✅ Phase 1 — `infra/` framework, `infra.vmware` assessor (CIS/NIST + KEV cross-ref), CLI (`python -m infra.cli`), HTML + PDF report section. Fixture-tested, dormant. |
-| Collector runtime + ingest API; activate CSPM (AWS) through the framework | High | Med | Phase 2 — needs a read-only cloud/vCenter target |
+| Collector runtime + ingest API; activate CSPM (AWS) through the framework | High | Med | ✅ Phase 2 — `infra.collector` (findings-only, creds stay local), token-auth `/api/infra/ingest` (dormant), `aws.cspm` assessor + `boto3` connector. Fixture-tested. Live validation needs a read-only cloud/vCenter target. |
 | ⭐ Data-protection & resilience assessors (immutability, 3-2-1-1-0, recovery readiness) | High | Med | Phase 3 — the differentiator |
 | Storage + BMC/physical + network device assessors | Med | High | Phase 4 |
 | Identity (AD/Entra, ADCS) + OS/DB assessors | High | High | Phase 5 |

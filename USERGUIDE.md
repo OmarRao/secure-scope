@@ -1120,6 +1120,7 @@ This command ships in three places so it applies however the app is deployed: th
 | `SCAN_RATE_WINDOW` | `600` | Rate-limit window in seconds |
 | `GH_WEBHOOK_SECRET` | `""` | Shared secret for the `/gh-webhook` PR-bot endpoint (must match the GitHub webhook's secret) |
 | `GITHUB_TOKEN` | `""` | PAT (`repo` scope) the PR bot uses to post comments |
+| `INFRA_INGEST_TOKEN` | `""` | Shared token for the `/api/infra/ingest` collector endpoint; unset = ingest disabled |
 | `FIREBASE_CREDENTIALS` | `""` | Service-account JSON (as a string/secret) for server-side ID-token verification. **Setting this turns on signed-in-only scanning automatically.** |
 | `FIREBASE_CREDENTIALS_FILE` | `""` | Alternative: path to the service-account JSON on disk |
 | `REQUIRE_AUTH` | *(auto)* | Kill-switch. Set to `false` to force auth **off** even when credentials are present |
@@ -1279,11 +1280,39 @@ python -m infra.cli --snapshot infra/examples/vsphere_sample.json
 python -m infra.cli --vsphere esxi01.example.com --user readonly --password-env VS_PW
 ```
 
-Each finding carries a status (PASS/FAIL/WARN/UNKNOWN), severity, remediation, and framework mappings (CIS ESXi, NIST 800-53), with outdated builds cross-referenced against CISA KEV / EPSS. When infrastructure findings are attached to a report they render as an **Infrastructure Posture** section (HTML + PDF):
+Each finding carries a status (PASS/FAIL/WARN/UNKNOWN), severity, remediation, and framework mappings (CIS, NIST 800-53), with outdated builds cross-referenced against CISA KEV / EPSS. Multiple domains render together in one **Infrastructure Posture** section (HTML + PDF) — e.g. hypervisors and cloud accounts side by side:
 
 ![Infrastructure Posture](docs/screenshots/20_infrastructure_posture.png)
 
-**Safety:** every assessor is strictly read-only (describe/get/list only), fails safe when a target is unreachable or an SDK is missing, and — in the planned collector model — credentials never leave your network (only findings are shipped to the dashboard).
+### Domains (Phase 1–2)
+
+| Domain | Assessor | Connector (read-only) |
+|---|---|---|
+| Hypervisor | `vmware.esxi` — CIS ESXi hardening + build KEV cross-ref | `pyVmomi` (vCenter *Read-only* role) |
+| Cloud (AWS) | `aws.cspm` — public S3, IAM without MFA, security groups open to the world | `boto3` (*SecurityAudit* read-only) |
+
+### The collector
+
+For on-prem/private targets a cloud-hosted dashboard can't reach, run the **collector** *inside* your network. It reads a local target config, collects read-only snapshots, runs the assessors locally, and optionally ships **findings only** — never credentials — to the dashboard ingest endpoint.
+
+```bash
+# infra_targets.json: [{"id":"esxi01","kind":"vmware_esxi","host":"esxi01.local",
+#   "user":"readonly","password_env":"ESXI01_PW"},
+#   {"id":"aws-prod","kind":"aws_account","region":"us-east-1","profile":"secaudit"}]
+
+python -m infra.collector --config infra_targets.json            # print posture locally
+python -m infra.collector --config infra_targets.json \
+    --ingest-url https://secure-scope.onrender.com/api/infra/ingest \
+    --token-env INFRA_INGEST_TOKEN
+```
+
+Credentials are resolved locally by name (e.g. `password_env`) and used only by the connector — they are never placed in the payload.
+
+### Ingest endpoint (hosted)
+
+`POST /api/infra/ingest` receives a collector's posture batch. It is **dormant until `INFRA_INGEST_TOKEN` is set**, authenticates with that shared token (constant-time compare), bounds the payload, validates its shape, and stores the latest posture per target in Firestore. Set the same token value on the dashboard host and pass it to the collector via `--token-env`.
+
+**Safety:** every assessor is strictly read-only (describe/get/list only), fails safe when a target is unreachable or an SDK is missing, and in the collector model **credentials never leave your network** — only findings are shipped to the dashboard over TLS with a scoped token.
 
 ## 15. Telemetry
 
